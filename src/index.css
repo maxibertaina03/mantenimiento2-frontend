@@ -206,6 +206,14 @@ h2 {
   grid-template-columns: 1fr 1fr;
   gap: 0 1rem;
 }
+.grilla-filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0 1rem;
+}
+.grilla-filtros .campo {
+  margin-bottom: 0.5rem;
+}
 
 /* ── Badges / estados ── */
 .badge {

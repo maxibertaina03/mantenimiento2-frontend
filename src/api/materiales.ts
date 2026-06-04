@@ -24,6 +24,22 @@ export function useMateriales(pagina = 1, limite = 20) {
   });
 }
 
+/** Trae TODOS los materiales (recorriendo páginas) para exportar. */
+export async function obtenerTodosLosMateriales(): Promise<Material[]> {
+  const limite = 100;
+  const acumulado: Material[] = [];
+  let pagina = 1;
+  for (;;) {
+    const resp = await apiRequest<RespuestaPaginada<Material>>('/materiales', {
+      query: { pagina, limite },
+    });
+    acumulado.push(...resp.datos);
+    if (acumulado.length >= resp.total || resp.datos.length === 0) break;
+    pagina += 1;
+  }
+  return acumulado;
+}
+
 export function useMaterialesBajoStock() {
   return useQuery({
     queryKey: clavesMateriales.bajoStock,

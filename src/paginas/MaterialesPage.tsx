@@ -1,9 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCategorias } from '@/api/categorias';
-import { useCrearMaterial, useMateriales, useMaterialesBajoStock } from '@/api/materiales';
+import {
+  obtenerTodosLosMateriales,
+  useCrearMaterial,
+  useMateriales,
+  useMaterialesBajoStock,
+} from '@/api/materiales';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
+import { descargarCsv, generarCsv, sufijoFechaArchivo } from '@/lib/csv';
 import { formatearNumero } from '@/lib/formato';
 import type { CrearMaterialInput } from '@/tipos/material';
 
@@ -11,15 +17,55 @@ export function MaterialesPage() {
   const { data, isLoading, error } = useMateriales();
   const { data: bajoStock } = useMaterialesBajoStock();
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [exportando, setExportando] = useState(false);
+  const [errorExport, setErrorExport] = useState<string | null>(null);
+
+  const exportar = async () => {
+    setErrorExport(null);
+    setExportando(true);
+    try {
+      const todos = await obtenerTodosLosMateriales();
+      const encabezados = [
+        'Material',
+        'Categoría',
+        'Unidad',
+        'Stock actual',
+        'Stock mínimo',
+        'Bajo stock',
+        'Notas',
+      ];
+      const filas = todos.map((m) => [
+        m.nombre,
+        m.categoriaNombre ?? '',
+        m.unidad,
+        m.stockActual,
+        m.stockMinimo,
+        m.bajoStock ? 'SÍ' : 'NO',
+        m.notas ?? '',
+      ]);
+      descargarCsv(`materiales_stock_${sufijoFechaArchivo()}.csv`, generarCsv(encabezados, filas));
+    } catch (e) {
+      setErrorExport(e instanceof Error ? e.message : 'No se pudo exportar.');
+    } finally {
+      setExportando(false);
+    }
+  };
 
   return (
     <>
       <div className="cabecera-pagina">
         <h1>Materiales</h1>
-        <button className="btn btn-primario" onClick={() => setModalAbierto(true)}>
-          + Nuevo material
-        </button>
+        <div className="fila-acciones">
+          <button className="btn" onClick={exportar} disabled={exportando}>
+            {exportando ? 'Exportando…' : '⬇ Exportar CSV'}
+          </button>
+          <button className="btn btn-primario" onClick={() => setModalAbierto(true)}>
+            + Nuevo material
+          </button>
+        </div>
       </div>
+
+      {errorExport && <MensajeError error={new Error(errorExport)} />}
 
       {bajoStock && bajoStock.length > 0 && (
         <div className="alerta alerta-aviso">

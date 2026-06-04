@@ -13,12 +13,15 @@ export const MOTIVOS_MOVIMIENTO: MotivoMovimiento[] = [
 export interface Movimiento {
   id: string;
   materialId: string;
+  materialNombre: string | null;
   tipo: TipoMovimiento;
   motivo: MotivoMovimiento;
   cantidad: number;
   fecha: string;
   proveedorId: string | null;
+  proveedorNombre: string | null;
   usuarioId: string | null;
+  usuarioNombre: string | null;
   referenciaTrabajo: string | null;
   notas: string | null;
   creadoEn: string;

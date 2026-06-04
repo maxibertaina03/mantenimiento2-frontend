@@ -31,6 +31,36 @@ export function useMovimientos(filtros: FiltrosMovimientos = {}) {
   });
 }
 
+/**
+ * Trae TODOS los movimientos que matchean los filtros (recorriendo las páginas).
+ * Se usa para exportar, sin el límite de paginación de la pantalla.
+ */
+export async function obtenerTodosLosMovimientos(
+  filtros: FiltrosMovimientos = {},
+): Promise<Movimiento[]> {
+  const limite = 100; // máximo permitido por el backend
+  const acumulado: Movimiento[] = [];
+  let pagina = 1;
+
+  for (;;) {
+    const resp = await apiRequest<RespuestaPaginada<Movimiento>>('/movimientos', {
+      query: {
+        materialId: filtros.materialId,
+        tipo: filtros.tipo,
+        motivo: filtros.motivo,
+        fechaDesde: filtros.fechaDesde,
+        fechaHasta: filtros.fechaHasta,
+        pagina,
+        limite,
+      },
+    });
+    acumulado.push(...resp.datos);
+    if (acumulado.length >= resp.total || resp.datos.length === 0) break;
+    pagina += 1;
+  }
+  return acumulado;
+}
+
 export function useCrearMovimiento() {
   const qc = useQueryClient();
   return useMutation({

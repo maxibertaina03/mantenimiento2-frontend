@@ -16,6 +16,9 @@ export function Layout() {
           <NavLink to="/materiales" className={claseNav}>
             Materiales
           </NavLink>
+          <NavLink to="/movimientos" end className={claseNav}>
+            Historial
+          </NavLink>
           <NavLink to="/movimientos/nuevo" className={claseNav}>
             Nuevo movimiento
           </NavLink>
