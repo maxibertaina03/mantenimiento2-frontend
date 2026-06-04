@@ -1,4 +1,5 @@
 import type { ErrorApi } from '@/tipos/comunes';
+import { obtenerTokenAuth } from './authToken';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api';
 
@@ -43,9 +44,15 @@ function extraerMensaje(payload: Partial<ErrorApi> | null, status: number): stri
 export async function apiRequest<T>(path: string, opciones: OpcionesRequest = {}): Promise<T> {
   const { method = 'GET', body, query } = opciones;
 
+  // Adjunta el token de Clerk si hay sesión (ver lib/authToken.ts).
+  const token = await obtenerTokenAuth();
+  const headers: Record<string, string> = {};
+  if (body) headers['Content-Type'] = 'application/json';
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
   const respuesta = await fetch(construirUrl(path, query), {
     method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
 

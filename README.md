@@ -93,13 +93,30 @@ src/
 
 ---
 
-## Autenticación (preparada para Clerk)
+## Autenticación (Clerk)
 
-Hoy **sin login**. Para activar Clerk más adelante:
+La app usa **Clerk**. El comportamiento depende de si `VITE_CLERK_PUBLISHABLE_KEY` está
+configurada:
 
-1. `npm install @clerk/clerk-react`
-2. Completar `VITE_CLERK_PUBLISHABLE_KEY` en `.env`
-3. Descomentar el `ClerkProvider` en `src/main.tsx` (ya está dejado el lugar exacto)
+- **Con key** → toda la app queda detrás del login. Sin sesión se muestra la pantalla de
+  Clerk (`<SignIn />`); con sesión, el token se adjunta automáticamente a cada request de
+  la API (`Authorization: Bearer …`) y aparece el `UserButton` en el sidebar.
+- **Sin key** → la app corre **sin auth** (modo desarrollo). En ese caso el backend debe
+  tener `AUTH_DISABLED="true"`.
+
+### Configurar Clerk
+
+1. Creá una aplicación en [clerk.com](https://clerk.com) (la misma instancia que el backend).
+2. En **API Keys**, copiá la **Publishable key** (`pk_test_…`).
+3. En el `.env`:
+   ```
+   VITE_CLERK_PUBLISHABLE_KEY="pk_test_..."
+   ```
+4. Reiniciá `npm run dev`. Asegurate de que el backend tenga su `CLERK_SECRET_KEY` puesta
+   y `AUTH_DISABLED="false"`.
+
+Piezas clave: `src/main.tsx` (gate de login), `src/componentes/ProveedorToken.tsx`
+(registra el token) y `src/lib/apiClient.ts` (lo adjunta a las requests).
 
 ---
 
