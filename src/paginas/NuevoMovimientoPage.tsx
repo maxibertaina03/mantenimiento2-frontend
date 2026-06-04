@@ -24,7 +24,8 @@ export function NuevoMovimientoPage() {
   const [params] = useSearchParams();
   const materialIdInicial = params.get('materialId') ?? '';
 
-  const { data: materiales } = useMateriales(1, 200);
+  // limite máximo permitido por el backend es 100 (PaginacionDto @Max(100)).
+  const { data: materiales, error: errorMateriales } = useMateriales(1, 100);
   const { data: proveedores } = useProveedores();
   const crear = useCrearMovimiento();
 
@@ -68,6 +69,7 @@ export function NuevoMovimientoPage() {
 
       <div className="panel" style={{ maxWidth: 640 }}>
         {exito && <div className="alerta alerta-exito">✅ {exito}</div>}
+        {errorMateriales && <MensajeError error={errorMateriales} />}
         {crear.error && <MensajeError error={crear.error} />}
 
         <form onSubmit={enviar}>
