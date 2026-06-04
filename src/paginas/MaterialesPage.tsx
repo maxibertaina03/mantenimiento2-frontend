@@ -10,6 +10,7 @@ import {
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
 import { descargarCsv, generarCsv, sufijoFechaArchivo } from '@/lib/csv';
+import { exportarPdf } from '@/lib/pdf';
 import { formatearNumero } from '@/lib/formato';
 import type { CrearMaterialInput } from '@/tipos/material';
 
@@ -20,7 +21,7 @@ export function MaterialesPage() {
   const [exportando, setExportando] = useState(false);
   const [errorExport, setErrorExport] = useState<string | null>(null);
 
-  const exportar = async () => {
+  const exportar = async (formato: 'csv' | 'pdf') => {
     setErrorExport(null);
     setExportando(true);
     try {
@@ -38,12 +39,27 @@ export function MaterialesPage() {
         m.nombre,
         m.categoriaNombre ?? '',
         m.unidad,
-        m.stockActual,
-        m.stockMinimo,
+        formatearNumero(m.stockActual),
+        formatearNumero(m.stockMinimo),
         m.bajoStock ? 'SÍ' : 'NO',
         m.notas ?? '',
       ]);
-      descargarCsv(`materiales_stock_${sufijoFechaArchivo()}.csv`, generarCsv(encabezados, filas));
+
+      if (formato === 'csv') {
+        descargarCsv(`materiales_stock_${sufijoFechaArchivo()}.csv`, generarCsv(encabezados, filas));
+      } else {
+        const bajos = todos.filter((m) => m.bajoStock).length;
+        await exportarPdf({
+          titulo: 'Materiales en stock',
+          subtitulo: `${todos.length} material(es)`,
+          encabezados,
+          filas,
+          nombreArchivo: `materiales_stock_${sufijoFechaArchivo()}.pdf`,
+          orientacion: 'landscape',
+          resaltarFilas: todos.map((m) => m.bajoStock),
+          leyenda: bajos > 0 ? `⚠ ${bajos} bajo stock (resaltados)` : 'Todo OK',
+        });
+      }
     } catch (e) {
       setErrorExport(e instanceof Error ? e.message : 'No se pudo exportar.');
     } finally {
@@ -56,8 +72,11 @@ export function MaterialesPage() {
       <div className="cabecera-pagina">
         <h1>Materiales</h1>
         <div className="fila-acciones">
-          <button className="btn" onClick={exportar} disabled={exportando}>
-            {exportando ? 'Exportando…' : '⬇ Exportar CSV'}
+          <button className="btn" onClick={() => exportar('csv')} disabled={exportando}>
+            {exportando ? 'Exportando…' : '⬇ CSV'}
+          </button>
+          <button className="btn" onClick={() => exportar('pdf')} disabled={exportando}>
+            {exportando ? 'Exportando…' : '⬇ PDF'}
           </button>
           <button className="btn btn-primario" onClick={() => setModalAbierto(true)}>
             + Nuevo material

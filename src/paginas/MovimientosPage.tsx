@@ -4,6 +4,7 @@ import { obtenerTodosLosMovimientos, useMovimientos } from '@/api/movimientos';
 import { BadgeMovimiento } from '@/componentes/BadgeMovimiento';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { descargarCsv, generarCsv, sufijoFechaArchivo } from '@/lib/csv';
+import { exportarPdf } from '@/lib/pdf';
 import { formatearFecha, formatearNumero } from '@/lib/formato';
 import {
   MOTIVOS_MOVIMIENTO,
@@ -54,7 +55,18 @@ export function MovimientosPage() {
     setPagina(1);
   };
 
-  const exportar = async () => {
+  // Resumen legible de los filtros activos (para el subtítulo del PDF).
+  const resumenFiltros = (): string => {
+    const partes: string[] = [];
+    if (materialId) partes.push(`Material: ${materiales?.datos.find((m) => m.id === materialId)?.nombre ?? materialId}`);
+    if (tipo) partes.push(`Tipo: ${tipo}`);
+    if (motivo) partes.push(`Motivo: ${motivo}`);
+    if (fechaDesde) partes.push(`Desde: ${fechaDesde}`);
+    if (fechaHasta) partes.push(`Hasta: ${fechaHasta}`);
+    return partes.length ? partes.join(' · ') : 'Sin filtros';
+  };
+
+  const exportar = async (formato: 'csv' | 'pdf') => {
     setErrorExport(null);
     setExportando(true);
     try {
@@ -75,13 +87,26 @@ export function MovimientosPage() {
         m.materialNombre ?? m.materialId,
         m.tipo,
         m.motivo,
-        m.cantidad,
+        formatearNumero(m.cantidad),
         m.proveedorNombre ?? '',
         m.usuarioNombre ?? '',
         m.referenciaTrabajo ?? '',
         m.notas ?? '',
       ]);
-      descargarCsv(`movimientos_${sufijoFechaArchivo()}.csv`, generarCsv(encabezados, filas));
+
+      if (formato === 'csv') {
+        descargarCsv(`movimientos_${sufijoFechaArchivo()}.csv`, generarCsv(encabezados, filas));
+      } else {
+        await exportarPdf({
+          titulo: 'Historial de movimientos',
+          subtitulo: `${todos.length} movimiento(s) · ${resumenFiltros()}`,
+          encabezados,
+          filas,
+          nombreArchivo: `movimientos_${sufijoFechaArchivo()}.pdf`,
+          orientacion: 'landscape',
+          columnaTipo: 2,
+        });
+      }
     } catch (e) {
       setErrorExport(e instanceof Error ? e.message : 'No se pudo exportar.');
     } finally {
@@ -95,9 +120,14 @@ export function MovimientosPage() {
     <>
       <div className="cabecera-pagina">
         <h1>Historial de movimientos</h1>
-        <button className="btn btn-primario" onClick={exportar} disabled={exportando}>
-          {exportando ? 'Exportando…' : '⬇ Exportar CSV'}
-        </button>
+        <div className="fila-acciones">
+          <button className="btn" onClick={() => exportar('csv')} disabled={exportando}>
+            {exportando ? 'Exportando…' : '⬇ CSV'}
+          </button>
+          <button className="btn btn-primario" onClick={() => exportar('pdf')} disabled={exportando}>
+            {exportando ? 'Exportando…' : '⬇ PDF'}
+          </button>
+        </div>
       </div>
 
       {errorExport && <MensajeError error={new Error(errorExport)} />}
