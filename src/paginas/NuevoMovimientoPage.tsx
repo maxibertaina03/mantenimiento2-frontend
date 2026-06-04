@@ -6,7 +6,7 @@ import { useProveedores } from '@/api/proveedores';
 import { MensajeError } from '@/componentes/Estados';
 import { formatearNumero } from '@/lib/formato';
 import {
-  MOTIVOS_MOVIMIENTO,
+  MOTIVOS_POR_TIPO,
   TIPOS_MOVIMIENTO,
   type CrearMovimientoInput,
   type MotivoMovimiento,
@@ -41,6 +41,19 @@ export function NuevoMovimientoPage() {
 
   const set = <K extends keyof CrearMovimientoInput>(clave: K, valor: CrearMovimientoInput[K]) =>
     setForm((f) => ({ ...f, [clave]: valor }));
+
+  // Motivos válidos para el tipo elegido.
+  const motivosDisponibles = MOTIVOS_POR_TIPO[form.tipo];
+
+  // Al cambiar el tipo, si el motivo actual ya no aplica, lo ajustamos al primero válido.
+  const cambiarTipo = (nuevoTipo: TipoMovimiento) => {
+    const validos = MOTIVOS_POR_TIPO[nuevoTipo];
+    setForm((f) => ({
+      ...f,
+      tipo: nuevoTipo,
+      motivo: validos.includes(f.motivo) ? f.motivo : validos[0],
+    }));
+  };
 
   const enviar = (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +114,7 @@ export function NuevoMovimientoPage() {
               <label>Tipo</label>
               <select
                 value={form.tipo}
-                onChange={(e) => set('tipo', e.target.value as TipoMovimiento)}
+                onChange={(e) => cambiarTipo(e.target.value as TipoMovimiento)}
               >
                 {TIPOS_MOVIMIENTO.map((t) => (
                   <option key={t} value={t}>
@@ -116,7 +129,7 @@ export function NuevoMovimientoPage() {
                 value={form.motivo}
                 onChange={(e) => set('motivo', e.target.value as MotivoMovimiento)}
               >
-                {MOTIVOS_MOVIMIENTO.map((m) => (
+                {motivosDisponibles.map((m) => (
                   <option key={m} value={m}>
                     {m}
                   </option>

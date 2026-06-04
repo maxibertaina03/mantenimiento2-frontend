@@ -10,6 +10,18 @@ export const MOTIVOS_MOVIMIENTO: MotivoMovimiento[] = [
   'OTRO',
 ];
 
+/**
+ * Motivos válidos por tipo de movimiento (debe coincidir con la validación del backend).
+ * - ENTRADA suma stock: COMPRA u OTRO.
+ * - SALIDA resta stock: TRABAJO, DEVOLUCION (al proveedor) u OTRO.
+ * - AJUSTE fija el stock: AJUSTE u OTRO.
+ */
+export const MOTIVOS_POR_TIPO: Record<TipoMovimiento, MotivoMovimiento[]> = {
+  ENTRADA: ['COMPRA', 'OTRO'],
+  SALIDA: ['TRABAJO', 'DEVOLUCION', 'OTRO'],
+  AJUSTE: ['AJUSTE', 'OTRO'],
+};
+
 export interface Movimiento {
   id: string;
   materialId: string;
