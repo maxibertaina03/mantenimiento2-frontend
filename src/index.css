@@ -279,7 +279,7 @@ h2 {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 8vh;
+  padding: 8vh 1rem 1rem;
   z-index: 50;
 }
 .modal {
@@ -305,4 +305,96 @@ h2 {
 .fila-acciones {
   display: flex;
   gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+/* ── Scroll horizontal para tablas anchas (clave en celular) ── */
+.tabla-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Barra superior móvil (hamburguesa). Oculta en escritorio. ── */
+.barra-movil {
+  display: none;
+}
+.overlay {
+  display: none;
+}
+
+/* ───────────────────────── Responsive (celular / tablet) ───────────────────────── */
+@media (max-width: 768px) {
+  .app {
+    flex-direction: column;
+  }
+
+  /* Barra superior con marca + botón hamburguesa */
+  .barra-movil {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 1rem;
+    background: var(--color-panel);
+    border-bottom: 1px solid var(--color-borde);
+    position: sticky;
+    top: 0;
+    z-index: 30;
+  }
+  .barra-movil .marca {
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+  .hamburguesa {
+    background: none;
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio);
+    font-size: 1.25rem;
+    line-height: 1;
+    padding: 0.3rem 0.6rem;
+    cursor: pointer;
+  }
+
+  /* La barra lateral pasa a ser un cajón deslizable */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 250px;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    z-index: 40;
+  }
+  .sidebar.abierta {
+    transform: translateX(0);
+  }
+  .overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 35;
+  }
+
+  .contenido {
+    padding: 1rem;
+  }
+  .cabecera-pagina {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .cabecera-pagina h1 {
+    font-size: 1.25rem;
+  }
+
+  /* Formularios y paneles a una sola columna */
+  .grilla-2 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Las celdas no se parten: la tabla scrollea horizontal dentro de .tabla-scroll */
+  .tabla th,
+  .tabla td {
+    white-space: nowrap;
+  }
 }

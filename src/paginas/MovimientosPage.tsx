@@ -207,6 +207,7 @@ export function MovimientosPage() {
 
       {data && data.datos.length > 0 && (
         <>
+          <div className="tabla-scroll">
           <table className="tabla">
             <thead>
               <tr>
@@ -239,6 +240,7 @@ export function MovimientosPage() {
               ))}
             </tbody>
           </table>
+          </div>
 
           {/* ── Paginación ── */}
           <div className="acciones" style={{ justifyContent: 'space-between', alignItems: 'center' }}>

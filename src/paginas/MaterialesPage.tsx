@@ -97,6 +97,7 @@ export function MaterialesPage() {
       {error && <MensajeError error={error} />}
 
       {data && (
+        <div className="tabla-scroll">
         <table className="tabla">
           <thead>
             <tr>
@@ -129,6 +130,7 @@ export function MaterialesPage() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       {data && data.datos.length === 0 && (

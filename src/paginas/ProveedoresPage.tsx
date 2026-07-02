@@ -46,6 +46,7 @@ export function ProveedoresPage() {
       {eliminar.error && <MensajeError error={eliminar.error} />}
 
       {data && (
+        <div className="tabla-scroll">
         <table className="tabla">
           <thead>
             <tr>
@@ -77,6 +78,7 @@ export function ProveedoresPage() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       {data && data.datos.length === 0 && (

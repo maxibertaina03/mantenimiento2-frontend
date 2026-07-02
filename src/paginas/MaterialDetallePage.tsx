@@ -71,6 +71,7 @@ export function MaterialDetallePage() {
       {material.movimientos.length === 0 ? (
         <EstadoVacio>Este material no tiene movimientos todavía.</EstadoVacio>
       ) : (
+        <div className="tabla-scroll">
         <table className="tabla">
           <thead>
             <tr>
@@ -97,6 +98,7 @@ export function MaterialDetallePage() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </>
   );
