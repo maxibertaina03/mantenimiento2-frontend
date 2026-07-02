@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCategorias } from '@/api/categorias';
 import {
@@ -14,12 +14,29 @@ import { exportarPdf } from '@/lib/pdf';
 import { formatearNumero } from '@/lib/formato';
 import type { CrearMaterialInput } from '@/tipos/material';
 
+const LIMITE = 20;
+
 export function MaterialesPage() {
-  const { data, isLoading, error } = useMateriales();
+  const [buscar, setBuscar] = useState('');
+  const [busquedaDebounced, setBusquedaDebounced] = useState('');
+  const [pagina, setPagina] = useState(1);
+
+  // Debounce: esperamos 300ms tras dejar de tipear antes de pedir a la API.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setBusquedaDebounced(buscar);
+      setPagina(1); // al cambiar la búsqueda volvemos a la primera página
+    }, 300);
+    return () => clearTimeout(t);
+  }, [buscar]);
+
+  const { data, isLoading, error, isFetching } = useMateriales(pagina, LIMITE, busquedaDebounced);
   const { data: bajoStock } = useMaterialesBajoStock();
   const [modalAbierto, setModalAbierto] = useState(false);
   const [exportando, setExportando] = useState(false);
   const [errorExport, setErrorExport] = useState<string | null>(null);
+
+  const totalPaginas = data ? Math.max(1, Math.ceil(data.total / LIMITE)) : 1;
 
   const exportar = async (formato: 'csv' | 'pdf') => {
     setErrorExport(null);
@@ -84,6 +101,19 @@ export function MaterialesPage() {
         </div>
       </div>
 
+      {/* Buscador rápido por nombre */}
+      <div className="buscador">
+        <input
+          type="search"
+          inputMode="search"
+          placeholder="🔍 Buscar material por nombre…"
+          value={buscar}
+          onChange={(e) => setBuscar(e.target.value)}
+          autoFocus
+        />
+        {isFetching && <span className="texto-suave">buscando…</span>}
+      </div>
+
       {errorExport && <MensajeError error={new Error(errorExport)} />}
 
       {bajoStock && bajoStock.length > 0 && (
@@ -116,7 +146,7 @@ export function MaterialesPage() {
                   <Link to={`/materiales/${m.id}`}>{m.nombre}</Link>
                 </td>
                 <td>{m.categoriaNombre ?? '—'}</td>
-                <td>{m.unidad}</td>
+                <td>{m.unidad || '—'}</td>
                 <td className="num">{formatearNumero(m.stockActual)}</td>
                 <td className="num">{formatearNumero(m.stockMinimo)}</td>
                 <td>
@@ -134,7 +164,37 @@ export function MaterialesPage() {
       )}
 
       {data && data.datos.length === 0 && (
-        <EstadoVacio>No hay materiales cargados todavía.</EstadoVacio>
+        <EstadoVacio>
+          {busquedaDebounced
+            ? `No se encontraron materiales para «${busquedaDebounced}».`
+            : 'No hay materiales cargados todavía.'}
+        </EstadoVacio>
+      )}
+
+      {/* Paginación */}
+      {data && data.total > LIMITE && (
+        <div className="acciones" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <span className="texto-suave">{data.total} material(es)</span>
+          <div className="fila-acciones">
+            <button
+              className="btn btn-sm"
+              disabled={pagina <= 1}
+              onClick={() => setPagina((p) => p - 1)}
+            >
+              ← Anterior
+            </button>
+            <span className="texto-suave" style={{ padding: '0 0.5rem' }}>
+              Página {pagina} de {totalPaginas}
+            </span>
+            <button
+              className="btn btn-sm"
+              disabled={pagina >= totalPaginas}
+              onClick={() => setPagina((p) => p + 1)}
+            >
+              Siguiente →
+            </button>
+          </div>
+        </div>
       )}
 
       <Modal titulo="Nuevo material" abierto={modalAbierto} onCerrar={() => setModalAbierto(false)}>

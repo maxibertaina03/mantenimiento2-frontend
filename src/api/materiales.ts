@@ -10,17 +10,20 @@ import type {
 
 export const clavesMateriales = {
   base: ['materiales'] as const,
-  lista: (pagina: number, limite: number) => ['materiales', 'lista', pagina, limite] as const,
+  lista: (pagina: number, limite: number, buscar: string) =>
+    ['materiales', 'lista', pagina, limite, buscar] as const,
   bajoStock: ['materiales', 'bajo-stock'] as const,
   detalle: (id: string) => ['materiales', 'detalle', id] as const,
   historial: (id: string) => ['materiales', 'historial', id] as const,
 };
 
-export function useMateriales(pagina = 1, limite = 20) {
+export function useMateriales(pagina = 1, limite = 20, buscar = '') {
   return useQuery({
-    queryKey: clavesMateriales.lista(pagina, limite),
+    queryKey: clavesMateriales.lista(pagina, limite, buscar),
     queryFn: () =>
-      apiRequest<RespuestaPaginada<Material>>('/materiales', { query: { pagina, limite } }),
+      apiRequest<RespuestaPaginada<Material>>('/materiales', {
+        query: { pagina, limite, buscar: buscar || undefined },
+      }),
   });
 }
 
