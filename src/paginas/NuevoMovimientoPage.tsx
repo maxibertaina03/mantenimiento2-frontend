@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useCrearMovimiento } from '@/api/movimientos';
-import { useProveedores } from '@/api/proveedores';
 import { ComboMaterial } from '@/componentes/ComboMaterial';
+import { ComboProveedor } from '@/componentes/ComboProveedor';
 import { MensajeError } from '@/componentes/Estados';
 import { formatearNumero } from '@/lib/formato';
 import type { Material } from '@/tipos/material';
@@ -25,7 +25,6 @@ export function NuevoMovimientoPage() {
   const [params] = useSearchParams();
   const materialIdInicial = params.get('materialId') ?? '';
 
-  const { data: proveedores } = useProveedores();
   const crear = useCrearMovimiento();
 
   const [form, setForm] = useState<CrearMovimientoInput>(FORM_INICIAL(materialIdInicial));
@@ -150,17 +149,7 @@ export function NuevoMovimientoPage() {
           {form.motivo === 'COMPRA' && (
             <div className="campo">
               <label>Proveedor (opcional)</label>
-              <select
-                value={form.proveedorId ?? ''}
-                onChange={(e) => set('proveedorId', e.target.value || undefined)}
-              >
-                <option value="">— Sin proveedor —</option>
-                {proveedores?.datos.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nombre}
-                  </option>
-                ))}
-              </select>
+              <ComboProveedor onCambio={(p) => set('proveedorId', p?.id ?? undefined)} />
             </div>
           )}
 

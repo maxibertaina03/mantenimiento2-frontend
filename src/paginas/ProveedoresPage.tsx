@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   useActualizarProveedor,
   useCrearProveedor,
@@ -10,12 +10,27 @@ import { Modal } from '@/componentes/Modal';
 import type { CrearProveedorInput, Proveedor } from '@/tipos/proveedor';
 
 const FORM_VACIO: CrearProveedorInput = { nombre: '', cuit: '', email: '', telefono: '', notas: '' };
+const LIMITE = 20;
 
 export function ProveedoresPage() {
-  const { data, isLoading, error } = useProveedores();
+  const [buscar, setBuscar] = useState('');
+  const [busquedaDebounced, setBusquedaDebounced] = useState('');
+  const [pagina, setPagina] = useState(1);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setBusquedaDebounced(buscar);
+      setPagina(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [buscar]);
+
+  const { data, isLoading, error, isFetching } = useProveedores(pagina, LIMITE, busquedaDebounced);
   const eliminar = useEliminarProveedor();
   const [edicion, setEdicion] = useState<Proveedor | null>(null);
   const [modalAbierto, setModalAbierto] = useState(false);
+
+  const totalPaginas = data ? Math.max(1, Math.ceil(data.total / LIMITE)) : 1;
 
   const abrirNuevo = () => {
     setEdicion(null);
@@ -39,6 +54,18 @@ export function ProveedoresPage() {
         <button className="btn btn-primario" onClick={abrirNuevo}>
           + Nuevo proveedor
         </button>
+      </div>
+
+      <div className="buscador">
+        <input
+          type="search"
+          inputMode="search"
+          placeholder="🔍 Buscar proveedor por nombre o CUIT…"
+          value={buscar}
+          onChange={(e) => setBuscar(e.target.value)}
+          autoFocus
+        />
+        {isFetching && <span className="texto-suave">buscando…</span>}
       </div>
 
       {isLoading && <Cargando />}
@@ -82,7 +109,36 @@ export function ProveedoresPage() {
       )}
 
       {data && data.datos.length === 0 && (
-        <EstadoVacio>No hay proveedores cargados todavía.</EstadoVacio>
+        <EstadoVacio>
+          {busquedaDebounced
+            ? `No se encontraron proveedores para «${busquedaDebounced}».`
+            : 'No hay proveedores cargados todavía.'}
+        </EstadoVacio>
+      )}
+
+      {data && data.total > LIMITE && (
+        <div className="acciones" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <span className="texto-suave">{data.total} proveedor(es)</span>
+          <div className="fila-acciones">
+            <button
+              className="btn btn-sm"
+              disabled={pagina <= 1}
+              onClick={() => setPagina((p) => p - 1)}
+            >
+              ← Anterior
+            </button>
+            <span className="texto-suave" style={{ padding: '0 0.5rem' }}>
+              Página {pagina} de {totalPaginas}
+            </span>
+            <button
+              className="btn btn-sm"
+              disabled={pagina >= totalPaginas}
+              onClick={() => setPagina((p) => p + 1)}
+            >
+              Siguiente →
+            </button>
+          </div>
+        </div>
       )}
 
       <Modal

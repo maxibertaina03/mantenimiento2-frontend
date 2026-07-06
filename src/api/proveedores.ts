@@ -9,14 +9,17 @@ import type {
 
 const claves = {
   base: ['proveedores'] as const,
-  lista: (pagina: number, limite: number) => ['proveedores', 'lista', pagina, limite] as const,
+  lista: (pagina: number, limite: number, buscar: string) =>
+    ['proveedores', 'lista', pagina, limite, buscar] as const,
 };
 
-export function useProveedores(pagina = 1, limite = 100) {
+export function useProveedores(pagina = 1, limite = 20, buscar = '') {
   return useQuery({
-    queryKey: claves.lista(pagina, limite),
+    queryKey: claves.lista(pagina, limite, buscar),
     queryFn: () =>
-      apiRequest<RespuestaPaginada<Proveedor>>('/proveedores', { query: { pagina, limite } }),
+      apiRequest<RespuestaPaginada<Proveedor>>('/proveedores', {
+        query: { pagina, limite, buscar: buscar || undefined },
+      }),
   });
 }
 
