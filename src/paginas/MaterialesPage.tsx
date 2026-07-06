@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useCategorias } from '@/api/categorias';
+import { useCategorias, useCrearCategoria } from '@/api/categorias';
 import {
   obtenerTodosLosMateriales,
   useCrearMaterial,
@@ -198,12 +198,28 @@ export function MaterialesPage() {
 function FormularioMaterial({ onListo }: { onListo: () => void }) {
   const { data: categorias } = useCategorias();
   const crear = useCrearMaterial();
+  const crearCategoria = useCrearCategoria();
   const [form, setForm] = useState<CrearMaterialInput>({
     nombre: '',
     categoriaId: '',
     unidad: 'u',
     stockMinimo: 0,
   });
+  // Alta rápida de categoría desde el mismo formulario.
+  const [modoNuevaCat, setModoNuevaCat] = useState(false);
+  const [nombreCat, setNombreCat] = useState('');
+
+  const crearNuevaCategoria = () => {
+    const nombre = nombreCat.trim();
+    if (!nombre) return;
+    crearCategoria.mutate(nombre, {
+      onSuccess: (cat) => {
+        setForm((f) => ({ ...f, categoriaId: cat.id })); // la dejamos seleccionada
+        setNombreCat('');
+        setModoNuevaCat(false);
+      },
+    });
+  };
 
   const enviar = (e: React.FormEvent) => {
     e.preventDefault();
@@ -229,20 +245,70 @@ function FormularioMaterial({ onListo }: { onListo: () => void }) {
       <div className="grilla-2">
         <div className="campo">
           <label>Categoría</label>
-          <select
-            required
-            value={form.categoriaId}
-            onChange={(e) => setForm({ ...form, categoriaId: e.target.value })}
-          >
-            <option value="" disabled>
-              Elegí una categoría…
-            </option>
-            {categorias?.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nombre}
-              </option>
-            ))}
-          </select>
+          {!modoNuevaCat ? (
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <select
+                required
+                value={form.categoriaId}
+                onChange={(e) => setForm({ ...form, categoriaId: e.target.value })}
+                style={{ flex: 1 }}
+              >
+                <option value="" disabled>
+                  Elegí una categoría…
+                </option>
+                {categorias?.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nombre}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => setModoNuevaCat(true)}
+                title="Crear una categoría nueva"
+              >
+                + Nueva
+              </button>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <input
+                  autoFocus
+                  placeholder="Nombre de la nueva categoría"
+                  value={nombreCat}
+                  onChange={(e) => setNombreCat(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      crearNuevaCategoria();
+                    }
+                  }}
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-primario btn-sm"
+                  onClick={crearNuevaCategoria}
+                  disabled={crearCategoria.isPending}
+                >
+                  {crearCategoria.isPending ? '…' : 'Crear'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => {
+                    setModoNuevaCat(false);
+                    setNombreCat('');
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
+              {crearCategoria.error && <MensajeError error={crearCategoria.error} />}
+            </>
+          )}
         </div>
         <div className="campo">
           <label>Unidad</label>
