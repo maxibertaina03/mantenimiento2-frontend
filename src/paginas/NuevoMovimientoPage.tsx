@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useMateriales } from '@/api/materiales';
 import { useCrearMovimiento } from '@/api/movimientos';
 import { useProveedores } from '@/api/proveedores';
+import { ComboMaterial } from '@/componentes/ComboMaterial';
 import { MensajeError } from '@/componentes/Estados';
 import { formatearNumero } from '@/lib/formato';
+import type { Material } from '@/tipos/material';
 import {
   MOTIVOS_POR_TIPO,
   TIPOS_MOVIMIENTO,
@@ -24,23 +25,23 @@ export function NuevoMovimientoPage() {
   const [params] = useSearchParams();
   const materialIdInicial = params.get('materialId') ?? '';
 
-  // limite máximo permitido por el backend es 100 (PaginacionDto @Max(100)).
-  const { data: materiales, error: errorMateriales } = useMateriales(1, 100);
   const { data: proveedores } = useProveedores();
   const crear = useCrearMovimiento();
 
   const [form, setForm] = useState<CrearMovimientoInput>(FORM_INICIAL(materialIdInicial));
+  // Material elegido en el combo (para mostrar stock y validar).
+  const [materialSel, setMaterialSel] = useState<Material | null>(null);
   // El input datetime-local trabaja con 'YYYY-MM-DDTHH:mm'; convertimos a ISO al enviar.
   const [fechaLocal, setFechaLocal] = useState('');
   const [exito, setExito] = useState<string | null>(null);
 
-  const materialSel = useMemo(
-    () => materiales?.datos.find((m) => m.id === form.materialId),
-    [materiales, form.materialId],
-  );
-
   const set = <K extends keyof CrearMovimientoInput>(clave: K, valor: CrearMovimientoInput[K]) =>
     setForm((f) => ({ ...f, [clave]: valor }));
+
+  const elegirMaterial = (m: Material | null) => {
+    setMaterialSel(m);
+    set('materialId', m?.id ?? '');
+  };
 
   // Motivos válidos para el tipo elegido.
   const motivosDisponibles = MOTIVOS_POR_TIPO[form.tipo];
@@ -58,6 +59,7 @@ export function NuevoMovimientoPage() {
   const enviar = (e: React.FormEvent) => {
     e.preventDefault();
     setExito(null);
+    if (!form.materialId) return; // sin material no se puede registrar
     const payload: CrearMovimientoInput = {
       ...form,
       cantidad: Number(form.cantidad),
@@ -82,26 +84,12 @@ export function NuevoMovimientoPage() {
 
       <div className="panel" style={{ maxWidth: 640 }}>
         {exito && <div className="alerta alerta-exito">✅ {exito}</div>}
-        {errorMateriales && <MensajeError error={errorMateriales} />}
         {crear.error && <MensajeError error={crear.error} />}
 
         <form onSubmit={enviar}>
           <div className="campo">
             <label>Material</label>
-            <select
-              required
-              value={form.materialId}
-              onChange={(e) => set('materialId', e.target.value)}
-            >
-              <option value="" disabled>
-                Elegí un material…
-              </option>
-              {materiales?.datos.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.nombre} — stock {formatearNumero(m.stockActual)} {m.unidad}
-                </option>
-              ))}
-            </select>
+            <ComboMaterial materialId={materialIdInicial} onCambio={elegirMaterial} />
             {materialSel && (
               <p className="texto-suave" style={{ fontSize: '0.8rem', marginBottom: 0 }}>
                 Stock actual: {formatearNumero(materialSel.stockActual)} {materialSel.unidad}
