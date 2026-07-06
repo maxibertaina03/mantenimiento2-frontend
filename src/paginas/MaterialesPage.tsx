@@ -5,7 +5,6 @@ import {
   obtenerTodosLosMateriales,
   useCrearMaterial,
   useMateriales,
-  useMaterialesBajoStock,
 } from '@/api/materiales';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
@@ -31,7 +30,6 @@ export function MaterialesPage() {
   }, [buscar]);
 
   const { data, isLoading, error, isFetching } = useMateriales(pagina, LIMITE, busquedaDebounced);
-  const { data: bajoStock } = useMaterialesBajoStock();
   const [modalAbierto, setModalAbierto] = useState(false);
   const [exportando, setExportando] = useState(false);
   const [errorExport, setErrorExport] = useState<string | null>(null);
@@ -115,13 +113,6 @@ export function MaterialesPage() {
       </div>
 
       {errorExport && <MensajeError error={new Error(errorExport)} />}
-
-      {bajoStock && bajoStock.length > 0 && (
-        <div className="alerta alerta-aviso">
-          ⚠️ <strong>{bajoStock.length}</strong> material(es) por debajo del stock mínimo:{' '}
-          {bajoStock.map((m) => m.nombre).join(', ')}.
-        </div>
-      )}
 
       {isLoading && <Cargando />}
       {error && <MensajeError error={error} />}
