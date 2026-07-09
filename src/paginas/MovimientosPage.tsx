@@ -1,14 +1,23 @@
 import { useState } from 'react';
 import { useMateriales } from '@/api/materiales';
-import { obtenerTodosLosMovimientos, useMovimientos } from '@/api/movimientos';
+import {
+  obtenerTodosLosMovimientos,
+  useActualizarMovimiento,
+  useEdicionesMovimiento,
+  useMovimientos,
+} from '@/api/movimientos';
+import { useUsuarioActual } from '@/api/usuarios';
 import { BadgeMovimiento } from '@/componentes/BadgeMovimiento';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
+import { Modal } from '@/componentes/Modal';
 import { descargarCsv, generarCsv, sufijoFechaArchivo } from '@/lib/csv';
 import { exportarPdf } from '@/lib/pdf';
-import { formatearFecha, formatearNumero } from '@/lib/formato';
+import { formatearFecha, formatearNumero, isoADatetimeLocal } from '@/lib/formato';
 import {
   MOTIVOS_MOVIMIENTO,
+  MOTIVOS_POR_TIPO,
   TIPOS_MOVIMIENTO,
+  type ActualizarMovimientoInput,
   type FiltrosMovimientos,
   type Movimiento,
   type MotivoMovimiento,
@@ -19,6 +28,15 @@ const LIMITE = 20;
 
 export function MovimientosPage() {
   const { data: materiales } = useMateriales(1, 100);
+  const { data: usuarioActual } = useUsuarioActual();
+
+  // Modales de edición y de auditoría.
+  const [editando, setEditando] = useState<Movimiento | null>(null);
+  const [viendo, setViendo] = useState<Movimiento | null>(null);
+
+  // Puede editar quien registró el movimiento o un admin.
+  const puedeEditar = (m: Movimiento) =>
+    !!usuarioActual && (m.usuarioId === usuarioActual.id || usuarioActual.rol === 'ADMIN');
 
   // Estado de filtros + paginación.
   const [materialId, setMaterialId] = useState('');
@@ -220,6 +238,7 @@ export function MovimientosPage() {
                 <th>Usuario</th>
                 <th>Referencia</th>
                 <th>Notas</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -236,6 +255,24 @@ export function MovimientosPage() {
                   <td>{m.usuarioNombre ?? '—'}</td>
                   <td>{m.referenciaTrabajo ?? '—'}</td>
                   <td>{m.notas ?? '—'}</td>
+                  <td>
+                    <div className="fila-acciones">
+                      {m.editado && (
+                        <button
+                          className="btn btn-sm"
+                          onClick={() => setViendo(m)}
+                          title="Ver historial de cambios"
+                        >
+                          ✎ editado
+                        </button>
+                      )}
+                      {puedeEditar(m) && (
+                        <button className="btn btn-sm" onClick={() => setEditando(m)}>
+                          Editar
+                        </button>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -269,6 +306,195 @@ export function MovimientosPage() {
           </div>
         </>
       )}
+
+      <Modal
+        titulo="Editar movimiento"
+        abierto={!!editando}
+        onCerrar={() => setEditando(null)}
+      >
+        {editando && (
+          <FormularioEdicion movimiento={editando} onListo={() => setEditando(null)} />
+        )}
+      </Modal>
+
+      <Modal
+        titulo="Historial de cambios"
+        abierto={!!viendo}
+        onCerrar={() => setViendo(null)}
+      >
+        {viendo && <Auditoria movimiento={viendo} />}
+      </Modal>
     </>
+  );
+}
+
+const ETIQUETAS: Record<string, string> = {
+  tipo: 'Tipo',
+  motivo: 'Motivo',
+  cantidad: 'Cantidad',
+  fecha: 'Fecha',
+  proveedorId: 'Proveedor',
+  referenciaTrabajo: 'Referencia',
+  notas: 'Notas',
+};
+
+/** Formulario de edición de un movimiento (exige motivo del cambio). */
+function FormularioEdicion({ movimiento, onListo }: { movimiento: Movimiento; onListo: () => void }) {
+  const actualizar = useActualizarMovimiento();
+  const [tipo, setTipo] = useState<TipoMovimiento>(movimiento.tipo);
+  const [motivo, setMotivo] = useState<MotivoMovimiento>(movimiento.motivo);
+  const [cantidad, setCantidad] = useState<number>(movimiento.cantidad);
+  const [fechaLocal, setFechaLocal] = useState(isoADatetimeLocal(movimiento.fecha));
+  const [referencia, setReferencia] = useState(movimiento.referenciaTrabajo ?? '');
+  const [notas, setNotas] = useState(movimiento.notas ?? '');
+  const [motivoEdicion, setMotivoEdicion] = useState('');
+
+  const motivosDisponibles = MOTIVOS_POR_TIPO[tipo];
+
+  const cambiarTipo = (nuevo: TipoMovimiento) => {
+    setTipo(nuevo);
+    if (!MOTIVOS_POR_TIPO[nuevo].includes(motivo)) setMotivo(MOTIVOS_POR_TIPO[nuevo][0]);
+  };
+
+  const enviar = (e: React.FormEvent) => {
+    e.preventDefault();
+    const input: ActualizarMovimientoInput = {
+      tipo,
+      motivo,
+      cantidad: Number(cantidad),
+      fecha: fechaLocal ? new Date(fechaLocal).toISOString() : undefined,
+      referenciaTrabajo: referencia || undefined,
+      notas: notas || undefined,
+      motivoEdicion: motivoEdicion.trim(),
+    };
+    actualizar.mutate({ id: movimiento.id, input }, { onSuccess: onListo });
+  };
+
+  return (
+    <form onSubmit={enviar}>
+      {actualizar.error && <MensajeError error={actualizar.error} />}
+      <p className="texto-suave" style={{ marginTop: 0, fontSize: '0.85rem' }}>
+        Material: <strong>{movimiento.materialNombre}</strong> (al editar se recalcula su stock)
+      </p>
+
+      <div className="grilla-2">
+        <div className="campo">
+          <label>Tipo</label>
+          <select value={tipo} onChange={(e) => cambiarTipo(e.target.value as TipoMovimiento)}>
+            {TIPOS_MOVIMIENTO.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="campo">
+          <label>Motivo</label>
+          <select value={motivo} onChange={(e) => setMotivo(e.target.value as MotivoMovimiento)}>
+            {motivosDisponibles.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="grilla-2">
+        <div className="campo">
+          <label>Cantidad{tipo === 'AJUSTE' && ' (stock absoluto)'}</label>
+          <input
+            type="number"
+            min={0}
+            step="0.001"
+            required
+            value={cantidad}
+            onChange={(e) => setCantidad(Number(e.target.value))}
+          />
+        </div>
+        <div className="campo">
+          <label>Fecha</label>
+          <input
+            type="datetime-local"
+            value={fechaLocal}
+            onChange={(e) => setFechaLocal(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="campo">
+        <label>Referencia de trabajo</label>
+        <input value={referencia} onChange={(e) => setReferencia(e.target.value)} placeholder="OT-1001" />
+      </div>
+      <div className="campo">
+        <label>Notas</label>
+        <textarea rows={2} value={notas} onChange={(e) => setNotas(e.target.value)} />
+      </div>
+
+      <div className="campo">
+        <label>Motivo del cambio (obligatorio)</label>
+        <textarea
+          rows={2}
+          required
+          minLength={3}
+          value={motivoEdicion}
+          onChange={(e) => setMotivoEdicion(e.target.value)}
+          placeholder="Ej: Cargué 100 por error, eran 60"
+        />
+      </div>
+
+      <div className="acciones">
+        <button type="button" className="btn" onClick={onListo}>
+          Cancelar
+        </button>
+        <button type="submit" className="btn btn-primario" disabled={actualizar.isPending}>
+          {actualizar.isPending ? 'Guardando…' : 'Guardar cambios'}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/** Muestra el historial de ediciones (auditoría) de un movimiento. */
+function Auditoria({ movimiento }: { movimiento: Movimiento }) {
+  const { data, isLoading, error } = useEdicionesMovimiento(movimiento.id, true);
+
+  if (isLoading) return <Cargando />;
+  if (error) return <MensajeError error={error} />;
+  if (!data || data.length === 0)
+    return <p className="texto-suave">Este movimiento no tiene ediciones.</p>;
+
+  return (
+    <div>
+      {data.map((ed) => {
+        const campos = Object.keys(ed.cambios.despues).filter(
+          (k) => String(ed.cambios.antes[k]) !== String(ed.cambios.despues[k]),
+        );
+        return (
+          <div key={ed.id} className="panel" style={{ marginBottom: '0.75rem' }}>
+            <div className="texto-suave" style={{ fontSize: '0.8rem' }}>
+              {formatearFecha(ed.creadoEn)} · {ed.usuarioNombre ?? 'usuario desconocido'}
+            </div>
+            <p style={{ margin: '0.35rem 0' }}>
+              <strong>Motivo:</strong> {ed.motivo}
+            </p>
+            {campos.length > 0 ? (
+              <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
+                {campos.map((k) => (
+                  <li key={k} style={{ fontSize: '0.85rem' }}>
+                    {ETIQUETAS[k] ?? k}: <span className="texto-suave">{String(ed.cambios.antes[k] ?? '—')}</span>{' '}
+                    → <strong>{String(ed.cambios.despues[k] ?? '—')}</strong>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <span className="texto-suave" style={{ fontSize: '0.85rem' }}>
+                Sin cambios en los datos.
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }

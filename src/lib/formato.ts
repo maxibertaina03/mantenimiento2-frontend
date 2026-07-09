@@ -13,3 +13,10 @@ export function formatearFecha(iso: string): string {
 export function formatearNumero(n: number): string {
   return n.toLocaleString('es-AR', { maximumFractionDigits: 3 });
 }
+
+/** Convierte una fecha ISO al formato que espera un input datetime-local (hora local). */
+export function isoADatetimeLocal(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}

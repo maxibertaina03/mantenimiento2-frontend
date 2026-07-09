@@ -37,6 +37,31 @@ export interface Movimiento {
   referenciaTrabajo: string | null;
   notas: string | null;
   creadoEn: string;
+  editado: boolean;
+}
+
+/** Datos para editar un movimiento. `motivoEdicion` es obligatorio (queda en auditoría). */
+export interface ActualizarMovimientoInput {
+  tipo?: TipoMovimiento;
+  motivo?: MotivoMovimiento;
+  cantidad?: number;
+  fecha?: string;
+  proveedorId?: string;
+  referenciaTrabajo?: string;
+  notas?: string;
+  motivoEdicion: string;
+}
+
+/** Registro de auditoría de una edición. */
+export interface EdicionMovimiento {
+  id: string;
+  motivo: string;
+  usuarioNombre: string | null;
+  cambios: {
+    antes: Record<string, string | number | null>;
+    despues: Record<string, string | number | null>;
+  };
+  creadoEn: string;
 }
 
 /** Ítem de historial embebido en el material (sin materialId ni creadoEn). */

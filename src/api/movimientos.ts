@@ -3,7 +3,9 @@ import { apiRequest } from '@/lib/apiClient';
 import type { RespuestaPaginada } from '@/tipos/comunes';
 import { clavesMateriales } from './materiales';
 import type {
+  ActualizarMovimientoInput,
   CrearMovimientoInput,
+  EdicionMovimiento,
   FiltrosMovimientos,
   Movimiento,
 } from '@/tipos/movimiento';
@@ -71,5 +73,26 @@ export function useCrearMovimiento() {
       qc.invalidateQueries({ queryKey: claves.base });
       qc.invalidateQueries({ queryKey: clavesMateriales.base });
     },
+  });
+}
+
+export function useActualizarMovimiento() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: ActualizarMovimientoInput }) =>
+      apiRequest<Movimiento>(`/movimientos/${id}`, { method: 'PATCH', body: input }),
+    onSuccess: () => {
+      // Editar recalcula el stock: refrescamos movimientos y materiales.
+      qc.invalidateQueries({ queryKey: claves.base });
+      qc.invalidateQueries({ queryKey: clavesMateriales.base });
+    },
+  });
+}
+
+export function useEdicionesMovimiento(id: string, habilitado: boolean) {
+  return useQuery({
+    queryKey: ['movimientos', 'ediciones', id],
+    queryFn: () => apiRequest<EdicionMovimiento[]>(`/movimientos/${id}/ediciones`),
+    enabled: habilitado && !!id,
   });
 }
