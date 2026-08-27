@@ -8,6 +8,7 @@ import { MovimientosPage } from './paginas/MovimientosPage';
 import { NuevoMovimientoPage } from './paginas/NuevoMovimientoPage';
 import { OrdenesCompraPage } from './paginas/OrdenesCompraPage';
 import { ProveedoresPage } from './paginas/ProveedoresPage';
+import { UsuariosPage } from './paginas/UsuariosPage';
 
 export function App() {
   return (
@@ -28,6 +29,14 @@ export function App() {
           }
         />
         <Route path="/proveedores" element={<ProveedoresPage />} />
+        <Route
+          path="/usuarios"
+          element={
+            <RutaSoloAdmin>
+              <UsuariosPage />
+            </RutaSoloAdmin>
+          }
+        />
         <Route path="*" element={<Navigate to="/materiales" replace />} />
       </Route>
     </Routes>

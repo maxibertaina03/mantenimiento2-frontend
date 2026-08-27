@@ -63,9 +63,14 @@ export function Layout() {
             Proveedores
           </NavLink>
           {esAdmin && (
-            <NavLink to="/equipos-it" className={claseNav}>
-              Equipos IT
-            </NavLink>
+            <>
+              <NavLink to="/equipos-it" className={claseNav}>
+                Equipos IT
+              </NavLink>
+              <NavLink to="/usuarios" className={claseNav}>
+                Usuarios
+              </NavLink>
+            </>
           )}
         </nav>
         {authActiva && (
