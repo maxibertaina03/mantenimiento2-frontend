@@ -2,15 +2,15 @@ export type EstadoOrdenCompra = 'BORRADOR' | 'EMITIDA' | 'RECIBIDA' | 'ANULADA';
 
 /**
  * Etiquetas del ciclo de la orden, en el lenguaje del depósito:
- *   Borrador  -> se está armando, todavía se puede editar
+ *   Orden creada        -> se está armando, todavía se puede editar
  *   Pendiente de recibo -> ya se imprimió y se le mandó al proveedor
- *   Finalizada -> llegó la mercadería y se sumó al stock
+ *   Finalizada          -> llegó la mercadería y se sumó al stock
  *
- * Los nombres internos (EMITIDA/RECIBIDA) se mantienen en la base para no
- * migrar datos; solo cambia lo que ve el usuario.
+ * Los nombres internos (BORRADOR/EMITIDA/RECIBIDA) se mantienen en la base
+ * para no migrar datos; solo cambia lo que ve el usuario.
  */
 export const ETIQUETA_ESTADO_ORDEN: Record<EstadoOrdenCompra, string> = {
-  BORRADOR: 'Borrador',
+  BORRADOR: 'Orden creada',
   EMITIDA: 'Pendiente de recibo',
   RECIBIDA: 'Finalizada',
   ANULADA: 'Anulada',
@@ -36,7 +36,6 @@ export interface OrdenCompra {
   proveedorNombre: string | null;
   proveedorCuit: string | null;
   fecha: string;
-  fechaEntregaEstimada: string | null;
   observaciones: string | null;
   creadoPorNombre: string | null;
   emitidaEn: string | null;
@@ -57,7 +56,6 @@ export interface RenglonInput {
 
 export interface CrearOrdenInput {
   proveedorId: string;
-  fechaEntregaEstimada?: string;
   observaciones?: string;
   renglones: RenglonInput[];
 }

@@ -17,6 +17,18 @@ interface OpcionesTabla {
 }
 const tablas: OpcionesTabla[] = [];
 
+// jsdom no dispara onload en imagenes, asi que el logo cae en su plazo de
+// espera. Se acorta para que los tests no esperen 3 segundos cada uno.
+vi.stubGlobal(
+  'Image',
+  class {
+    onerror: (() => void) | null = null;
+    set src(_valor: string) {
+      setTimeout(() => this.onerror?.(), 0);
+    }
+  },
+);
+
 vi.mock('jspdf', () => {
   class JsPDFFalso {
     internal = {
@@ -30,6 +42,7 @@ vi.mock('jspdf', () => {
     setFontSize() {}
     roundedRect() {}
     rect() {}
+    addImage() {}
     triangle() {}
     circle() {}
     line() {}
@@ -62,7 +75,6 @@ const orden: OrdenCompra = {
   proveedorNombre: 'Ferretería Central',
   proveedorCuit: '30-12345678-9',
   fecha: '2026-08-25T10:00:00.000Z',
-  fechaEntregaEstimada: '2026-09-01T00:00:00.000Z',
   observaciones: 'Entregar en portería',
   creadoPorNombre: 'Maxi',
   emitidaEn: '2026-08-25T11:00:00.000Z',
@@ -118,10 +130,21 @@ describe('PDF de la orden de compra', () => {
     expect(contenido()).toContain('CUIT: 30-12345678-9');
   });
 
-  it('muestra las fechas en formato dd/mm/aaaa', async () => {
+  it('muestra la fecha de emisión en formato dd/mm/aaaa', async () => {
     await descargarPdfOrdenCompra(orden);
     expect(contenido()).toContain('25/08/2026');
-    expect(contenido()).toContain('01/09/2026');
+  });
+
+  it('REGRESION: no imprime el estado interno de la orden', async () => {
+    await descargarPdfOrdenCompra(orden);
+    // El proveedor recibe un pedido, no el estado de nuestro circuito interno.
+    expect(contenido()).not.toContain('Estado');
+    expect(contenido()).not.toContain('EMITIDA');
+  });
+
+  it('REGRESION: no imprime fecha de entrega estimada (se saco del sistema)', async () => {
+    await descargarPdfOrdenCompra(orden);
+    expect(contenido()).not.toContain('Entrega estimada');
   });
 
   it('lleva el detalle a una tabla con los renglones', async () => {
@@ -166,9 +189,9 @@ describe('PDF de la orden de compra', () => {
     expect(contenido()).toContain('Autorizado por');
   });
 
-  it('una orden sin entrega estimada no rompe', async () => {
+  it('una orden sin observaciones no rompe', async () => {
     await expect(
-      descargarPdfOrdenCompra({ ...orden, fechaEntregaEstimada: null, observaciones: null }),
+      descargarPdfOrdenCompra({ ...orden, observaciones: null }),
     ).resolves.toBeUndefined();
     expect(guardados).toHaveLength(1);
   });

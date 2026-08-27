@@ -1,3 +1,4 @@
+import { logoComoSvg } from '@/componentes/LogoLasTres';
 import { formatearFechaSola, formatearNumero } from './formato';
 import type { OrdenCompra } from '@/tipos/ordenCompra';
 
@@ -5,15 +6,6 @@ import type { OrdenCompra } from '@/tipos/ordenCompra';
 const ROJO: [number, number, number] = [200, 16, 46];
 const GRIS: [number, number, number] = [90, 90, 90];
 const NEGRO: [number, number, number] = [25, 25, 25];
-
-/** Subconjunto de jsPDF que usa el dibujo del escudo. */
-interface DocPdf {
-  setFillColor: (r: number, g: number, b: number) => void;
-  roundedRect: (x: number, y: number, w: number, h: number, rx: number, ry: number, s: string) => void;
-  rect: (x: number, y: number, w: number, h: number, s: string) => void;
-  triangle: (x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, s: string) => void;
-  circle: (x: number, y: number, r: number, s: string) => void;
-}
 
 const EMPRESA = {
   nombre: 'LÁCTEOS LAS TRES S.R.L.',
@@ -26,6 +18,54 @@ function moneda(valor: number | null): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
+}
+
+/** Cuánto se espera a que el navegador rasterice el logo antes de seguir sin él. */
+const MS_ESPERA_LOGO = 3000;
+
+/**
+ * Convierte el logo (SVG) a PNG, que es lo que jsPDF sabe insertar.
+ *
+ * Se dibuja en un canvas al doble del tamaño final para que no se vea pixelado
+ * al imprimir. Si algo falla (canvas bloqueado, SVG invalido), devuelve null y
+ * el PDF sale sin logo en lugar de romperse.
+ */
+async function logoComoPng(lado = 512): Promise<string | null> {
+  try {
+    const svg = logoComoSvg();
+    const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+
+    // El plazo es clave: si el navegador nunca dispara onload ni onerror, sin
+    // esto la promesa queda colgada y el PDF no se genera nunca. Preferimos un
+    // PDF sin logo antes que un boton que no responde.
+    const imagen = await new Promise<HTMLImageElement | null>((resolve) => {
+      const img = new Image();
+      const plazo = setTimeout(() => resolve(null), MS_ESPERA_LOGO);
+      img.onload = () => {
+        clearTimeout(plazo);
+        resolve(img);
+      };
+      img.onerror = () => {
+        clearTimeout(plazo);
+        resolve(null);
+      };
+      img.src = url;
+    });
+    if (!imagen) return null;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = lado;
+    canvas.height = lado;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    // Fondo blanco: el PDF no maneja transparencia de forma consistente.
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, lado, lado);
+    ctx.drawImage(imagen, 0, 0, lado, lado);
+    return canvas.toDataURL('image/png');
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -44,18 +84,21 @@ export async function descargarPdfOrdenCompra(orden: OrdenCompra): Promise<void>
   const anchoPagina = doc.internal.pageSize.getWidth();
   const margen = 14;
 
-  // ── Encabezado: escudo + datos de la empresa ──
-  dibujarEscudo(doc, margen, 12, 18);
+  // ── Encabezado: logo real + datos de la empresa ──
+  const logoPng = await logoComoPng();
+  if (logoPng) {
+    doc.addImage(logoPng, 'PNG', margen, 10, 24, 24);
+  }
 
   doc.setTextColor(...ROJO);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(15);
-  doc.text(EMPRESA.nombre, margen + 24, 20);
+  doc.text(EMPRESA.nombre, margen + 29, 20);
 
   doc.setTextColor(...GRIS);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.text(EMPRESA.leyenda, margen + 24, 25.5);
+  doc.text(EMPRESA.leyenda, margen + 29, 25.5);
 
   // ── Recuadro del número de orden (arriba a la derecha) ──
   const anchoCaja = 62;
@@ -72,11 +115,6 @@ export async function descargarPdfOrdenCompra(orden: OrdenCompra): Promise<void>
   doc.setTextColor(...NEGRO);
   doc.setFontSize(14);
   doc.text(orden.numero, xCaja + anchoCaja / 2, 27, { align: 'center' });
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(...GRIS);
-  doc.text(`Estado: ${orden.estado}`, xCaja + anchoCaja / 2, 32, { align: 'center' });
 
   // Línea separadora
   doc.setDrawColor(...ROJO);
@@ -103,7 +141,6 @@ export async function descargarPdfOrdenCompra(orden: OrdenCompra): Promise<void>
 
   const derecha: string[] = [
     `Fecha de emisión: ${formatearFechaSola(orden.fecha)}`,
-    `Entrega estimada: ${formatearFechaSola(orden.fechaEntregaEstimada)}`,
     orden.creadoPorNombre ? `Solicitó: ${orden.creadoPorNombre}` : '',
     orden.recibidaEn ? `Recibida: ${formatearFechaSola(orden.recibidaEn)}` : '',
   ].filter(Boolean);
@@ -204,75 +241,4 @@ export async function descargarPdfOrdenCompra(orden: OrdenCompra): Promise<void>
   );
 
   doc.save(`${orden.numero}.pdf`);
-}
-
-/**
- * Escudo del logo dibujado con primitivas de jsPDF.
- *
- * jsPDF no acepta SVG, así que el escudo se reconstruye con rectángulos
- * redondeados, un círculo para la base en U y triángulos para las estrellas.
- * Espeja la forma del componente LogoLasTres: borde rojo, hueco blanco, cuerpo
- * rojo, base redondeada y estrella central más grande.
- *
- * Si algún día se sube el archivo oficial del logo, esto se reemplaza por
- * `doc.addImage(logoBase64, 'PNG', x, y, ancho, alto)`, que queda idéntico.
- */
-function dibujarEscudo(doc: DocPdf, x: number, y: number, ancho: number): void {
-  // Tres capas concéntricas: borde, hueco blanco y cuerpo.
-  const capas: [number, [number, number, number]][] = [
-    [0, ROJO],
-    [0.5, [255, 255, 255]],
-    [1.1, ROJO],
-  ];
-
-  for (const [inset, color] of capas) {
-    const a = ancho - inset * 2;
-    const cx = x + inset;
-    const cy = y + inset;
-    const radio = a / 2;
-    // Parte recta del escudo.
-    const altoRecto = ancho * 0.72 - inset;
-
-    doc.setFillColor(...color);
-    doc.roundedRect(cx, cy, a, altoRecto, a * 0.06, a * 0.06, 'F');
-    // Base en U: media circunferencia apoyada al final de la parte recta.
-    doc.circle(cx + radio, cy + altoRecto, radio, 'F');
-    // Tapa la mitad superior del círculo para que no sobresalga de los lados.
-    doc.setFillColor(...color);
-    doc.rect(cx, cy + altoRecto - radio, a, radio, 'F');
-  }
-
-  // Estrellas: la del centro más grande, como en el original.
-  doc.setFillColor(255, 255, 255);
-  const yEstrellas = y + ancho * 0.3;
-  estrella(doc, x + ancho * 0.28, yEstrellas + ancho * 0.04, ancho * 0.09);
-  estrella(doc, x + ancho * 0.5, yEstrellas, ancho * 0.13);
-  estrella(doc, x + ancho * 0.72, yEstrellas + ancho * 0.04, ancho * 0.09);
-
-  // Franja diagonal del paisaje.
-  doc.setFillColor(255, 255, 255);
-  doc.triangle(
-    x + ancho * 0.1,
-    y + ancho * 0.78,
-    x + ancho * 0.9,
-    y + ancho * 0.56,
-    x + ancho * 0.9,
-    y + ancho * 0.64,
-    'F',
-  );
-  doc.triangle(
-    x + ancho * 0.1,
-    y + ancho * 0.78,
-    x + ancho * 0.9,
-    y + ancho * 0.64,
-    x + ancho * 0.1,
-    y + ancho * 0.86,
-    'F',
-  );
-}
-
-/** Estrella de cinco puntas aproximada con dos triángulos superpuestos. */
-function estrella(doc: DocPdf, cx: number, cy: number, r: number): void {
-  doc.triangle(cx, cy - r, cx - r * 0.87, cy + r * 0.5, cx + r * 0.87, cy + r * 0.5, 'F');
-  doc.triangle(cx, cy + r, cx - r * 0.87, cy - r * 0.5, cx + r * 0.87, cy - r * 0.5, 'F');
 }

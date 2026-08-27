@@ -1,82 +1,87 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { LogoLasTres } from './LogoLasTres';
+import { LogoLasTres, logoComoSvg } from './LogoLasTres';
 import { StickerHerramientas } from './StickerHerramientas';
+import {
+  MARRON_LAS_TRES,
+  PATHS_MARRON,
+  PATHS_ROJO,
+  ROJO_LAS_TRES,
+} from './logoPaths';
 
 /**
- * El logo se veía cortado ("AS TRES" en vez de "LAS TRES") porque el ancho real
- * del texto depende de la fuente de cada equipo y se desbordaba del viewBox.
- * La solución fue fijar `textLength`, así que estos tests protegen justamente eso.
+ * El logo es ahora el archivo oficial (src/assets/logo.svg), no una
+ * reconstrucción. Como ese archivo es un trazado monocromo, lo que hay que
+ * proteger es el coloreado: si los paths se reordenan o se recorta el archivo,
+ * el logo saldría todo negro o con las partes mal pintadas.
  */
 describe('LogoLasTres', () => {
-  it('rinde el nombre completo de la empresa', () => {
+  it('rinde el nombre de la empresa como texto accesible', () => {
     render(<LogoLasTres />);
     expect(screen.getByRole('img', { name: /Lácteos Las Tres/i })).toBeInTheDocument();
   });
 
-  it('REGRESION: los textos fijan textLength para no cortarse', () => {
+  it('dibuja los 33 paths del archivo original', () => {
     const { container } = render(<LogoLasTres />);
-    const lasTres = [...container.querySelectorAll('text')].find(
-      (t) => t.textContent?.trim() === 'LAS TRES',
-    );
-    expect(lasTres).toBeDefined();
-    expect(lasTres?.getAttribute('textLength')).toBeTruthy();
-    expect(lasTres?.getAttribute('lengthAdjust')).toBe('spacingAndGlyphs');
+    expect(container.querySelectorAll('path')).toHaveLength(33);
+    expect(PATHS_ROJO.length + PATHS_MARRON.length).toBe(33);
   });
 
-  it('REGRESION: el texto entra dentro del viewBox', () => {
+  it('REGRESION: ningun path queda en negro (el archivo viene monocromo)', () => {
     const { container } = render(<LogoLasTres />);
-    const svg = container.querySelector('svg')!;
-    const [, , ancho] = svg.getAttribute('viewBox')!.split(' ').map(Number);
-
-    for (const t of container.querySelectorAll('text[textLength]')) {
-      const largo = Number(t.getAttribute('textLength'));
-      const x = Number(t.getAttribute('x'));
-      // Con textAnchor="middle" el texto se extiende media longitud a cada lado.
-      expect(x - largo / 2).toBeGreaterThanOrEqual(0);
-      expect(x + largo / 2).toBeLessThanOrEqual(ancho);
+    const grupos = [...container.querySelectorAll('g[fill]')];
+    expect(grupos.length).toBeGreaterThan(0);
+    for (const g of grupos) {
+      expect(g.getAttribute('fill')).not.toBe('#000000');
     }
   });
 
-  it('incluye las tres estrellas, con la del centro mas grande', () => {
+  it('REGRESION: el escudo y "LAS TRES" van en rojo institucional', () => {
     const { container } = render(<LogoLasTres />);
-    const estrellas = [...container.querySelectorAll('use')];
-    expect(estrellas).toHaveLength(3);
-
-    const anchos = estrellas.map((e) => Number(e.getAttribute('width')));
-    // El original tiene la estrella central destacada.
-    expect(anchos[1]).toBeGreaterThan(anchos[0]);
-    expect(anchos[1]).toBeGreaterThan(anchos[2]);
+    const rojo = container.querySelector(`g[fill="${ROJO_LAS_TRES}"]`);
+    expect(rojo).not.toBeNull();
+    expect(rojo!.querySelectorAll('path')).toHaveLength(PATHS_ROJO.length);
   });
 
   it('REGRESION: "LACTEOS" y "EST. 1989" van en marron, no en rojo', () => {
     const { container } = render(<LogoLasTres />);
-    const textos = [...container.querySelectorAll('text')];
-    const lacteos = textos.find((t) => t.textContent?.includes('LÁCTEOS'));
-    const est = textos.find((t) => t.textContent?.includes('EST.'));
-    expect(lacteos?.getAttribute('fill')).toBe('#3F2318');
-    expect(est?.getAttribute('fill')).toBe('#3F2318');
+    const marron = container.querySelector(`g[fill="${MARRON_LAS_TRES}"]`);
+    expect(marron).not.toBeNull();
+    expect(marron!.querySelectorAll('path')).toHaveLength(PATHS_MARRON.length);
+    expect(MARRON_LAS_TRES).not.toBe(ROJO_LAS_TRES);
   });
 
-  it('REGRESION: "LAS TRES" es mucho mas ancho que el escudo', () => {
+  it('conserva el transform del trazado (invierte el eje Y)', () => {
     const { container } = render(<LogoLasTres />);
-    const lasTres = [...container.querySelectorAll('text')].find(
-      (t) => t.textContent?.trim() === 'LAS TRES',
-    );
-    // El escudo mide 120 de ancho en el lienzo; el original tiene el texto
-    // cerca de 2,4 veces mas ancho. Si esta proporcion se pierde, el logo se
-    // ve chico y perdido dentro del panel.
-    expect(Number(lasTres?.getAttribute('textLength'))).toBeGreaterThan(120 * 2);
+    const grupo = container.querySelector('svg > g');
+    expect(grupo?.getAttribute('transform')).toContain('scale(0.1,-0.1)');
   });
 
-  it('respeta el alto pedido y mantiene la proporción', () => {
-    const { container } = render(<LogoLasTres alto={100} />);
+  it('es cuadrado y respeta el alto pedido', () => {
+    const { container } = render(<LogoLasTres alto={120} />);
     const svg = container.querySelector('svg')!;
-    expect(Number(svg.getAttribute('height'))).toBe(100);
-    // Levemente mas ancho que alto, como el isologo real.
-    const ancho = Number(svg.getAttribute('width'));
-    expect(ancho).toBeGreaterThan(100);
-    expect(ancho).toBeLessThan(130);
+    expect(svg.getAttribute('height')).toBe('120');
+    expect(svg.getAttribute('width')).toBe('120');
+  });
+});
+
+describe('logoComoSvg (para el PDF)', () => {
+  it('devuelve un SVG completo con el namespace', () => {
+    const svg = logoComoSvg();
+    expect(svg.startsWith('<svg')).toBe(true);
+    expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
+    expect(svg.endsWith('</svg>')).toBe(true);
+  });
+
+  it('lleva los dos colores del logo', () => {
+    const svg = logoComoSvg();
+    expect(svg).toContain(ROJO_LAS_TRES);
+    expect(svg).toContain(MARRON_LAS_TRES);
+  });
+
+  it('incluye todos los paths', () => {
+    const svg = logoComoSvg();
+    expect(svg.match(/<path /g)).toHaveLength(33);
   });
 });
 

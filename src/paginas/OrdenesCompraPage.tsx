@@ -95,7 +95,7 @@ export function OrdenesCompraPage() {
         <EstadoVacio>
           {busquedaDebounced || estado
             ? 'No hay órdenes que coincidan con el filtro.'
-            : 'Todavía no generaste ninguna orden de compra.'}
+            : 'Todavía no creaste ninguna orden de compra.'}
         </EstadoVacio>
       )}
 
@@ -185,7 +185,6 @@ interface RenglonBorrador extends RenglonInput {
 
 function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => void }) {
   const [proveedorId, setProveedorId] = useState('');
-  const [fechaEntrega, setFechaEntrega] = useState('');
   const [observaciones, setObservaciones] = useState('');
   const [renglones, setRenglones] = useState<RenglonBorrador[]>([]);
 
@@ -198,7 +197,6 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
 
   const limpiar = () => {
     setProveedorId('');
-    setFechaEntrega('');
     setObservaciones('');
     setRenglones([]);
     setMaterial(null);
@@ -239,7 +237,6 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
     e.preventDefault();
     const orden = await crear.mutateAsync({
       proveedorId,
-      fechaEntregaEstimada: fechaEntrega ? `${fechaEntrega}T00:00:00.000Z` : undefined,
       observaciones: observaciones || undefined,
       renglones: renglones.map(({ materialId, cantidad: c, precioUnitario }) => ({
         materialId,
@@ -262,21 +259,6 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
           Proveedor *
           <ComboProveedor onCambio={(p) => setProveedorId(p?.id ?? '')} />
         </label>
-
-        <div className="grilla-campos">
-          <label className="campo">
-            Entrega estimada (opcional)
-            <input
-              type="date"
-              value={fechaEntrega}
-              onChange={(e) => setFechaEntrega(e.target.value)}
-            />
-            <span className="texto-suave texto-chico">
-              Para cuando el proveedor prometió entregar. Sale impresa en la orden y sirve
-              para reclamar si no llega.
-            </span>
-          </label>
-        </div>
 
         <h3 className="subtitulo-form">Materiales a comprar</h3>
 
