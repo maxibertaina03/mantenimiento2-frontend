@@ -1,9 +1,11 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './componentes/Layout';
+import { EquiposItPage } from './paginas/EquiposItPage';
 import { MaterialesPage } from './paginas/MaterialesPage';
 import { MaterialDetallePage } from './paginas/MaterialDetallePage';
 import { MovimientosPage } from './paginas/MovimientosPage';
 import { NuevoMovimientoPage } from './paginas/NuevoMovimientoPage';
+import { OrdenesCompraPage } from './paginas/OrdenesCompraPage';
 import { ProveedoresPage } from './paginas/ProveedoresPage';
 
 export function App() {
@@ -15,6 +17,8 @@ export function App() {
         <Route path="/materiales/:id" element={<MaterialDetallePage />} />
         <Route path="/movimientos" element={<MovimientosPage />} />
         <Route path="/movimientos/nuevo" element={<NuevoMovimientoPage />} />
+        <Route path="/ordenes-compra" element={<OrdenesCompraPage />} />
+        <Route path="/equipos-it" element={<EquiposItPage />} />
         <Route path="/proveedores" element={<ProveedoresPage />} />
         <Route path="*" element={<Navigate to="/materiales" replace />} />
       </Route>

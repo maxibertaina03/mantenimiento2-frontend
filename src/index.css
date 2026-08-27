@@ -489,3 +489,225 @@ button.combo-item:hover {
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* ─────────── Logo sobre panel blanco ───────────
+   El isologo de Las Tres es rojo sobre claro: necesita fondo blanco para
+   leerse bien, tanto en la barra lateral oscura como en la pantalla de acceso. */
+.panel-logo {
+  background: #fff;
+  border-radius: 12px;
+  padding: 0.6rem 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.18);
+}
+.panel-logo-grande {
+  padding: 1.1rem 1.5rem;
+  border-radius: 16px;
+}
+.panel-logo-chico {
+  padding: 0.25rem 0.4rem;
+  border-radius: 8px;
+}
+
+.marca-lateral {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: center;
+}
+
+/* ─────────── Pantalla de acceso (login / registro) ─────────── */
+.pantalla-acceso {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.75rem;
+  padding: 2rem 1rem;
+  background: var(--color-fondo);
+}
+
+.acceso-marca {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.acceso-titulo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
+}
+.acceso-titulo h1 {
+  margin: 0 0 0.15rem;
+  font-size: 1.6rem;
+}
+.acceso-titulo p {
+  margin: 0;
+  max-width: 34ch;
+}
+
+.acceso-formulario {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+}
+.acceso-cambio {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.acceso-pie {
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+/* En celular el título se apila debajo del sticker. */
+@media (max-width: 520px) {
+  .acceso-titulo {
+    flex-direction: column;
+    text-align: center;
+  }
+  .acceso-titulo p {
+    max-width: none;
+  }
+}
+
+/* ─────────── Módulos IT y Órdenes de compra ─────────── */
+
+.texto-chico {
+  font-size: 0.78rem;
+}
+
+.subtitulo-form {
+  margin: 1.1rem 0 0.5rem;
+  font-size: 0.95rem;
+  border-bottom: 1px solid var(--color-borde, #e5e7eb);
+  padding-bottom: 0.3rem;
+}
+
+/* Filtros: buscador ancho + selects que no se estiran de más. */
+.grilla-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+.grilla-filtros input[type='search'] {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.grilla-filtros select {
+  flex: 0 1 190px;
+}
+
+/* Formularios dentro de modales */
+.formulario-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.grilla-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.7rem;
+}
+.grilla-campos label,
+.formulario-modal > label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.88rem;
+}
+
+/* Fila para armar un renglón de la orden de compra */
+.alta-renglon {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 0.5rem;
+  align-items: start;
+}
+@media (max-width: 700px) {
+  .alta-renglon {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Acciones dentro de una celda de tabla */
+.fila-acciones-celda {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+/* Tarjetas de resumen del módulo IT */
+.tarjetas-resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+}
+.tarjeta-resumen {
+  background: var(--color-panel, #fff);
+  border: 1px solid var(--color-borde, #e5e7eb);
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+  display: flex;
+  flex-direction: column;
+  min-width: 104px;
+}
+.tarjeta-numero {
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+/* Ficha de datos (detalle de equipo / orden) */
+.grilla-datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.7rem;
+}
+.dato {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+/* Historial de asignaciones */
+.linea-tiempo {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.linea-tiempo li {
+  border-left: 3px solid var(--color-borde, #e5e7eb);
+  padding-left: 0.7rem;
+}
+.linea-tiempo li strong {
+  margin-right: 0.4rem;
+}
+
+/* Badges que faltaban para estados */
+.badge-ok {
+  background: #dcfce7;
+  color: #166534;
+}
+.badge-aviso {
+  background: var(--color-alerta-fondo);
+  color: var(--color-alerta-texto);
+}
+.badge-error {
+  background: #fee2e2;
+  color: #991b1b;
+}

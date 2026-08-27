@@ -7,6 +7,7 @@ import { ClerkProvider, SignedIn, SignedOut } from '@clerk/clerk-react';
 import { App } from './App';
 import { PantallaLogin } from './componentes/PantallaLogin';
 import { ProveedorToken } from './componentes/ProveedorToken';
+import { clerkEspanol } from './lib/clerkEspanol';
 import { queryClient } from './lib/queryClient';
 import './index.css';
 
@@ -38,7 +39,7 @@ function Raiz() {
 
   // Con Clerk -> toda la app queda detrás del login.
   return (
-    <ClerkProvider publishableKey={clerkKey} afterSignOutUrl="/">
+    <ClerkProvider publishableKey={clerkKey} afterSignOutUrl="/" localization={clerkEspanol}>
       <SignedOut>
         <PantallaLogin />
       </SignedOut>

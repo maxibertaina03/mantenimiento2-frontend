@@ -2,6 +2,7 @@ import { UserButton } from '@clerk/clerk-react';
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { BannerServidor } from './Estados';
+import { LogoLasTres } from './LogoLasTres';
 
 const claseNav = ({ isActive }: { isActive: boolean }) => (isActive ? 'activo' : '');
 
@@ -25,14 +26,24 @@ export function Layout() {
         >
           ☰
         </button>
-        <span className="marca">🔧 Mantenimiento</span>
+        <span className="marca">
+          <span className="panel-logo panel-logo-chico">
+            <LogoLasTres alto={30} />
+          </span>
+          Mantenimiento
+        </span>
       </div>
 
       <aside
         className={`sidebar ${menuAbierto ? 'abierta' : ''}`}
         style={{ display: 'flex', flexDirection: 'column' }}
       >
-        <div className="marca">🔧 Mantenimiento</div>
+        <div className="marca marca-lateral">
+          <div className="panel-logo">
+            <LogoLasTres alto={76} />
+          </div>
+          <span>Mantenimiento</span>
+        </div>
         <nav onClick={cerrar}>
           <NavLink to="/materiales" className={claseNav}>
             Materiales
@@ -43,8 +54,14 @@ export function Layout() {
           <NavLink to="/movimientos/nuevo" className={claseNav}>
             Nuevo movimiento
           </NavLink>
+          <NavLink to="/ordenes-compra" className={claseNav}>
+            Órdenes de compra
+          </NavLink>
           <NavLink to="/proveedores" className={claseNav}>
             Proveedores
+          </NavLink>
+          <NavLink to="/equipos-it" className={claseNav}>
+            Equipos IT
           </NavLink>
         </nav>
         {authActiva && (
