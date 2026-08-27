@@ -265,12 +265,16 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
 
         <div className="grilla-campos">
           <label className="campo">
-            Entrega estimada
+            Entrega estimada (opcional)
             <input
               type="date"
               value={fechaEntrega}
               onChange={(e) => setFechaEntrega(e.target.value)}
             />
+            <span className="texto-suave texto-chico">
+              Para cuando el proveedor prometió entregar. Sale impresa en la orden y sirve
+              para reclamar si no llega.
+            </span>
           </label>
         </div>
 
@@ -509,7 +513,8 @@ function ModalDetalleOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar: 
 
         {orden.estado === 'RECIBIDA' && (
           <div className="alerta alerta-exito">
-            ✔ La mercadería ingresó al stock. Cada renglón generó su movimiento de ENTRADA.
+            ✔ Orden finalizada: la mercadería ya ingresó al stock. Cada renglón generó su
+            movimiento de ENTRADA, que podés ver en el Historial.
           </div>
         )}
 
@@ -524,7 +529,8 @@ function ModalDetalleOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar: 
               />
             </label>
             <p className="texto-suave texto-chico">
-              Al confirmar se suma el stock de todos los materiales de la orden.
+              Al confirmar, la orden queda <strong>finalizada</strong> y cada material de la
+              orden suma su cantidad al stock.
             </p>
             <div className="acciones">
               <button className="btn" onClick={() => setMostrarRecepcion(false)}>
@@ -539,7 +545,7 @@ function ModalDetalleOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar: 
                   onCerrar();
                 }}
               >
-                {recibir.isPending ? 'Registrando…' : 'Confirmar recepción'}
+                {recibir.isPending ? 'Registrando…' : 'Confirmar y sumar al stock'}
               </button>
             </div>
           </div>
@@ -557,17 +563,21 @@ function ModalDetalleOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar: 
               className="btn btn-primario"
               disabled={emitir.isPending}
               onClick={async () => {
+                // Imprimir y marcar como enviada es un solo gesto: se baja el
+                // PDF para mandarle al proveedor y la orden queda esperando la
+                // mercaderia.
+                await descargarPdfOrdenCompra(orden);
                 await emitir.mutateAsync();
                 onCerrar();
               }}
             >
-              {emitir.isPending ? 'Emitiendo…' : 'Emitir orden'}
+              {emitir.isPending ? 'Procesando…' : '🖨 Imprimir y enviar al proveedor'}
             </button>
           )}
 
           {orden.estado === 'EMITIDA' && !mostrarRecepcion && (
             <button className="btn btn-primario" onClick={() => setMostrarRecepcion(true)}>
-              Registrar recepción
+              ✔ Marcar como recibida
             </button>
           )}
 

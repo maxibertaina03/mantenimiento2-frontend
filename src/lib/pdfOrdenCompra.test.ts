@@ -29,6 +29,7 @@ vi.mock('jspdf', () => {
     setFont() {}
     setFontSize() {}
     roundedRect() {}
+    rect() {}
     triangle() {}
     circle() {}
     line() {}

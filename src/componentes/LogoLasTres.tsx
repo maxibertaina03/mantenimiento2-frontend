@@ -28,12 +28,12 @@ const CENTRO = ANCHO / 2;
  * (borde rojo → hueco blanco → cuerpo rojo) sin repetir el path a mano.
  */
 function escudo(inset: number): string {
-  const x0 = 100 + inset;
-  const x1 = 220 - inset;
-  const yTop = 8 + inset;
+  const x0 = 118 + inset;
+  const x1 = 202 - inset;
+  const yTop = 10 + inset;
   const r = (x1 - x0) / 2;
   // La base sube junto con el inset, así que el punto donde arranca la U no cambia.
-  const yBase = 94;
+  const yBase = 88;
   return `M ${x0} ${yTop + 6} A 6 6 0 0 1 ${x0 + 6} ${yTop} H ${x1 - 6} A 6 6 0 0 1 ${x1} ${yTop + 6} V ${yBase} A ${r} ${r} 0 0 1 ${x0} ${yBase} Z`;
 }
 
@@ -70,7 +70,7 @@ export function LogoLasTres({
         </symbol>
 
         {/* Arco sobre el que se apoya "LÁCTEOS". */}
-        <path id="arco-lacteos-lt" d="M 62 208 Q 160 168 258 208" fill="none" />
+        <path id="arco-lacteos-lt" d="M 76 196 Q 160 158 244 196" fill="none" />
 
         {/* El paisaje interior no puede salirse del cuerpo del escudo. */}
         <clipPath id="cuerpo-escudo-lt">
@@ -84,21 +84,21 @@ export function LogoLasTres({
       <path d={escudo(9)} fill={ROJO} />
 
       {/* Tres estrellas: la del centro es más grande, como en el original. */}
-      <use href="#estrella-lt" x="118" y="42" width="26" height="26" />
-      <use href="#estrella-lt" x="145" y="30" width="34" height="34" />
-      <use href="#estrella-lt" x="180" y="42" width="26" height="26" />
+      <use href="#estrella-lt" x="129" y="38" width="19" height="19" />
+      <use href="#estrella-lt" x="147" y="29" width="26" height="26" />
+      <use href="#estrella-lt" x="172" y="38" width="19" height="19" />
 
       {/* Paisaje: franja diagonal y loma, recortados al cuerpo del escudo. */}
       <g clipPath="url(#cuerpo-escudo-lt)">
         {/* Franja diagonal blanca de abajo-izquierda a arriba-derecha. */}
-        <path d="M 100 122 L 224 84 L 224 96 L 100 134 Z" fill="#fff" />
+        <path d="M 112 108 L 210 80 L 210 89 L 112 117 Z" fill="#fff" />
         {/* Loma: media circunferencia apoyada sobre la franja. */}
-        <path d="M 133 100 A 27 27 0 0 1 187 88 L 187 100 Z" fill="#fff" />
+        <path d="M 138 92 A 21 21 0 0 1 180 83 L 180 92 Z" fill="#fff" />
         <path
-          d="M 133 101 A 27 27 0 0 1 187 89"
+          d="M 138 93 A 21 21 0 0 1 180 84"
           fill="none"
           stroke="#fff"
-          strokeWidth="7"
+          strokeWidth="5"
           strokeLinecap="round"
         />
       </g>
@@ -106,9 +106,9 @@ export function LogoLasTres({
       {/* "LÁCTEOS" en arco, en marrón. */}
       <text
         fill={MARRON}
-        fontSize="27"
+        fontSize="22"
         fontWeight="600"
-        letterSpacing="7"
+        letterSpacing="6"
         fontFamily="Georgia, 'Times New Roman', serif"
       >
         <textPath href="#arco-lacteos-lt" startOffset="50%" textAnchor="middle">
@@ -119,12 +119,12 @@ export function LogoLasTres({
       {/* "EST. 1989", también en marrón. */}
       <text
         x={CENTRO}
-        y="216"
+        y="204"
         fill={MARRON}
-        fontSize="14"
+        fontSize="13"
         fontWeight="600"
         textAnchor="middle"
-        textLength="76"
+        textLength="66"
         lengthAdjust="spacingAndGlyphs"
         fontFamily="Georgia, 'Times New Roman', serif"
       >
@@ -134,12 +134,12 @@ export function LogoLasTres({
       {/* "LAS TRES": la línea que define el ancho del logo. */}
       <text
         x={CENTRO}
-        y="262"
+        y="252"
         fill={ROJO}
-        fontSize="62"
+        fontSize="58"
         fontWeight="700"
         textAnchor="middle"
-        textLength="300"
+        textLength="272"
         lengthAdjust="spacingAndGlyphs"
         fontFamily="Georgia, 'Times New Roman', serif"
       >
@@ -149,17 +149,17 @@ export function LogoLasTres({
       {/* "S.R.L." centrado debajo. */}
       <text
         x={CENTRO}
-        y="284"
+        y="278"
         fill={ROJO}
-        fontSize="15"
+        fontSize="14"
         fontWeight="600"
-        letterSpacing="3"
+        letterSpacing="4"
         textAnchor="middle"
-        textLength="48"
+        textLength="46"
         lengthAdjust="spacingAndGlyphs"
         fontFamily="Georgia, 'Times New Roman', serif"
       >
-        SRL
+        S.R.L.
       </text>
     </svg>
   );

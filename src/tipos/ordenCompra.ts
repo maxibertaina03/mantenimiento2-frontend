@@ -1,9 +1,18 @@
 export type EstadoOrdenCompra = 'BORRADOR' | 'EMITIDA' | 'RECIBIDA' | 'ANULADA';
 
+/**
+ * Etiquetas del ciclo de la orden, en el lenguaje del depósito:
+ *   Borrador  -> se está armando, todavía se puede editar
+ *   Pendiente de recibo -> ya se imprimió y se le mandó al proveedor
+ *   Finalizada -> llegó la mercadería y se sumó al stock
+ *
+ * Los nombres internos (EMITIDA/RECIBIDA) se mantienen en la base para no
+ * migrar datos; solo cambia lo que ve el usuario.
+ */
 export const ETIQUETA_ESTADO_ORDEN: Record<EstadoOrdenCompra, string> = {
   BORRADOR: 'Borrador',
-  EMITIDA: 'Emitida',
-  RECIBIDA: 'Recibida',
+  EMITIDA: 'Pendiente de recibo',
+  RECIBIDA: 'Finalizada',
   ANULADA: 'Anulada',
 };
 

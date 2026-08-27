@@ -2,6 +2,7 @@ import { UserButton } from '@clerk/clerk-react';
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { BannerServidor } from './Estados';
+import { useUsuarioActual } from '@/api/usuarios';
 import { PanelLogo } from './PanelLogo';
 
 const claseNav = ({ isActive }: { isActive: boolean }) => (isActive ? 'activo' : '');
@@ -14,6 +15,11 @@ const authActiva = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 export function Layout() {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const cerrar = () => setMenuAbierto(false);
+
+  // Equipos IT lo administra solo sistemas. El backend igual lo bloquea; esto
+  // es para no mostrar una seccion que va a dar 403.
+  const { data: usuario } = useUsuarioActual();
+  const esAdmin = usuario?.rol === 'ADMIN';
 
   return (
     <div className="app">
@@ -56,9 +62,11 @@ export function Layout() {
           <NavLink to="/proveedores" className={claseNav}>
             Proveedores
           </NavLink>
-          <NavLink to="/equipos-it" className={claseNav}>
-            Equipos IT
-          </NavLink>
+          {esAdmin && (
+            <NavLink to="/equipos-it" className={claseNav}>
+              Equipos IT
+            </NavLink>
+          )}
         </nav>
         {authActiva && (
           <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>

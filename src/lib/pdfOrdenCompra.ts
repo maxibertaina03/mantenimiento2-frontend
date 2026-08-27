@@ -6,6 +6,15 @@ const ROJO: [number, number, number] = [200, 16, 46];
 const GRIS: [number, number, number] = [90, 90, 90];
 const NEGRO: [number, number, number] = [25, 25, 25];
 
+/** Subconjunto de jsPDF que usa el dibujo del escudo. */
+interface DocPdf {
+  setFillColor: (r: number, g: number, b: number) => void;
+  roundedRect: (x: number, y: number, w: number, h: number, rx: number, ry: number, s: string) => void;
+  rect: (x: number, y: number, w: number, h: number, s: string) => void;
+  triangle: (x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, s: string) => void;
+  circle: (x: number, y: number, r: number, s: string) => void;
+}
+
 const EMPRESA = {
   nombre: 'LÁCTEOS LAS TRES S.R.L.',
   leyenda: 'Est. 1989 · Sistema de Mantenimiento',
@@ -197,29 +206,73 @@ export async function descargarPdfOrdenCompra(orden: OrdenCompra): Promise<void>
   doc.save(`${orden.numero}.pdf`);
 }
 
-/** Escudo simplificado del logo, dibujado con primitivas de jsPDF. */
-function dibujarEscudo(
-  doc: {
-    setFillColor: (r: number, g: number, b: number) => void;
-    roundedRect: (x: number, y: number, w: number, h: number, rx: number, ry: number, s: string) => void;
-    triangle: (x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, s: string) => void;
-    circle: (x: number, y: number, r: number, s: string) => void;
-  },
-  x: number,
-  y: number,
-  ancho: number,
-): void {
-  const alto = ancho * 1.12;
-  doc.setFillColor(...ROJO);
-  doc.roundedRect(x, y, ancho, alto * 0.68, 1.5, 1.5, 'F');
-  // Punta inferior del escudo
-  doc.triangle(x, y + alto * 0.66, x + ancho, y + alto * 0.66, x + ancho / 2, y + alto, 'F');
+/**
+ * Escudo del logo dibujado con primitivas de jsPDF.
+ *
+ * jsPDF no acepta SVG, así que el escudo se reconstruye con rectángulos
+ * redondeados, un círculo para la base en U y triángulos para las estrellas.
+ * Espeja la forma del componente LogoLasTres: borde rojo, hueco blanco, cuerpo
+ * rojo, base redondeada y estrella central más grande.
+ *
+ * Si algún día se sube el archivo oficial del logo, esto se reemplaza por
+ * `doc.addImage(logoBase64, 'PNG', x, y, ancho, alto)`, que queda idéntico.
+ */
+function dibujarEscudo(doc: DocPdf, x: number, y: number, ancho: number): void {
+  // Tres capas concéntricas: borde, hueco blanco y cuerpo.
+  const capas: [number, [number, number, number]][] = [
+    [0, ROJO],
+    [0.5, [255, 255, 255]],
+    [1.1, ROJO],
+  ];
 
-  // Tres estrellas simplificadas como puntos blancos.
+  for (const [inset, color] of capas) {
+    const a = ancho - inset * 2;
+    const cx = x + inset;
+    const cy = y + inset;
+    const radio = a / 2;
+    // Parte recta del escudo.
+    const altoRecto = ancho * 0.72 - inset;
+
+    doc.setFillColor(...color);
+    doc.roundedRect(cx, cy, a, altoRecto, a * 0.06, a * 0.06, 'F');
+    // Base en U: media circunferencia apoyada al final de la parte recta.
+    doc.circle(cx + radio, cy + altoRecto, radio, 'F');
+    // Tapa la mitad superior del círculo para que no sobresalga de los lados.
+    doc.setFillColor(...color);
+    doc.rect(cx, cy + altoRecto - radio, a, radio, 'F');
+  }
+
+  // Estrellas: la del centro más grande, como en el original.
   doc.setFillColor(255, 255, 255);
-  const radio = ancho * 0.07;
-  const yEstrellas = y + alto * 0.24;
-  doc.circle(x + ancho * 0.28, yEstrellas, radio, 'F');
-  doc.circle(x + ancho * 0.5, yEstrellas - ancho * 0.04, radio, 'F');
-  doc.circle(x + ancho * 0.72, yEstrellas, radio, 'F');
+  const yEstrellas = y + ancho * 0.3;
+  estrella(doc, x + ancho * 0.28, yEstrellas + ancho * 0.04, ancho * 0.09);
+  estrella(doc, x + ancho * 0.5, yEstrellas, ancho * 0.13);
+  estrella(doc, x + ancho * 0.72, yEstrellas + ancho * 0.04, ancho * 0.09);
+
+  // Franja diagonal del paisaje.
+  doc.setFillColor(255, 255, 255);
+  doc.triangle(
+    x + ancho * 0.1,
+    y + ancho * 0.78,
+    x + ancho * 0.9,
+    y + ancho * 0.56,
+    x + ancho * 0.9,
+    y + ancho * 0.64,
+    'F',
+  );
+  doc.triangle(
+    x + ancho * 0.1,
+    y + ancho * 0.78,
+    x + ancho * 0.9,
+    y + ancho * 0.64,
+    x + ancho * 0.1,
+    y + ancho * 0.86,
+    'F',
+  );
+}
+
+/** Estrella de cinco puntas aproximada con dos triángulos superpuestos. */
+function estrella(doc: DocPdf, cx: number, cy: number, r: number): void {
+  doc.triangle(cx, cy - r, cx - r * 0.87, cy + r * 0.5, cx + r * 0.87, cy + r * 0.5, 'F');
+  doc.triangle(cx, cy + r, cx - r * 0.87, cy - r * 0.5, cx + r * 0.87, cy - r * 0.5, 'F');
 }
