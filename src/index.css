@@ -462,3 +462,30 @@ button.combo-item:hover {
     white-space: nowrap;
   }
 }
+
+/* Cartel de "iniciando el servidor" (arranque en frio del plan free). */
+.girando {
+  display: inline-block;
+  animation: girar 1.6s linear infinite;
+}
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .girando {
+    animation: none;
+  }
+}
+
+/* Boton que se ve como un enlace (accion dentro de un cartel). */
+.boton-enlace {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

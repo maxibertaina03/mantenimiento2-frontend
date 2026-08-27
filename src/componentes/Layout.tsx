@@ -1,6 +1,7 @@
 import { UserButton } from '@clerk/clerk-react';
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { BannerServidor } from './Estados';
 
 const claseNav = ({ isActive }: { isActive: boolean }) => (isActive ? 'activo' : '');
 
@@ -57,6 +58,8 @@ export function Layout() {
       {menuAbierto && <div className="overlay" onClick={cerrar} />}
 
       <main className="contenido">
+        {/* Arranque en frio del backend: visible en cualquier pantalla. */}
+        <BannerServidor />
         <Outlet />
       </main>
     </div>
