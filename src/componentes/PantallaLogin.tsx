@@ -6,23 +6,34 @@ import { StickerHerramientas } from './StickerHerramientas';
 /**
  * Pantalla de acceso: alterna entre iniciar sesión y registrarse.
  *
- * Clerk trae su propio enlace "Registrate", pero navega a una ruta que acá no
- * existe (la app no monta el Router hasta después del login). Por eso el cambio
- * entre una vista y otra se maneja con estado local.
+ * El enlace propio de Clerk ("¿No tenés cuenta?") se oculta porque navega a una
+ * ruta que todavía no existe: el Router recién se monta después del login. En su
+ * lugar usamos el boton de abajo, que cambia de vista con estado local. Sin esto
+ * aparecian DOS enlaces "Registrate" y el de Clerk no hacía nada.
  */
+const APARIENCIA_CLERK = {
+  elements: {
+    footerAction: { display: 'none' },
+    // La tarjeta ya vive dentro de nuestro contenedor centrado.
+    rootBox: { width: '100%' },
+    cardBox: { width: '100%' },
+  },
+} as const;
+
 export function PantallaLogin() {
   const [vista, setVista] = useState<'ingresar' | 'registrarse'>('ingresar');
+  const esIngreso = vista === 'ingresar';
 
   return (
     <div className="pantalla-acceso">
       <div className="acceso-marca">
         {/* El isologo es rojo: necesita fondo blanco para leerse. */}
         <div className="panel-logo panel-logo-grande">
-          <LogoLasTres alto={132} />
+          <LogoLasTres alto={120} />
         </div>
 
         <div className="acceso-titulo">
-          <StickerHerramientas tamano={72} />
+          <StickerHerramientas tamano={64} />
           <div>
             <h1>Sistema de Mantenimiento</h1>
             <p className="texto-suave">
@@ -33,28 +44,21 @@ export function PantallaLogin() {
       </div>
 
       <div className="acceso-formulario">
-        {vista === 'ingresar' ? (
-          <SignIn routing="virtual" signUpUrl={undefined} />
+        {esIngreso ? (
+          <SignIn routing="virtual" appearance={APARIENCIA_CLERK} />
         ) : (
-          <SignUp routing="virtual" signInUrl={undefined} />
+          <SignUp routing="virtual" appearance={APARIENCIA_CLERK} />
         )}
 
         <p className="acceso-cambio">
-          {vista === 'ingresar' ? (
-            <>
-              ¿No tenés cuenta?{' '}
-              <button type="button" className="boton-enlace" onClick={() => setVista('registrarse')}>
-                Registrate
-              </button>
-            </>
-          ) : (
-            <>
-              ¿Ya tenés cuenta?{' '}
-              <button type="button" className="boton-enlace" onClick={() => setVista('ingresar')}>
-                Iniciá sesión
-              </button>
-            </>
-          )}
+          {esIngreso ? '¿No tenés cuenta? ' : '¿Ya tenés cuenta? '}
+          <button
+            type="button"
+            className="boton-enlace"
+            onClick={() => setVista(esIngreso ? 'registrarse' : 'ingresar')}
+          >
+            {esIngreso ? 'Registrate' : 'Iniciá sesión'}
+          </button>
         </p>
       </div>
 

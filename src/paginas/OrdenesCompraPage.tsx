@@ -256,7 +256,7 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
   };
 
   return (
-    <Modal titulo="Nueva orden de compra" abierto={abierto} onCerrar={onCerrar}>
+    <Modal titulo="Nueva orden de compra" abierto={abierto} tamano="ancho" onCerrar={onCerrar}>
       <form onSubmit={enviar} className="formulario-modal">
         <label className="campo">
           Proveedor *
@@ -274,29 +274,45 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
           </label>
         </div>
 
-        <h3 className="subtitulo-form">Detalle</h3>
+        <h3 className="subtitulo-form">Materiales a comprar</h3>
 
-        <div className="alta-renglon">
-          <ComboMaterial materialId={material?.id ?? ''} onCambio={setMaterial} />
-          <input
-            type="number"
-            step="0.001"
-            min="0.001"
-            placeholder="Cantidad"
-            value={cantidad}
-            onChange={(e) => setCantidad(e.target.value)}
-          />
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="Precio unit. (opcional)"
-            value={precio}
-            onChange={(e) => setPrecio(e.target.value)}
-          />
+        <div className="panel alta-renglon">
+          <label className="alta-renglon-material">
+            Material
+            {/* La `key` fuerza a remontar el combo tras cada alta: mantiene
+                estado interno y si no, seguiría mostrando el material anterior.
+                Solo ofrece materiales cargados en el sistema (busca en la API). */}
+            <ComboMaterial
+              key={`material-${renglones.length}`}
+              materialId=""
+              onCambio={setMaterial}
+            />
+          </label>
+          <label>
+            Cantidad *
+            <input
+              type="number"
+              step="0.001"
+              min="0.001"
+              placeholder="0"
+              value={cantidad}
+              onChange={(e) => setCantidad(e.target.value)}
+            />
+          </label>
+          <label>
+            Precio unitario
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="opcional"
+              value={precio}
+              onChange={(e) => setPrecio(e.target.value)}
+            />
+          </label>
           <button
             type="button"
-            className="btn"
+            className="btn btn-primario alta-renglon-boton"
             onClick={agregarRenglon}
             disabled={!material || !cantidad}
           >
@@ -305,7 +321,10 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
         </div>
 
         {renglones.length === 0 && (
-          <p className="texto-suave">Agregá al menos un material a la orden.</p>
+          <p className="texto-suave">
+            Buscá un material por nombre, poné la cantidad y tocá «Agregar». La orden necesita
+            al menos uno.
+          </p>
         )}
 
         {renglones.length > 0 && (
@@ -404,7 +423,7 @@ function ModalDetalleOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar: 
   const errorAccion = emitir.error ?? recibir.error ?? anular.error ?? eliminar.error;
 
   return (
-    <Modal titulo={`Orden ${orden.numero}`} abierto onCerrar={onCerrar}>
+    <Modal titulo={`Orden ${orden.numero}`} abierto tamano="ancho" onCerrar={onCerrar}>
       <div className="formulario-modal">
         <div className="grilla-datos">
           <div className="dato">

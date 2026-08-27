@@ -263,7 +263,7 @@ function ModalAltaEquipo({ alCerrar }: { alCerrar: () => void }) {
   };
 
   return (
-    <Modal titulo="Nuevo equipo" abierto onCerrar={alCerrar}>
+    <Modal titulo="Nuevo equipo" abierto tamano="ancho" onCerrar={alCerrar}>
       <form onSubmit={enviar} className="formulario-modal">
         <div className="grilla-campos">
           <label>
@@ -506,8 +506,8 @@ function ModalDetalleEquipo({ equipo, alCerrar }: { equipo: EquipoIt; alCerrar: 
   const eliminar = useEliminarEquipo();
 
   return (
-    <Modal titulo={`${equipo.marca} ${equipo.modelo}`} abierto onCerrar={alCerrar}>
-      <div className="detalle-equipo">
+    <Modal titulo={`${equipo.marca} ${equipo.modelo}`} abierto tamano="ancho" onCerrar={alCerrar}>
+      <div className="formulario-modal">
         <div className="grilla-datos">
           <Dato etiqueta="Código interno" valor={equipo.codigoInterno} />
           <Dato etiqueta="Tipo" valor={ETIQUETA_TIPO[equipo.tipo]} />

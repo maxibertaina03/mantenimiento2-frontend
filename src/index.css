@@ -351,14 +351,34 @@ button.combo-item:hover {
   border-radius: var(--radio);
   width: 100%;
   max-width: 480px;
-  padding: 1.5rem;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  /* Cabecera fija + cuerpo con scroll: sin esto los formularios largos
+     (alta de equipo) se estiraban mas alla de la pantalla. */
+  display: flex;
+  flex-direction: column;
+  max-height: 86vh;
+}
+/* Variante para formularios de varias columnas. */
+.modal-ancho {
+  max-width: 760px;
+}
+.modal-cuerpo {
+  overflow-y: auto;
+  padding: 1.25rem 1.5rem 1.5rem;
 }
 .modal-titulo {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  gap: 1rem;
+  /* Queda fija arriba mientras el cuerpo scrollea. */
+  padding: 1.25rem 1.5rem 0.9rem;
+  border-bottom: 1px solid var(--color-borde, #e5e7eb);
+  flex-shrink: 0;
+}
+.modal-titulo h2 {
+  margin: 0;
+  font-size: 1.15rem;
 }
 .acciones {
   display: flex;
@@ -710,4 +730,197 @@ button.combo-item:hover {
 .badge-error {
   background: #fee2e2;
   color: #991b1b;
+}
+
+/* ─────────── Ajustes de formularios en modales ─────────── */
+
+/* Campos del formulario dentro del modal: etiqueta arriba, control abajo. */
+.formulario-modal label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+.formulario-modal input,
+.formulario-modal select,
+.formulario-modal textarea {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--color-borde, #d1d5db);
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 400;
+  background: var(--color-panel, #fff);
+  color: inherit;
+}
+.formulario-modal input:focus,
+.formulario-modal select:focus,
+.formulario-modal textarea:focus {
+  outline: 2px solid var(--color-primario, #2563eb);
+  outline-offset: 1px;
+}
+
+/* Acciones del formulario: pegadas abajo y alineadas a la derecha. */
+.formulario-modal .acciones,
+.modal-cuerpo > .acciones {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 0.4rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--color-borde, #e5e7eb);
+}
+
+/* ─────────── Responsive (celular) ─────────── */
+@media (max-width: 640px) {
+  /* El modal ocupa la pantalla: en celular no tiene sentido dejar margen. */
+  .modal-fondo {
+    padding: 0;
+    align-items: stretch;
+  }
+  .modal,
+  .modal-ancho {
+    max-width: none;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  /* Todos los formularios pasan a una sola columna. */
+  .grilla-campos,
+  .grilla-datos {
+    grid-template-columns: 1fr;
+  }
+
+  /* Filtros apilados y a lo ancho. */
+  .grilla-filtros {
+    flex-direction: column;
+  }
+  .grilla-filtros input[type='search'],
+  .grilla-filtros select {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  /* Los botones de accion se estiran para ser tocables. */
+  .formulario-modal .acciones .btn,
+  .modal-cuerpo > .acciones .btn {
+    flex: 1 1 auto;
+  }
+
+  /* Cabecera de pagina apilada. */
+  .cabecera-pagina {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+  .cabecera-pagina .btn {
+    width: 100%;
+  }
+
+  /* Tarjetas de resumen: que entren de a dos. */
+  .tarjeta-resumen {
+    flex: 1 1 calc(50% - 0.7rem);
+    min-width: 0;
+  }
+
+  /* Objetivos tactiles mas comodos. */
+  .btn {
+    min-height: 40px;
+  }
+  .fila-acciones-celda .btn,
+  .fila-acciones .btn {
+    min-height: 34px;
+  }
+}
+
+/* ─────────── Alta de renglones de la orden de compra ─────────── */
+.alta-renglon {
+  display: grid;
+  grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: end;
+  padding: 0.9rem;
+  border: 1px solid var(--color-borde, #e5e7eb);
+  border-radius: 10px;
+  background: var(--color-fondo, #f8fafc);
+}
+.alta-renglon label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  min-width: 0;
+}
+.alta-renglon-boton {
+  white-space: nowrap;
+}
+/* El combo tiene posicionamiento propio: que ocupe todo el ancho de su celda. */
+.alta-renglon .combo {
+  width: 100%;
+}
+.alta-renglon .combo input {
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .alta-renglon {
+    grid-template-columns: 1fr 1fr;
+  }
+  /* El buscador de material y el boton ocupan la fila completa. */
+  .alta-renglon-material,
+  .alta-renglon-boton {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ─────────── Logo en la barra lateral / barra móvil ─────────── */
+
+/* En escritorio: panel blanco centrado sobre la barra oscura. */
+.marca-lateral .panel-logo {
+  padding: 0.5rem 0.7rem;
+}
+.marca-lateral span {
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+}
+
+/* En la barra móvil el logo va chico y al lado del texto. */
+.barra-movil .marca {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.barra-movil .panel-logo-chico {
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  /* La barra lateral es un cajón: el logo grande ahí adentro molesta. */
+  .marca-lateral .panel-logo {
+    padding: 0.4rem 0.6rem;
+  }
+}
+
+/* ─────────── Pantalla de acceso en celular ─────────── */
+@media (max-width: 640px) {
+  .pantalla-acceso {
+    gap: 1.25rem;
+    padding: 1.5rem 0.9rem;
+    justify-content: flex-start;
+  }
+  .acceso-titulo h1 {
+    font-size: 1.3rem;
+  }
+  .acceso-formulario {
+    width: 100%;
+  }
+  /* La tarjeta de Clerk se adapta al ancho disponible. */
+  .acceso-formulario > div {
+    width: 100%;
+  }
 }

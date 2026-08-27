@@ -1,27 +1,31 @@
 /**
- * Logo de Lácteos Las Tres S.R.L.
+ * Logo de Lácteos Las Tres S.R.L. (reconstrucción vectorial del isologo).
  *
- * Es una reconstrucción vectorial del isologo (escudo con tres estrellas +
- * "LÁCTEOS LAS TRES"). Está en SVG para que escale sin perder nitidez y para
- * poder pintar el texto según el fondo.
+ * Detalle importante: los textos usan `textLength` + `lengthAdjust`, que obliga
+ * al navegador a encajar cada línea en un ancho fijo. Sin eso, el ancho real
+ * depende de la fuente disponible en cada equipo y "LAS TRES" se desbordaba del
+ * viewBox, quedando cortado ("AS TRES"). Con textLength el logo se ve igual en
+ * cualquier máquina.
  *
- * El logo original es blanco sobre fondo oscuro; sobre fondo claro ese texto
- * desaparecería, así que acá el texto se pinta en rojo institucional y solo los
- * detalles DENTRO del escudo quedan en blanco (que es donde contrastan).
+ * El isologo original es blanco sobre fondo oscuro; acá el texto va en rojo
+ * institucional porque siempre se muestra sobre panel blanco (.panel-logo).
  *
- * Si tenés el archivo oficial (SVG/PNG), reemplazá este componente por un
- * <img src={...} /> apuntando al asset: el resto del sistema lo usa por nombre.
+ * Si conseguís el archivo oficial (SVG/PNG), reemplazá solo este componente.
  */
 
 const ROJO = '#C8102E';
 
 interface Props {
-  /** Alto en píxeles. El ancho se calcula solo. */
+  /** Alto en píxeles. El ancho se calcula manteniendo la proporción. */
   alto?: number;
-  /** Texto alternativo accesible. */
   titulo?: string;
   className?: string;
 }
+
+// Proporciones del lienzo. Todo se dibuja dentro de estas medidas.
+const ANCHO = 240;
+const ALTO = 296;
+const CENTRO = ANCHO / 2;
 
 export function LogoLasTres({
   alto = 64,
@@ -30,9 +34,9 @@ export function LogoLasTres({
 }: Props) {
   return (
     <svg
-      viewBox="0 0 200 260"
+      viewBox={`0 0 ${ANCHO} ${ALTO}`}
       height={alto}
-      width={(alto * 200) / 260}
+      width={(alto * ANCHO) / ALTO}
       role="img"
       aria-label={titulo}
       className={className}
@@ -41,85 +45,86 @@ export function LogoLasTres({
       <title>{titulo}</title>
 
       <defs>
-        {/* Estrella de cinco puntas reutilizable, centrada en el origen. */}
-        <symbol id="estrella" viewBox="-10 -10 20 20">
+        <symbol id="estrella-lt" viewBox="-10 -10 20 20">
           <path
             d="M0,-10 L2.94,-4.05 L9.51,-3.09 L4.76,1.55 L5.88,8.09 L0,5 L-5.88,8.09 L-4.76,1.55 L-9.51,-3.09 L-2.94,-4.05 Z"
             fill="#fff"
           />
         </symbol>
 
-        {/* Guía para el texto "LÁCTEOS" en arco. */}
-        <path id="arco-lacteos" d="M 28 196 A 74 44 0 0 1 172 196" fill="none" />
+        {/* Arco sobre el que se apoya "LÁCTEOS" (peak en el centro). */}
+        <path id="arco-lacteos-lt" d="M 46 214 Q 120 186 194 214" fill="none" />
 
-        {/* Recorta el escudo para que la banda curva no se salga del borde. */}
-        <clipPath id="recorte-escudo">
-          <path d="M40 10 H160 A8 8 0 0 1 168 18 V80 C168 114 140 142 100 158 C60 142 32 114 32 80 V18 A8 8 0 0 1 40 10 Z" />
+        {/* Recorta la banda curva para que no se salga del escudo. */}
+        <clipPath id="recorte-escudo-lt">
+          <path d="M78 12 H162 A10 10 0 0 1 172 22 V92 C172 124 150 148 120 162 C90 148 68 124 68 92 V22 A10 10 0 0 1 78 12 Z" />
         </clipPath>
       </defs>
 
       {/* Escudo */}
       <path
-        d="M40 10 H160 A8 8 0 0 1 168 18 V80 C168 114 140 142 100 158 C60 142 32 114 32 80 V18 A8 8 0 0 1 40 10 Z"
+        d="M78 12 H162 A10 10 0 0 1 172 22 V92 C172 124 150 148 120 162 C90 148 68 124 68 92 V22 A10 10 0 0 1 78 12 Z"
         fill={ROJO}
       />
 
       {/* Tres estrellas */}
-      <use href="#estrella" x="52" y="34" width="26" height="26" />
-      <use href="#estrella" x="87" y="28" width="26" height="26" />
-      <use href="#estrella" x="122" y="34" width="26" height="26" />
+      <use href="#estrella-lt" x="82" y="34" width="24" height="24" />
+      <use href="#estrella-lt" x="108" y="28" width="24" height="24" />
+      <use href="#estrella-lt" x="134" y="34" width="24" height="24" />
 
-      {/* Banda curva (el campo/la loma del isologo original) */}
-      <g clipPath="url(#recorte-escudo)">
+      {/* Banda curva (el campo del isologo) */}
+      <g clipPath="url(#recorte-escudo-lt)">
         <path
-          d="M20 120 C 55 86, 105 86, 140 118 C 158 134, 172 146, 186 152 L186 172 L20 172 Z"
+          d="M60 118 C 84 92, 122 92, 148 116 C 162 129, 172 138, 182 143 L182 170 L60 170 Z"
           fill={ROJO}
         />
         <path
-          d="M20 112 C 55 78, 105 78, 140 110 C 158 126, 172 138, 186 144"
+          d="M60 110 C 84 84, 122 84, 148 108 C 162 121, 172 130, 182 135"
           fill="none"
           stroke="#fff"
-          strokeWidth="9"
+          strokeWidth="8"
           strokeLinecap="round"
         />
       </g>
 
-      {/* "LÁCTEOS" en arco */}
+      {/* "LÁCTEOS" siguiendo el arco */}
       <text
         fill={ROJO}
         fontSize="19"
         fontWeight="600"
-        letterSpacing="5"
+        letterSpacing="4"
         fontFamily="Georgia, 'Times New Roman', serif"
       >
-        <textPath href="#arco-lacteos" startOffset="50%" textAnchor="middle">
+        <textPath href="#arco-lacteos-lt" startOffset="50%" textAnchor="middle">
           LÁCTEOS
         </textPath>
       </text>
 
       {/* "EST. 1989" */}
       <text
-        x="100"
-        y="203"
+        x={CENTRO}
+        y="230"
         fill={ROJO}
         fontSize="11"
         fontWeight="500"
-        letterSpacing="2.5"
         textAnchor="middle"
+        textLength="62"
+        lengthAdjust="spacingAndGlyphs"
         fontFamily="Georgia, 'Times New Roman', serif"
       >
         EST. 1989
       </text>
 
-      {/* "LAS TRES" */}
+      {/* "LAS TRES": el textLength garantiza que nunca se corte. */}
       <text
-        x="100"
-        y="238"
+        x={CENTRO}
+        y="270"
         fill={ROJO}
         fontSize="44"
         fontWeight="800"
-        letterSpacing="1"
         textAnchor="middle"
+        textLength="196"
+        lengthAdjust="spacingAndGlyphs"
         fontFamily="Georgia, 'Times New Roman', serif"
       >
         LAS TRES
@@ -127,13 +132,14 @@ export function LogoLasTres({
 
       {/* "S.R.L." */}
       <text
-        x="163"
-        y="253"
+        x="196"
+        y="288"
         fill={ROJO}
         fontSize="12"
         fontWeight="600"
-        letterSpacing="1"
         textAnchor="middle"
+        textLength="34"
+        lengthAdjust="spacingAndGlyphs"
         fontFamily="Georgia, 'Times New Roman', serif"
       >
         S.R.L.
@@ -142,10 +148,7 @@ export function LogoLasTres({
   );
 }
 
-/**
- * Logo sobre panel blanco. El isologo es rojo sobre claro, así que necesita
- * fondo blanco para leerse bien en cualquier parte de la app.
- */
+/** Logo sobre panel blanco: el isologo es rojo y necesita fondo claro. */
 export function LogoEnPanel({ alto = 64 }: { alto?: number }) {
   return (
     <div className="panel-logo">
