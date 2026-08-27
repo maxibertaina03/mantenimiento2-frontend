@@ -53,6 +53,19 @@ export function useActualizarOrden(id: string) {
   });
 }
 
+/**
+ * Emite una orden recibiendo el id al momento de llamarla.
+ * Hace falta en el alta: ahí el id recién existe después de crear la orden.
+ */
+export function useEmitirOrdenPorId() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiRequest<OrdenCompra>(`/ordenes-compra/${id}/emitir`, { method: 'PATCH' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesOrdenes.base }),
+  });
+}
+
 export function useEmitirOrden(id: string) {
   const qc = useQueryClient();
   return useMutation({

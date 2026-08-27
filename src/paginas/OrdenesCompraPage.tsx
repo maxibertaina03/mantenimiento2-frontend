@@ -4,6 +4,7 @@ import {
   useCrearOrden,
   useEliminarOrden,
   useEmitirOrden,
+  useEmitirOrdenPorId,
   useOrdenes,
   useRecibirOrden,
 } from '@/api/ordenesCompra';
@@ -194,6 +195,7 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
   const [precio, setPrecio] = useState('');
 
   const crear = useCrearOrden();
+  const emitir = useEmitirOrdenPorId();
 
   const limpiar = () => {
     setProveedorId('');
@@ -246,10 +248,22 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
     });
     limpiar();
     onCerrar();
-    // Ofrecemos el PDF apenas se crea: es el motivo principal de cargar la orden.
-    if (confirm(`Orden ${orden.numero} creada. ¿Descargar el PDF para imprimir?`)) {
-      await descargarPdfOrdenCompra(orden);
-    }
+
+    // Imprimir la orden es, en la practica, mandarsela al proveedor: si el
+    // usuario baja el PDF, la orden pasa directo a "pendiente de recibo" y no
+    // hay que acordarse de emitirla despues en otra pantalla.
+    const imprimir = confirm(
+      [
+        `Orden ${orden.numero} creada.`,
+        '',
+        '¿Imprimir y enviar al proveedor?',
+        'Se descarga el PDF y la orden queda pendiente de recibo.',
+      ].join('\n'),
+    );
+    if (!imprimir) return;
+
+    await descargarPdfOrdenCompra(orden);
+    await emitir.mutateAsync(orden.id);
   };
 
   return (
