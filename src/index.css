@@ -924,3 +924,82 @@ button.combo-item:hover {
     width: 100%;
   }
 }
+
+/* ─────────── Panel del logo: menos aire para que el logo mande ─────────── */
+.panel-logo {
+  /* Antes el relleno era tan grande que el logo se veia chico dentro de una
+     tarjeta blanca enorme. Ahora el panel se ajusta al logo. */
+  padding: 0.45rem 0.6rem;
+}
+.panel-logo-grande {
+  padding: 0.8rem 1.1rem;
+  border-radius: 14px;
+}
+.panel-logo-chico {
+  padding: 0.2rem 0.3rem;
+  border-radius: 7px;
+}
+
+/* Variante clickeable: sin estilos de boton, con realce al pasar por encima. */
+.panel-logo-boton {
+  border: none;
+  cursor: zoom-in;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.panel-logo-boton:hover,
+.panel-logo-boton:focus-visible {
+  transform: scale(1.03);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.22);
+}
+.panel-logo-boton:focus-visible {
+  outline: 2px solid var(--color-primario, #2563eb);
+  outline-offset: 3px;
+}
+
+/* ─────────── Visor del logo a pantalla completa ─────────── */
+.visor-logo {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgb(0 0 0 / 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5vmin;
+  cursor: zoom-out;
+}
+.visor-logo-panel {
+  background: #fff;
+  border-radius: 18px;
+  padding: 4vmin;
+  display: flex;
+  cursor: default;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.45);
+}
+.visor-logo-svg {
+  /* Crece hasta llenar la pantalla sin deformarse ni desbordar. */
+  width: min(78vw, 78vh);
+  height: auto;
+}
+.visor-logo-cerrar {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: rgb(255 255 255 / 0.92);
+  color: #111;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+.visor-logo-cerrar:hover {
+  background: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-logo-boton {
+    transition: none;
+  }
+}

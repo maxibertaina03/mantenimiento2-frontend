@@ -2,7 +2,7 @@ import { UserButton } from '@clerk/clerk-react';
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { BannerServidor } from './Estados';
-import { LogoLasTres } from './LogoLasTres';
+import { PanelLogo } from './PanelLogo';
 
 const claseNav = ({ isActive }: { isActive: boolean }) => (isActive ? 'activo' : '');
 
@@ -27,9 +27,7 @@ export function Layout() {
           ☰
         </button>
         <span className="marca">
-          <span className="panel-logo panel-logo-chico">
-            <LogoLasTres alto={30} />
-          </span>
+          <PanelLogo alto={26} className="panel-logo-chico" ampliable={false} />
           Mantenimiento
         </span>
       </div>
@@ -39,9 +37,7 @@ export function Layout() {
         style={{ display: 'flex', flexDirection: 'column' }}
       >
         <div className="marca marca-lateral">
-          <div className="panel-logo">
-            <LogoLasTres alto={76} />
-          </div>
+          <PanelLogo alto={68} />
           <span>Mantenimiento</span>
         </div>
         <nav onClick={cerrar}>

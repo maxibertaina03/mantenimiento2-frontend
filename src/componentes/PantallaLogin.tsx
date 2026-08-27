@@ -1,6 +1,6 @@
 import { SignIn, SignUp } from '@clerk/clerk-react';
 import { useState } from 'react';
-import { LogoLasTres } from './LogoLasTres';
+import { PanelLogo } from './PanelLogo';
 import { StickerHerramientas } from './StickerHerramientas';
 
 /**
@@ -27,10 +27,8 @@ export function PantallaLogin() {
   return (
     <div className="pantalla-acceso">
       <div className="acceso-marca">
-        {/* El isologo es rojo: necesita fondo blanco para leerse. */}
-        <div className="panel-logo panel-logo-grande">
-          <LogoLasTres alto={120} />
-        </div>
+        {/* El isologo es rojo: necesita fondo blanco. Se toca para ampliar. */}
+        <PanelLogo alto={150} className="panel-logo-grande" />
 
         <div className="acceso-titulo">
           <StickerHerramientas tamano={64} />

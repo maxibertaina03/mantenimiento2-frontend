@@ -38,17 +38,45 @@ describe('LogoLasTres', () => {
     }
   });
 
-  it('incluye las tres estrellas del escudo', () => {
+  it('incluye las tres estrellas, con la del centro mas grande', () => {
     const { container } = render(<LogoLasTres />);
-    expect(container.querySelectorAll('use')).toHaveLength(3);
+    const estrellas = [...container.querySelectorAll('use')];
+    expect(estrellas).toHaveLength(3);
+
+    const anchos = estrellas.map((e) => Number(e.getAttribute('width')));
+    // El original tiene la estrella central destacada.
+    expect(anchos[1]).toBeGreaterThan(anchos[0]);
+    expect(anchos[1]).toBeGreaterThan(anchos[2]);
+  });
+
+  it('REGRESION: "LACTEOS" y "EST. 1989" van en marron, no en rojo', () => {
+    const { container } = render(<LogoLasTres />);
+    const textos = [...container.querySelectorAll('text')];
+    const lacteos = textos.find((t) => t.textContent?.includes('LÁCTEOS'));
+    const est = textos.find((t) => t.textContent?.includes('EST.'));
+    expect(lacteos?.getAttribute('fill')).toBe('#3F2318');
+    expect(est?.getAttribute('fill')).toBe('#3F2318');
+  });
+
+  it('REGRESION: "LAS TRES" es mucho mas ancho que el escudo', () => {
+    const { container } = render(<LogoLasTres />);
+    const lasTres = [...container.querySelectorAll('text')].find(
+      (t) => t.textContent?.trim() === 'LAS TRES',
+    );
+    // El escudo mide 120 de ancho en el lienzo; el original tiene el texto
+    // cerca de 2,4 veces mas ancho. Si esta proporcion se pierde, el logo se
+    // ve chico y perdido dentro del panel.
+    expect(Number(lasTres?.getAttribute('textLength'))).toBeGreaterThan(120 * 2);
   });
 
   it('respeta el alto pedido y mantiene la proporción', () => {
     const { container } = render(<LogoLasTres alto={100} />);
     const svg = container.querySelector('svg')!;
     expect(Number(svg.getAttribute('height'))).toBe(100);
-    // Más angosto que alto, como el isologo real.
-    expect(Number(svg.getAttribute('width'))).toBeLessThan(100);
+    // Levemente mas ancho que alto, como el isologo real.
+    const ancho = Number(svg.getAttribute('width'));
+    expect(ancho).toBeGreaterThan(100);
+    expect(ancho).toBeLessThan(130);
   });
 });
 
