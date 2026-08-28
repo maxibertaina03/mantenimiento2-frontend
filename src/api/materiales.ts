@@ -92,3 +92,33 @@ export function useEliminarMaterial() {
   });
 }
 
+/** Cuántos materiales todavía no tienen unidad cargada. */
+export function useMaterialesSinUnidad() {
+  return useQuery({
+    queryKey: ['materiales', 'sin-unidad'],
+    queryFn: () => apiRequest<{ sinUnidad: number }>('/materiales/sin-unidad'),
+    staleTime: 30_000,
+  });
+}
+
+/**
+ * Pone una unidad por defecto a los materiales que no tienen.
+ *
+ * Los materiales importados de los listados viejos vinieron sin unidad;
+ * asignarlas de a una no es viable. Por defecto NO pisa las que ya están
+ * cargadas, para no borrar lo corregido a mano.
+ */
+export function useAsignarUnidadMasiva() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (datos: { unidadId: string; soloSinUnidad?: boolean }) =>
+      apiRequest<{ actualizados: number; sinUnidad: number }>(
+        '/materiales/asignar-unidad-masiva',
+        { method: 'POST', body: datos },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['materiales'] });
+      qc.invalidateQueries({ queryKey: ['unidades-medida'] });
+    },
+  });
+}

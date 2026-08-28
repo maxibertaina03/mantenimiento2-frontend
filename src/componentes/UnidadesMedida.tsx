@@ -5,6 +5,7 @@ import {
   useEliminarUnidad,
   useUnidadesMedida,
 } from '@/api/unidadesMedida';
+import { useAsignarUnidadMasiva, useMaterialesSinUnidad } from '@/api/materiales';
 import { AccionesFila } from './AccionesFila';
 import { CampoNumero } from './CampoNumero';
 import { Cargando, EstadoVacio, MensajeError } from './Estados';
@@ -36,6 +37,8 @@ export function UnidadesMedida({ abierto, onCerrar }: { abierto: boolean; onCerr
         <p className="texto-suave">
           El símbolo es lo que se muestra al lado de cada cantidad (450 <strong>kg</strong>).
         </p>
+
+        <CargaMasiva unidades={unidades ?? []} />
 
         {isLoading && <Cargando />}
         {error && <MensajeError error={error} />}
@@ -185,5 +188,74 @@ function FormularioUnidad({ unidad, alCerrar }: { unidad?: UnidadMedida; alCerra
         </div>
       </form>
     </Modal>
+  );
+}
+
+/**
+ * Carga masiva de la unidad por defecto.
+ *
+ * Los materiales importados de los listados viejos vinieron sin unidad, y son
+ * cientos: asignarlas de a una no es viable. Esto pone una por defecto y
+ * después se corrigen las que hagan falta desde cada material.
+ */
+function CargaMasiva({ unidades }: { unidades: UnidadMedida[] }) {
+  const { data: pendientes } = useMaterialesSinUnidad();
+  const asignar = useAsignarUnidadMasiva();
+  const [unidadId, setUnidadId] = useState('');
+  const [hecho, setHecho] = useState<number | null>(null);
+
+  const sinUnidad = pendientes?.sinUnidad ?? 0;
+  // Con todo asignado el bloque no aporta nada, salvo para mostrar el resultado.
+  if (sinUnidad === 0 && hecho === null) return null;
+
+  const elegida = unidades.find((u) => u.id === unidadId);
+
+  const aplicar = async () => {
+    if (!elegida) return;
+    const msg =
+      `Se le va a asignar "${elegida.nombre}" a ${sinUnidad} material(es) que no tienen ` +
+      'unidad. Los que ya tienen una NO se tocan. ¿Seguimos?';
+    if (!confirm(msg)) return;
+    const res = await asignar.mutateAsync({ unidadId });
+    setHecho(res.actualizados);
+  };
+
+  return (
+    <div className="alerta alerta-aviso">
+      {hecho !== null ? (
+        <p>
+          Listo: {hecho} material(es) quedaron con la unidad asignada. Ajustá desde cada material
+          los que necesiten otra.
+        </p>
+      ) : (
+        <>
+          <p>
+            Hay <strong>{sinUnidad} material(es) sin unidad</strong> (vienen así de la importación
+            de los listados viejos). Podés asignarles una por defecto y corregir después los que
+            necesiten otra.
+          </p>
+          <div className="acciones-envio">
+            <select value={unidadId} onChange={(e) => setUnidadId(e.target.value)}>
+              <option value="">Elegí la unidad por defecto…</option>
+              {unidades
+                .filter((u) => u.activo)
+                .map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.nombre} ({u.simbolo})
+                  </option>
+                ))}
+            </select>
+            <button
+              className="btn btn-primario"
+              onClick={aplicar}
+              disabled={!unidadId || asignar.isPending}
+            >
+              {asignar.isPending ? 'Asignando…' : `Asignar a los ${sinUnidad} sin unidad`}
+            </button>
+          </div>
+          {asignar.error && <MensajeError error={asignar.error} />}
+        </>
+      )}
+    </div>
   );
 }

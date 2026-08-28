@@ -41,6 +41,9 @@ beforeEach(() => {
   apiRequestMock.mockReset();
   apiRequestMock.mockImplementation((ruta: string) => {
     if (ruta.startsWith('/unidades-medida')) return Promise.resolve(CATALOGO);
+    if (ruta === '/materiales/sin-unidad') return Promise.resolve({ sinUnidad: 0 });
+    if (ruta === '/materiales/asignar-unidad-masiva')
+      return Promise.resolve({ actualizados: 831, sinUnidad: 0 });
     return Promise.resolve([]);
   });
   vi.spyOn(window, 'confirm').mockReturnValue(true);
@@ -112,5 +115,79 @@ describe('UnidadesMedida', () => {
   it('explica que una unidad en uso se desactiva en vez de borrarse', async () => {
     abrir();
     expect(await screen.findByText(/desactivala/i)).toBeInTheDocument();
+  });
+});
+
+describe('UnidadesMedida — carga masiva', () => {
+  /** Deja el backend respondiendo que hay `n` materiales sin unidad. */
+  function conPendientes(n: number) {
+    apiRequestMock.mockImplementation((ruta: string) => {
+      if (ruta.startsWith('/unidades-medida')) return Promise.resolve(CATALOGO);
+      if (ruta === '/materiales/sin-unidad') return Promise.resolve({ sinUnidad: n });
+      if (ruta === '/materiales/asignar-unidad-masiva')
+        return Promise.resolve({ actualizados: n, sinUnidad: 0 });
+      return Promise.resolve([]);
+    });
+  }
+
+  it('no muestra nada si todos los materiales ya tienen unidad', async () => {
+    conPendientes(0);
+    abrir();
+    await screen.findByText('Litro');
+    expect(screen.queryByText(/sin unidad/i)).not.toBeInTheDocument();
+  });
+
+  it('avisa cuantos materiales estan sin unidad', async () => {
+    conPendientes(831);
+    abrir();
+    expect(await screen.findByText(/831 material\(es\) sin unidad/i)).toBeInTheDocument();
+  });
+
+  it('asigna la unidad elegida a los que no tienen', async () => {
+    conPendientes(831);
+    const usuario = userEvent.setup();
+    abrir();
+    await screen.findByText(/831 material/i);
+
+    await usuario.selectOptions(
+      screen.getByRole('combobox'),
+      screen.getByRole('option', { name: /Unidad \(u\)/ }),
+    );
+    await usuario.click(screen.getByRole('button', { name: /asignar a los 831/i }));
+
+    await waitFor(() =>
+      expect(apiRequestMock).toHaveBeenCalledWith(
+        '/materiales/asignar-unidad-masiva',
+        expect.objectContaining({ method: 'POST', body: { unidadId: 'u1' } }),
+      ),
+    );
+    expect(await screen.findByText(/831 material\(es\) quedaron/i)).toBeInTheDocument();
+  });
+
+  it('REGRESION: no manda nada si el usuario cancela la confirmacion', async () => {
+    // Es una operacion masiva: tiene que poder frenarse.
+    conPendientes(831);
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const usuario = userEvent.setup();
+    abrir();
+    await screen.findByText(/831 material/i);
+
+    await usuario.selectOptions(
+      screen.getByRole('combobox'),
+      screen.getByRole('option', { name: /Unidad \(u\)/ }),
+    );
+    await usuario.click(screen.getByRole('button', { name: /asignar a los 831/i }));
+
+    expect(apiRequestMock).not.toHaveBeenCalledWith(
+      '/materiales/asignar-unidad-masiva',
+      expect.anything(),
+    );
+  });
+
+  it('el boton esta deshabilitado hasta elegir una unidad', async () => {
+    conPendientes(831);
+    abrir();
+    await screen.findByText(/831 material/i);
+    expect(screen.getByRole('button', { name: /asignar a los 831/i })).toBeDisabled();
   });
 });
