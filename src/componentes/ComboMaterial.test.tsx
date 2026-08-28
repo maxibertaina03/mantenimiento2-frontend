@@ -183,3 +183,50 @@ describe('ComboMaterial', () => {
     await waitFor(() => expect(screen.getByText(/Sin resultados/)).toBeInTheDocument());
   });
 });
+
+describe('ComboMaterial — alta desde el combo', () => {
+  it('sin onCrear no ofrece crear nada', async () => {
+    const usuario = userEvent.setup();
+    render(<ComboMaterial materialId="" onCambio={() => {}} />, { wrapper: envoltorio() });
+    await usuario.click(screen.getByRole('textbox'));
+    await usuario.type(screen.getByRole('textbox'), 'cable inexistente');
+    await waitFor(() => expect(screen.queryByText(/Crear el material/i)).not.toBeInTheDocument());
+  });
+
+  it('ofrece crear el material con el texto buscado', async () => {
+    const alCrear = vi.fn();
+    const usuario = userEvent.setup();
+    render(<ComboMaterial materialId="" onCambio={() => {}} onCrear={alCrear} />, {
+      wrapper: envoltorio(),
+    });
+    await usuario.click(screen.getByRole('textbox'));
+    await usuario.type(screen.getByRole('textbox'), 'Valvula esferica');
+
+    const boton = await screen.findByRole('button', { name: /Crear el material «Valvula esferica»/i });
+    await usuario.click(boton);
+    expect(alCrear).toHaveBeenCalledWith('Valvula esferica');
+  });
+
+  it('REGRESION: no ofrece crear con el campo vacio', async () => {
+    // Sin texto no habria nombre para el material nuevo.
+    const alCrear = vi.fn();
+    const usuario = userEvent.setup();
+    render(<ComboMaterial materialId="" onCambio={() => {}} onCrear={alCrear} />, {
+      wrapper: envoltorio(),
+    });
+    await usuario.click(screen.getByRole('textbox'));
+    expect(screen.queryByText(/Crear el material/i)).not.toBeInTheDocument();
+  });
+
+  it('el texto se recorta antes de mandarlo', async () => {
+    const alCrear = vi.fn();
+    const usuario = userEvent.setup();
+    render(<ComboMaterial materialId="" onCambio={() => {}} onCrear={alCrear} />, {
+      wrapper: envoltorio(),
+    });
+    await usuario.click(screen.getByRole('textbox'));
+    await usuario.type(screen.getByRole('textbox'), '  Buje bronce  ');
+    await usuario.click(await screen.findByRole('button', { name: /Crear el material/i }));
+    expect(alCrear).toHaveBeenCalledWith('Buje bronce');
+  });
+});

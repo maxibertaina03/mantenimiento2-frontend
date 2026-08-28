@@ -10,6 +10,7 @@ import {
 } from '@/api/ordenesCompra';
 import { CampoNumero } from '@/componentes/CampoNumero';
 import { ComboMaterial } from '@/componentes/ComboMaterial';
+import { NuevoMaterialRapido } from '@/componentes/NuevoMaterialRapido';
 import { ComboProveedor } from '@/componentes/ComboProveedor';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
@@ -214,6 +215,10 @@ function ModalNuevaOrden({
 
   // Renglón que se está armando.
   const [material, setMaterial] = useState<Material | null>(null);
+  // Alta de un material que no existe todavia, sin salir de la orden.
+  const [nombreACrear, setNombreACrear] = useState<string | null>(null);
+  // Id del recien creado: remonta el combo para que quede seleccionado.
+  const [materialNuevo, setMaterialNuevo] = useState<string | null>(null);
   const [cantidad, setCantidad] = useState<number | undefined>(undefined);
   const [precio, setPrecio] = useState<number | undefined>(undefined);
 
@@ -225,6 +230,9 @@ function ModalNuevaOrden({
     setObservaciones('');
     setRenglones([]);
     setMaterial(null);
+    // Si no se limpia, el combo remontado volveria a preseleccionar el material
+    // recien creado en el renglon siguiente.
+    setMaterialNuevo(null);
     setCantidad(undefined);
     setPrecio(undefined);
   };
@@ -247,6 +255,9 @@ function ModalNuevaOrden({
       },
     ]);
     setMaterial(null);
+    // Si no se limpia, el combo remontado volveria a preseleccionar el material
+    // recien creado en el renglon siguiente.
+    setMaterialNuevo(null);
     setCantidad(undefined);
     setPrecio(undefined);
   };
@@ -308,9 +319,10 @@ function ModalNuevaOrden({
                 estado interno y si no, seguiría mostrando el material anterior.
                 Solo ofrece materiales cargados en el sistema (busca en la API). */}
             <ComboMaterial
-              key={`material-${renglones.length}`}
-              materialId=""
+              key={`material-${renglones.length}-${materialNuevo ?? ''}`}
+              materialId={materialNuevo ?? ''}
               onCambio={setMaterial}
+              onCrear={setNombreACrear}
             />
           </label>
           <label>
@@ -430,6 +442,19 @@ function ModalNuevaOrden({
           </button>
         </div>
       </form>
+
+      {nombreACrear !== null && (
+        <NuevoMaterialRapido
+          nombreInicial={nombreACrear}
+          onCerrar={() => setNombreACrear(null)}
+          onCreado={(nuevo) => {
+            // Queda elegido en el combo: quien lo creó ya lo queria usar.
+            setMaterial(nuevo);
+            setMaterialNuevo(nuevo.id);
+            setNombreACrear(null);
+          }}
+        />
+      )}
     </Modal>
   );
 }

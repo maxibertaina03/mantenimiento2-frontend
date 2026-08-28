@@ -7,13 +7,19 @@ interface Props {
   /** Id del material seleccionado (puede venir preseleccionado por query param). */
   materialId: string;
   onCambio: (material: Material | null) => void;
+  /**
+   * Si viene, el combo ofrece dar de alta un material con el texto buscado.
+   * Sirve donde el material puede no existir todavía —comprar algo que nunca
+   * se compró— sin obligar a salir de la pantalla y perder lo cargado.
+   */
+  onCrear?: (nombre: string) => void;
 }
 
 /**
  * Buscador con autocompletado de materiales. Consulta la API por nombre
  * (soporta cientos de materiales sin cargarlos todos de una).
  */
-export function ComboMaterial({ materialId, onCambio }: Props) {
+export function ComboMaterial({ materialId, onCambio, onCrear }: Props) {
   const [texto, setTexto] = useState('');
   const [busq, setBusq] = useState('');
   const [abierto, setAbierto] = useState(false);
@@ -42,6 +48,9 @@ export function ComboMaterial({ materialId, onCambio }: Props) {
   }, []);
 
   const { data, isFetching } = useMateriales(1, 20, abierto ? busq : '');
+
+  // Solo con algo escrito: sin texto no habría nombre para el material nuevo.
+  const puedeCrear = Boolean(onCrear) && texto.trim().length > 0;
 
   const elegir = (m: Material) => {
     setSeleccionado(m);
@@ -77,8 +86,22 @@ export function ComboMaterial({ materialId, onCambio }: Props) {
                 </span>
               </button>
             ))}
-          {!isFetching && data && data.datos.length === 0 && (
+          {!isFetching && data && data.datos.length === 0 && !puedeCrear && (
             <div className="combo-item texto-suave">Sin resultados</div>
+          )}
+          {/* El alta va al final: primero se ve si el material ya existe, para
+              no terminar con el mismo material cargado dos veces. */}
+          {!isFetching && puedeCrear && (
+            <button
+              type="button"
+              className="combo-item combo-item-crear"
+              onClick={() => {
+                setAbierto(false);
+                onCrear!(texto.trim());
+              }}
+            >
+              ＋ Crear el material «{texto.trim()}»
+            </button>
           )}
           {!isFetching && data && data.total > data.datos.length && (
             <div className="combo-item texto-suave" style={{ fontSize: '0.75rem' }}>
