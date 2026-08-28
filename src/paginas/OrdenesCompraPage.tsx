@@ -101,8 +101,8 @@ export function OrdenesCompraPage() {
       )}
 
       {data && data.datos.length > 0 && (
-        <div className="tabla-scroll">
-          <table className="tabla">
+        <div className="tabla-scroll tabla-cards-contenedor">
+          <table className="tabla tabla-cards">
             <thead>
               <tr>
                 <th>Número</th>
@@ -117,19 +117,19 @@ export function OrdenesCompraPage() {
             <tbody>
               {data.datos.map((orden) => (
                 <tr key={orden.id}>
-                  <td>
+                  <td data-etiqueta="Número">
                     <strong>{orden.numero}</strong>
                   </td>
-                  <td>{orden.proveedorNombre ?? '—'}</td>
-                  <td>{formatearFecha(orden.fecha)}</td>
-                  <td>{orden.renglones.length}</td>
-                  <td>{moneda(orden.total)}</td>
-                  <td>
+                  <td data-etiqueta="Proveedor">{orden.proveedorNombre ?? '—'}</td>
+                  <td data-etiqueta="Fecha">{formatearFecha(orden.fecha)}</td>
+                  <td data-etiqueta="Ítems">{orden.renglones.length}</td>
+                  <td data-etiqueta="Total">{moneda(orden.total)}</td>
+                  <td data-etiqueta="Estado">
                     <span className={CLASE_ESTADO[orden.estado]}>
                       {ETIQUETA_ESTADO_ORDEN[orden.estado]}
                     </span>
                   </td>
-                  <td>
+                  <td className="celda-acciones">
                     <div className="fila-acciones">
                       <button className="btn btn-sm" onClick={() => setOrdenAbierta(orden)}>
                         Ver
@@ -151,7 +151,7 @@ export function OrdenesCompraPage() {
       )}
 
       {data && totalPaginas > 1 && (
-        <div className="acciones" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="acciones paginacion">
           <button className="btn btn-sm" disabled={pagina <= 1} onClick={() => setPagina((p) => p - 1)}>
             ← Anterior
           </button>
@@ -328,8 +328,8 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
         )}
 
         {renglones.length > 0 && (
-          <div className="tabla-scroll">
-            <table className="tabla">
+          <div className="tabla-scroll tabla-cards-contenedor">
+            <table className="tabla tabla-cards">
               <thead>
                 <tr>
                   <th>Material</th>
@@ -342,17 +342,19 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
               <tbody>
                 {renglones.map((r) => (
                   <tr key={r.materialId}>
-                    <td>{r.materialNombre}</td>
-                    <td>
+                    <td data-etiqueta="Material">{r.materialNombre}</td>
+                    <td data-etiqueta="Cantidad">
                       {formatearNumero(r.cantidad)} {r.unidad}
                     </td>
-                    <td>{r.precioUnitario !== undefined ? moneda(r.precioUnitario) : '—'}</td>
-                    <td>
+                    <td data-etiqueta="P. unitario">
+                      {r.precioUnitario !== undefined ? moneda(r.precioUnitario) : '—'}
+                    </td>
+                    <td data-etiqueta="Subtotal">
                       {r.precioUnitario !== undefined
                         ? moneda(r.cantidad * r.precioUnitario)
                         : '—'}
                     </td>
-                    <td>
+                    <td className="celda-acciones">
                       <button
                         type="button"
                         className="btn btn-sm btn-peligro"
@@ -463,8 +465,8 @@ function ModalDetalleOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar: 
           )}
         </div>
 
-        <div className="tabla-scroll">
-          <table className="tabla">
+        <div className="tabla-scroll tabla-cards-contenedor">
+          <table className="tabla tabla-cards">
             <thead>
               <tr>
                 <th>Material</th>
@@ -476,12 +478,12 @@ function ModalDetalleOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar: 
             <tbody>
               {orden.renglones.map((r) => (
                 <tr key={r.id}>
-                  <td>{r.materialNombre ?? '—'}</td>
-                  <td>
+                  <td data-etiqueta="Material">{r.materialNombre ?? '—'}</td>
+                  <td data-etiqueta="Cantidad">
                     {formatearNumero(r.cantidad)} {r.unidad ?? ''}
                   </td>
-                  <td>{moneda(r.precioUnitario)}</td>
-                  <td>{moneda(r.subtotal)}</td>
+                  <td data-etiqueta="P. unitario">{moneda(r.precioUnitario)}</td>
+                  <td data-etiqueta="Subtotal">{moneda(r.subtotal)}</td>
                 </tr>
               ))}
             </tbody>

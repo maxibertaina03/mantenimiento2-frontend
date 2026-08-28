@@ -243,18 +243,17 @@ function FormularioMaterial({ onListo }: { onListo: () => void }) {
       </div>
 
       <div className="grilla-2">
-        <div className="campo">
+        <div className="campo campo-ancho">
           <label>Categoría</label>
           {!modoNuevaCat ? (
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
+            <div className="campo-con-boton">
               <select
                 required
                 value={form.categoriaId}
                 onChange={(e) => setForm({ ...form, categoriaId: e.target.value })}
-                style={{ flex: 1 }}
               >
                 <option value="" disabled>
-                  Elegí una categoría…
+                  Elegí una categoría
                 </option>
                 {categorias?.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -273,7 +272,7 @@ function FormularioMaterial({ onListo }: { onListo: () => void }) {
             </div>
           ) : (
             <>
-              <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <div className="campo-con-boton">
                 <input
                   autoFocus
                   placeholder="Nombre de la nueva categoría"

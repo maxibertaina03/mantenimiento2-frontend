@@ -203,8 +203,18 @@ h2 {
 }
 .grilla-2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* auto-fit en vez de `1fr 1fr`: con dos columnas fijas, en un modal angosto
+     cada campo quedaba con ~110px y el texto de los <select> se cortaba
+     ("Elegí una categ..."). Asi cada campo nunca baja de 220px y, si no entran
+     dos, pasa a una sola columna solo. */
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0 1rem;
+}
+/* Los items de grid traen min-width:auto y se niegan a achicarse, desbordando
+   la celda. Esto los deja encogerse hasta su contenedor. */
+.grilla-2 > *,
+.grilla-campos > * {
+  min-width: 0;
 }
 .grilla-filtros {
   display: grid;
@@ -1001,5 +1011,144 @@ button.combo-item:hover {
 @media (prefers-reduced-motion: reduce) {
   .panel-logo-boton {
     transition: none;
+  }
+}
+
+/* ═══════════ Que ningún texto quede cortado en los formularios ═══════════ */
+
+/* El padding y el borde entran DENTRO del ancho declarado: sin esto, un
+   `width: 100%` mas padding desborda al contenedor. */
+input,
+select,
+textarea,
+button {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* Los <select> son el caso critico: no recortan con puntos suspensivos, así
+   que si no entran, el texto se corta a la mitad. Se les da un piso de ancho
+   y permiso para encogerse solo hasta ahí. */
+.campo select,
+.formulario-modal select,
+.grilla-2 select,
+.grilla-campos select {
+  min-width: 0;
+  width: 100%;
+  /* Deja lugar a la flecha del desplegable para que no pise al texto. */
+  padding-right: 2rem;
+}
+
+/* Filas de campo + botón al lado (ej: Categoría + "Nueva"): si no entran en
+   una línea, el botón baja en vez de aplastar al control. */
+.campo-con-boton {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.campo-con-boton > select,
+.campo-con-boton > input {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+.campo-con-boton > .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* Las etiquetas pueden ocupar dos renglones antes que recortarse. */
+.campo label,
+.formulario-modal label {
+  overflow-wrap: anywhere;
+}
+
+/* Un campo que necesita todo el ancho de la grilla (textos largos, combos). */
+.campo-ancho {
+  grid-column: 1 / -1;
+}
+
+/* ═══════════ Tablas que se vuelven tarjetas en celular ═══════════
+   Una tabla de 7 columnas en un teléfono obliga a scrollear de costado y se
+   pierde de vista a qué fila pertenece cada dato. Con `.tabla-cards`, en
+   pantallas chicas cada fila pasa a ser una tarjeta y cada celda muestra su
+   encabezado al lado (via data-etiqueta). En escritorio no cambia nada. */
+@media (max-width: 700px) {
+  .tabla-cards {
+    display: block;
+  }
+  .tabla-cards thead {
+    /* Oculto para lectores de pantalla también: cada celda ya dice su etiqueta. */
+    display: none;
+  }
+  .tabla-cards tbody,
+  .tabla-cards tr,
+  .tabla-cards td {
+    display: block;
+    width: auto;
+  }
+  .tabla-cards tr {
+    border: 1px solid var(--color-borde, #e5e7eb);
+    border-radius: 10px;
+    padding: 0.7rem 0.85rem;
+    margin-bottom: 0.7rem;
+    background: var(--color-panel, #fff);
+  }
+  .tabla-cards tr:hover {
+    background: var(--color-panel, #fff);
+  }
+  .tabla-cards td {
+    border: none;
+    padding: 0.28rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.9rem;
+    text-align: right;
+  }
+  /* El encabezado de la columna, al lado del dato. */
+  .tabla-cards td::before {
+    content: attr(data-etiqueta);
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: var(--color-texto-suave, #6b7280);
+    text-align: left;
+    flex: 0 0 auto;
+  }
+  /* Celdas sin etiqueta (las de acciones): ocupan la fila completa. */
+  .tabla-cards td[data-etiqueta='']::before,
+  .tabla-cards td:not([data-etiqueta])::before {
+    content: none;
+  }
+  .tabla-cards td.celda-acciones {
+    justify-content: stretch;
+    padding-top: 0.6rem;
+    margin-top: 0.35rem;
+    border-top: 1px solid var(--color-borde, #e5e7eb);
+  }
+  .tabla-cards td.celda-acciones .fila-acciones {
+    width: 100%;
+  }
+  .tabla-cards td.celda-acciones .btn {
+    flex: 1 1 auto;
+  }
+  /* En tarjetas el scroll horizontal ya no hace falta. */
+  .tabla-cards-contenedor {
+    overflow-x: visible;
+  }
+}
+
+/* Paginación: en celular el texto va arriba y los botones abajo, a lo ancho. */
+@media (max-width: 640px) {
+  .paginacion {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .paginacion .btn {
+    width: 100%;
+  }
+  .paginacion span {
+    text-align: center;
   }
 }

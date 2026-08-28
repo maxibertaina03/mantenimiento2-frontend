@@ -62,8 +62,8 @@ export function UsuariosPage() {
       )}
 
       {data && data.datos.length > 0 && (
-        <div className="tabla-scroll">
-          <table className="tabla">
+        <div className="tabla-scroll tabla-cards-contenedor">
+          <table className="tabla tabla-cards">
             <thead>
               <tr>
                 <th>Usuario</th>
@@ -75,16 +75,16 @@ export function UsuariosPage() {
             <tbody>
               {data.datos.map((u) => (
                 <tr key={u.id}>
-                  <td>
+                  <td data-etiqueta="Usuario">
                     <strong>{u.nombre}</strong>
                     {u.id === yo?.id && <span className="badge badge-ok">Vos</span>}
                     {!u.idExterno && (
                       <div className="texto-suave texto-chico">Sin acceso al sistema</div>
                     )}
                   </td>
-                  <td>{u.email}</td>
-                  <td className="texto-suave">{formatearFecha(u.creadoEn)}</td>
-                  <td>
+                  <td data-etiqueta="Email">{u.email}</td>
+                  <td className="texto-suave" data-etiqueta="Alta">{formatearFecha(u.creadoEn)}</td>
+                  <td data-etiqueta="Rol">
                     <select
                       value={u.rol}
                       disabled={guardando === u.id}

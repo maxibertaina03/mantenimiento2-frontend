@@ -152,8 +152,8 @@ export function EquiposItPage() {
       )}
 
       {data && data.datos.length > 0 && (
-        <div className="tabla-scroll">
-          <table className="tabla">
+        <div className="tabla-scroll tabla-cards-contenedor">
+          <table className="tabla tabla-cards">
             <thead>
               <tr>
                 <th>Código</th>
@@ -168,17 +168,19 @@ export function EquiposItPage() {
             <tbody>
               {data.datos.map((equipo) => (
                 <tr key={equipo.id}>
-                  <td>{equipo.codigoInterno ?? '—'}</td>
-                  <td>{ETIQUETA_TIPO[equipo.tipo]}</td>
-                  <td>
+                  <td data-etiqueta="Código">{equipo.codigoInterno ?? '—'}</td>
+                  <td data-etiqueta="Tipo">{ETIQUETA_TIPO[equipo.tipo]}</td>
+                  <td data-etiqueta="Equipo">
                     <strong>{equipo.marca}</strong> {equipo.modelo}
                     {equipo.direccionIp && (
                       <div className="texto-suave texto-chico">{equipo.direccionIp}</div>
                     )}
                   </td>
-                  <td>{equipo.asignadoANombre ?? <span className="texto-suave">Depósito</span>}</td>
-                  <td>{equipo.ubicacion ?? '—'}</td>
-                  <td>
+                  <td data-etiqueta="Asignado a">
+                    {equipo.asignadoANombre ?? <span className="texto-suave">Depósito</span>}
+                  </td>
+                  <td data-etiqueta="Ubicación">{equipo.ubicacion ?? '—'}</td>
+                  <td data-etiqueta="Estado">
                     <span className={CLASE_ESTADO[equipo.estado]}>
                       {ETIQUETA_ESTADO[equipo.estado]}
                     </span>
@@ -186,13 +188,15 @@ export function EquiposItPage() {
                       <div className="texto-suave texto-chico">Garantía vencida</div>
                     )}
                   </td>
-                  <td className="fila-acciones-celda">
+                  <td className="celda-acciones">
+                    <div className="fila-acciones">
                     <button className="btn btn-sm" onClick={() => setEquipoDetalle(equipo)}>
                       Ver
                     </button>
                     <button className="btn btn-sm" onClick={() => setEquipoAsignar(equipo)}>
                       Asignar
                     </button>
+                    </div>
                   </td>
                 </tr>
               ))}
