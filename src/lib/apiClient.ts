@@ -137,9 +137,12 @@ export async function apiRequest<T>(path: string, opciones: OpcionesRequest = {}
   const datos = await respuesta.json().catch(() => null);
 
   if (!respuesta.ok) {
-    // Un 5xx que sobrevivió a los reintentos sigue siendo el servidor sin
-    // levantar, no un error de negocio: merece el mensaje explicativo.
-    if (ESTADOS_ARRANCANDO.has(respuesta.status)) {
+    // Un 5xx que sobrevivió a los reintentos suele ser el servidor sin levantar.
+    // Pero nuestra API también usa 502/503 para cosas reales (por ejemplo, que
+    // el correo no esté configurado), y ahí el mensaje explicativo tapaba el
+    // motivo verdadero. Se distinguen por el cuerpo: el proxy de Render
+    // devuelve HTML, y nuestra API devuelve JSON con `message`.
+    if (ESTADOS_ARRANCANDO.has(respuesta.status) && !datos?.message) {
       throw new ErrorServidorNoDisponible(
         'El servidor no está respondiendo. Puede estar iniciándose; probá de nuevo en un minuto.',
       );

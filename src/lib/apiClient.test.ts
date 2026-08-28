@@ -171,6 +171,45 @@ describe('apiRequest - manejo de errores', () => {
     await expect(apiRequest('/materiales')).rejects.toThrow('Error 409');
   });
 
+  it('REGRESION: un 503 CON mensaje de la API conserva ese mensaje', async () => {
+    // La API usa 503 para "el correo no esta configurado". Antes el cliente lo
+    // tapaba con el cartel de "el servidor esta arrancando" y el motivo real
+    // nunca llegaba a la pantalla.
+    fetchMock.mockResolvedValue(
+      respuesta(503, { message: 'El envío automático de correo no está configurado.' }),
+    );
+    await expect(
+      apiRequest('/ordenes-compra/x/enviar-correo', { method: 'POST', body: {} }),
+    ).rejects.toBeInstanceOf(ApiError);
+    await expect(
+      apiRequest('/ordenes-compra/x/enviar-correo', { method: 'POST', body: {} }),
+    ).rejects.toThrow(/no está configurado/);
+  });
+
+  it('REGRESION: un 502 CON mensaje (Gmail rechazo el envio) tambien lo conserva', async () => {
+    fetchMock.mockResolvedValue(
+      respuesta(502, { message: 'No se pudo enviar el correo: Invalid login 535-5.7.8' }),
+    );
+    await expect(
+      apiRequest('/ordenes-compra/x/enviar-correo', { method: 'POST', body: {} }),
+    ).rejects.toThrow(/535-5\.7\.8/);
+  });
+
+  it('un 503 SIN mensaje sigue siendo el servidor arrancando', async () => {
+    // Es lo que devuelve el proxy de Render mientras la instancia levanta: HTML,
+    // sin cuerpo JSON.
+    fetchMock.mockResolvedValue({
+      status: 503,
+      ok: false,
+      json: async () => {
+        throw new Error('no es JSON');
+      },
+    } as unknown as Response);
+    await expect(
+      apiRequest('/materiales', { method: 'POST', body: {} }),
+    ).rejects.toBeInstanceOf(ErrorServidorNoDisponible);
+  });
+
   it('un fallo de red se traduce a ErrorServidorNoDisponible (ver arranqueEnFrio.test.ts)', async () => {
     fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
     // Las mutaciones no se reintentan, asi que esto resuelve sin esperas.
