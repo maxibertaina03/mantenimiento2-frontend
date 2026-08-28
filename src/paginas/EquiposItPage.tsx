@@ -10,6 +10,7 @@ import {
 import { useUsuarios } from '@/api/usuarios';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { CampoNumero } from '@/componentes/CampoNumero';
+import { ImportarEquipos } from '@/componentes/ImportarEquipos';
 import { Modal } from '@/componentes/Modal';
 import { formatearFecha, formatearFechaSola } from '@/lib/formato';
 import {
@@ -52,6 +53,7 @@ export function EquiposItPage() {
   const [estado, setEstado] = useState<EstadoEquipoIt | ''>('');
 
   const [modalAlta, setModalAlta] = useState(false);
+  const [modalImportar, setModalImportar] = useState(false);
   const [equipoDetalle, setEquipoDetalle] = useState<EquipoIt | null>(null);
   const [equipoAsignar, setEquipoAsignar] = useState<EquipoIt | null>(null);
 
@@ -82,9 +84,14 @@ export function EquiposItPage() {
             Inventario de equipos informáticos: PCs, notebooks, servidores, celulares y cámaras.
           </p>
         </div>
-        <button className="btn btn-primario" onClick={() => setModalAlta(true)}>
-          + Nuevo equipo
-        </button>
+        <div className="fila-acciones">
+          <button className="btn" onClick={() => setModalImportar(true)}>
+            ↑ Importar CSV
+          </button>
+          <button className="btn btn-primario" onClick={() => setModalAlta(true)}>
+            + Nuevo equipo
+          </button>
+        </div>
       </header>
 
       {resumen && resumen.total > 0 && (
@@ -228,6 +235,7 @@ export function EquiposItPage() {
         </div>
       )}
 
+      <ImportarEquipos abierto={modalImportar} onCerrar={() => setModalImportar(false)} />
       {modalAlta && <ModalAltaEquipo alCerrar={() => setModalAlta(false)} />}
       {equipoDetalle && (
         <ModalDetalleEquipo equipo={equipoDetalle} alCerrar={() => setEquipoDetalle(null)} />

@@ -149,3 +149,25 @@ export interface AsignarEquipoInput {
   motivo?: string;
   notas?: string;
 }
+
+/** Una fila del CSV, tal cual se manda al backend (sin contraseñas). */
+export interface FilaImportacion {
+  nombreEquipo?: string;
+  tipo?: string;
+  modelo?: string;
+  estado?: string;
+  ubicacion?: string;
+  asignadoA?: string;
+  accesoRemotoId?: string;
+}
+
+export interface ResultadoImportacion {
+  creados: number;
+  actualizados: number;
+  conError: number;
+  /** Personas dadas de alta como usuarios sin acceso. */
+  usuariosCreados: string[];
+  /** Equipos cuya marca no se pudo reconocer y conviene revisar. */
+  revisarMarca: string[];
+  errores: { fila: number; equipo: string; motivo: string }[];
+}

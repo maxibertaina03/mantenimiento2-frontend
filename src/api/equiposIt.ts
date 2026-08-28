@@ -8,6 +8,8 @@ import type {
   CrearEquipoInput,
   EquipoIt,
   EstadoEquipoIt,
+  FilaImportacion,
+  ResultadoImportacion,
   ResumenEquipos,
   TipoEquipoIt,
 } from '@/tipos/equipoIt';
@@ -103,5 +105,19 @@ export function useEliminarEquipo() {
   return useMutation({
     mutationFn: (id: string) => apiRequest<void>(`/equipos-it/${id}`, { method: 'DELETE' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: clavesEquipos.base }),
+  });
+}
+
+/** Importación masiva del inventario desde una planilla. */
+export function useImportarEquipos() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { filas: FilaImportacion[] }) =>
+      apiRequest<ResultadoImportacion>('/equipos-it/importar', { method: 'POST', body: input }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: clavesEquipos.base });
+      // La importación puede dar de alta personas nuevas.
+      qc.invalidateQueries({ queryKey: ['usuarios'] });
+    },
   });
 }
