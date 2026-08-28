@@ -8,6 +8,7 @@ import {
   useOrdenes,
   useRecibirOrden,
 } from '@/api/ordenesCompra';
+import { CampoNumero } from '@/componentes/CampoNumero';
 import { ComboMaterial } from '@/componentes/ComboMaterial';
 import { ComboProveedor } from '@/componentes/ComboProveedor';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
@@ -191,8 +192,8 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
 
   // Renglón que se está armando.
   const [material, setMaterial] = useState<Material | null>(null);
-  const [cantidad, setCantidad] = useState('');
-  const [precio, setPrecio] = useState('');
+  const [cantidad, setCantidad] = useState<number | undefined>(undefined);
+  const [precio, setPrecio] = useState<number | undefined>(undefined);
 
   const crear = useCrearOrden();
   const emitir = useEmitirOrdenPorId();
@@ -202,12 +203,12 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
     setObservaciones('');
     setRenglones([]);
     setMaterial(null);
-    setCantidad('');
-    setPrecio('');
+    setCantidad(undefined);
+    setPrecio(undefined);
   };
 
   const agregarRenglon = () => {
-    if (!material || !cantidad) return;
+    if (!material || cantidad === undefined || cantidad <= 0) return;
     // El backend rechaza el mismo material dos veces: lo avisamos antes.
     if (renglones.some((r) => r.materialId === material.id)) {
       alert(`"${material.nombre}" ya está en la orden. Editá la cantidad de ese renglón.`);
@@ -219,13 +220,13 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
         materialId: material.id,
         materialNombre: material.nombre,
         unidad: material.unidad,
-        cantidad: Number(cantidad),
-        precioUnitario: precio ? Number(precio) : undefined,
+        cantidad,
+        precioUnitario: precio,
       },
     ]);
     setMaterial(null);
-    setCantidad('');
-    setPrecio('');
+    setCantidad(undefined);
+    setPrecio(undefined);
   };
 
   const quitarRenglon = (materialId: string) =>
@@ -290,31 +291,29 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
           </label>
           <label>
             Cantidad *
-            <input
-              type="number"
+            <CampoNumero
               step="0.001"
               min="0.001"
               placeholder="0"
-              value={cantidad}
-              onChange={(e) => setCantidad(e.target.value)}
+              valor={cantidad}
+              onCambio={setCantidad}
             />
           </label>
           <label>
             Precio unitario
-            <input
-              type="number"
+            <CampoNumero
               step="0.01"
               min="0"
               placeholder="opcional"
-              value={precio}
-              onChange={(e) => setPrecio(e.target.value)}
+              valor={precio}
+              onCambio={setPrecio}
             />
           </label>
           <button
             type="button"
             className="btn btn-primario alta-renglon-boton"
             onClick={agregarRenglon}
-            disabled={!material || !cantidad}
+            disabled={!material || cantidad === undefined || cantidad <= 0}
           >
             + Agregar
           </button>

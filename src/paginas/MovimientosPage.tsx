@@ -9,6 +9,7 @@ import {
 import { useUsuarioActual } from '@/api/usuarios';
 import { BadgeMovimiento } from '@/componentes/BadgeMovimiento';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
+import { CampoNumero } from '@/componentes/CampoNumero';
 import { Modal } from '@/componentes/Modal';
 import { descargarCsv, generarCsv, sufijoFechaArchivo } from '@/lib/csv';
 import { exportarPdf } from '@/lib/pdf';
@@ -343,7 +344,9 @@ function FormularioEdicion({ movimiento, onListo }: { movimiento: Movimiento; on
   const actualizar = useActualizarMovimiento();
   const [tipo, setTipo] = useState<TipoMovimiento>(movimiento.tipo);
   const [motivo, setMotivo] = useState<MotivoMovimiento>(movimiento.motivo);
-  const [cantidad, setCantidad] = useState<number>(movimiento.cantidad);
+  // `undefined` mientras el campo esta vacio: el input es obligatorio, asi
+  // que el navegador no deja enviar el formulario en ese estado.
+  const [cantidad, setCantidad] = useState<number | undefined>(movimiento.cantidad);
   const [fechaLocal, setFechaLocal] = useState(isoADatetimeLocal(movimiento.fecha));
   const [referencia, setReferencia] = useState(movimiento.referenciaTrabajo ?? '');
   const [notas, setNotas] = useState(movimiento.notas ?? '');
@@ -361,7 +364,7 @@ function FormularioEdicion({ movimiento, onListo }: { movimiento: Movimiento; on
     const input: ActualizarMovimientoInput = {
       tipo,
       motivo,
-      cantidad: Number(cantidad),
+      cantidad: cantidad ?? 0,
       fecha: fechaLocal ? new Date(fechaLocal).toISOString() : undefined,
       referenciaTrabajo: referencia || undefined,
       notas: notas || undefined,
@@ -403,13 +406,12 @@ function FormularioEdicion({ movimiento, onListo }: { movimiento: Movimiento; on
       <div className="grilla-2">
         <div className="campo">
           <label>Cantidad{tipo === 'AJUSTE' && ' (stock absoluto)'}</label>
-          <input
-            type="number"
+          <CampoNumero
             min={0}
             step="0.001"
             required
-            value={cantidad}
-            onChange={(e) => setCantidad(Number(e.target.value))}
+            valor={cantidad}
+            onCambio={setCantidad}
           />
         </div>
         <div className="campo">

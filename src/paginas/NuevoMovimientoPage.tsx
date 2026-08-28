@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useCrearMovimiento } from '@/api/movimientos';
+import { CampoNumero } from '@/componentes/CampoNumero';
 import { ComboMaterial } from '@/componentes/ComboMaterial';
 import { ComboProveedor } from '@/componentes/ComboProveedor';
 import { MensajeError } from '@/componentes/Estados';
@@ -14,11 +15,20 @@ import {
   type TipoMovimiento,
 } from '@/tipos/movimiento';
 
-const FORM_INICIAL = (materialId: string): CrearMovimientoInput => ({
+/**
+ * Borrador del formulario. Se distingue de `CrearMovimientoInput` (el payload
+ * que espera la API) porque mientras se escribe la cantidad puede estar vacía:
+ * el input es obligatorio, así que el navegador no deja enviar sin completarla.
+ */
+type BorradorMovimiento = Omit<CrearMovimientoInput, 'cantidad'> & {
+  cantidad?: number;
+};
+
+const FORM_INICIAL = (materialId: string): BorradorMovimiento => ({
   materialId,
   tipo: 'ENTRADA',
   motivo: 'COMPRA',
-  cantidad: 0,
+  cantidad: undefined,
 });
 
 export function NuevoMovimientoPage() {
@@ -27,14 +37,14 @@ export function NuevoMovimientoPage() {
 
   const crear = useCrearMovimiento();
 
-  const [form, setForm] = useState<CrearMovimientoInput>(FORM_INICIAL(materialIdInicial));
+  const [form, setForm] = useState<BorradorMovimiento>(FORM_INICIAL(materialIdInicial));
   // Material elegido en el combo (para mostrar stock y validar).
   const [materialSel, setMaterialSel] = useState<Material | null>(null);
   // El input datetime-local trabaja con 'YYYY-MM-DDTHH:mm'; convertimos a ISO al enviar.
   const [fechaLocal, setFechaLocal] = useState('');
   const [exito, setExito] = useState<string | null>(null);
 
-  const set = <K extends keyof CrearMovimientoInput>(clave: K, valor: CrearMovimientoInput[K]) =>
+  const set = <K extends keyof BorradorMovimiento>(clave: K, valor: BorradorMovimiento[K]) =>
     setForm((f) => ({ ...f, [clave]: valor }));
 
   const elegirMaterial = (m: Material | null) => {
@@ -61,7 +71,7 @@ export function NuevoMovimientoPage() {
     if (!form.materialId) return; // sin material no se puede registrar
     const payload: CrearMovimientoInput = {
       ...form,
-      cantidad: Number(form.cantidad),
+      cantidad: form.cantidad ?? 0,
       fecha: fechaLocal ? new Date(fechaLocal).toISOString() : undefined,
       // El proveedor solo aplica a compras.
       proveedorId: form.motivo === 'COMPRA' ? form.proveedorId || undefined : undefined,
@@ -130,15 +140,14 @@ export function NuevoMovimientoPage() {
               Cantidad
               {form.tipo === 'AJUSTE' && ' (fija el stock a este valor absoluto)'}
             </label>
-            <input
-              type="number"
+            <CampoNumero
               min={0}
               step="0.001"
               required
-              value={form.cantidad}
-              onChange={(e) => set('cantidad', Number(e.target.value))}
+              valor={form.cantidad}
+              onCambio={(v) => set('cantidad', v)}
             />
-            {form.tipo === 'SALIDA' && materialSel && form.cantidad > materialSel.stockActual && (
+            {form.tipo === 'SALIDA' && materialSel && (form.cantidad ?? 0) > materialSel.stockActual && (
               <p className="texto-suave" style={{ fontSize: '0.8rem', color: 'var(--color-peligro)' }}>
                 La salida supera el stock disponible ({formatearNumero(materialSel.stockActual)}).
                 El backend la rechazará.

@@ -9,6 +9,7 @@ import {
 } from '@/api/equiposIt';
 import { useUsuarios } from '@/api/usuarios';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
+import { CampoNumero } from '@/componentes/CampoNumero';
 import { Modal } from '@/componentes/Modal';
 import { formatearFecha, formatearFechaSola } from '@/lib/formato';
 import {
@@ -342,13 +343,10 @@ function ModalAltaEquipo({ alCerrar }: { alCerrar: () => void }) {
               </label>
               <label>
                 Memoria RAM (GB)
-                <input
-                  type="number"
+                <CampoNumero
                   min={1}
-                  value={form.memoriaRamGb ?? ''}
-                  onChange={(e) =>
-                    cambiar('memoriaRamGb', e.target.value ? Number(e.target.value) : undefined)
-                  }
+                  valor={form.memoriaRamGb}
+                  onCambio={(v) => cambiar('memoriaRamGb', v)}
                 />
               </label>
               <label>
@@ -368,13 +366,10 @@ function ModalAltaEquipo({ alCerrar }: { alCerrar: () => void }) {
               </label>
               <label>
                 Capacidad del disco (GB)
-                <input
-                  type="number"
+                <CampoNumero
                   min={1}
-                  value={form.discoCapacidadGb ?? ''}
-                  onChange={(e) =>
-                    cambiar('discoCapacidadGb', e.target.value ? Number(e.target.value) : undefined)
-                  }
+                  valor={form.discoCapacidadGb}
+                  onCambio={(v) => cambiar('discoCapacidadGb', v)}
                 />
               </label>
               <label>

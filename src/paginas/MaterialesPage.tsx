@@ -7,6 +7,7 @@ import {
   useMateriales,
 } from '@/api/materiales';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
+import { CampoNumero } from '@/componentes/CampoNumero';
 import { Modal } from '@/componentes/Modal';
 import { descargarCsv, generarCsv, sufijoFechaArchivo } from '@/lib/csv';
 import { exportarPdf } from '@/lib/pdf';
@@ -322,12 +323,11 @@ function FormularioMaterial({ onListo }: { onListo: () => void }) {
 
       <div className="campo">
         <label>Stock mínimo (umbral de alerta)</label>
-        <input
-          type="number"
+        <CampoNumero
           min={0}
           step="0.001"
-          value={form.stockMinimo}
-          onChange={(e) => setForm({ ...form, stockMinimo: Number(e.target.value) })}
+          valor={form.stockMinimo}
+          onCambio={(v) => setForm({ ...form, stockMinimo: v })}
         />
       </div>
 
