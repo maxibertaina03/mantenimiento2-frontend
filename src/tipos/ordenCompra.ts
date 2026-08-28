@@ -35,6 +35,10 @@ export interface OrdenCompra {
   proveedorId: string;
   proveedorNombre: string | null;
   proveedorCuit: string | null;
+  /** Para ofrecer el envío por correo. */
+  proveedorEmail: string | null;
+  /** Para ofrecer el envío por WhatsApp. */
+  proveedorTelefono: string | null;
   fecha: string;
   observaciones: string | null;
   creadoPorNombre: string | null;

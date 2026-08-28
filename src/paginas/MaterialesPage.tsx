@@ -3,20 +3,28 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCategorias, useCrearCategoria } from '@/api/categorias';
 import {
   obtenerTodosLosMateriales,
+  useActualizarMaterial,
   useCrearMaterial,
   useEliminarMaterial,
   useMateriales,
+  useUnidades,
 } from '@/api/materiales';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { AccionesFila } from '@/componentes/AccionesFila';
+import { CategoriasMaterial } from '@/componentes/CategoriasMaterial';
 import { CampoNumero } from '@/componentes/CampoNumero';
 import { Modal } from '@/componentes/Modal';
 import { descargarCsv, generarCsv, sufijoFechaArchivo } from '@/lib/csv';
 import { exportarPdf } from '@/lib/pdf';
 import { formatearNumero } from '@/lib/formato';
-import type { CrearMaterialInput } from '@/tipos/material';
+import type { CrearMaterialInput, Material } from '@/tipos/material';
 
 const LIMITE = 20;
+
+/** Unidades que se ofrecen aunque todavía no las use ningún material. */
+const UNIDADES_HABITUALES = [
+  'u', 'kg', 'g', 'lt', 'ml', 'm', 'cm', 'mm', 'm2', 'm3', 'par', 'caja', 'rollo', 'juego',
+];
 
 export function MaterialesPage() {
   const navegar = useNavigate();
@@ -36,6 +44,8 @@ export function MaterialesPage() {
 
   const { data, isLoading, error, isFetching } = useMateriales(pagina, LIMITE, busquedaDebounced);
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [editando, setEditando] = useState<Material | null>(null);
+  const [modalCategorias, setModalCategorias] = useState(false);
   const [exportando, setExportando] = useState(false);
   const [errorExport, setErrorExport] = useState<string | null>(null);
 
@@ -97,6 +107,9 @@ export function MaterialesPage() {
           </button>
           <button className="btn" onClick={() => exportar('pdf')} disabled={exportando}>
             {exportando ? 'Exportando…' : '⬇ PDF'}
+          </button>
+          <button className="btn" onClick={() => setModalCategorias(true)}>
+            ⚙ Categorías
           </button>
           <button className="btn btn-primario" onClick={() => setModalAbierto(true)}>
             + Nuevo material
@@ -169,7 +182,7 @@ export function MaterialesPage() {
                   <AccionesFila
                     descripcion={m.nombre}
                     onVer={() => navegar(`/materiales/${m.id}`)}
-                    onEditar={() => navegar(`/materiales/${m.id}`)}
+                    onEditar={() => setEditando(m)}
                     onEliminar={() => {
                       if (confirm(`¿Eliminar el material "${m.nombre}"?`)) eliminar.mutate(m.id);
                     }}
@@ -216,22 +229,60 @@ export function MaterialesPage() {
         </div>
       )}
 
-      <Modal titulo="Nuevo material" abierto={modalAbierto} onCerrar={() => setModalAbierto(false)}>
-        <FormularioMaterial onListo={() => setModalAbierto(false)} />
+      <Modal
+        titulo={editando ? `Editar ${editando.nombre}` : 'Nuevo material'}
+        abierto={modalAbierto || editando !== null}
+        onCerrar={() => {
+          setModalAbierto(false);
+          setEditando(null);
+        }}
+      >
+        {/* key: remonta el formulario al cambiar de material, para que no
+            conserve los valores del anterior. */}
+        <FormularioMaterial
+          key={editando?.id ?? 'nuevo'}
+          material={editando ?? undefined}
+          onListo={() => {
+            setModalAbierto(false);
+            setEditando(null);
+          }}
+        />
       </Modal>
+
+      <CategoriasMaterial
+        abierto={modalCategorias}
+        onCerrar={() => setModalCategorias(false)}
+      />
     </>
   );
 }
 
-function FormularioMaterial({ onListo }: { onListo: () => void }) {
+/**
+ * Mismo formulario para dar de alta y para editar. Mantener dos copias
+ * garantizaba que se desincronizaran al agregar un campo.
+ */
+function FormularioMaterial({
+  onListo,
+  material,
+}: {
+  onListo: () => void;
+  /** Si viene, el formulario edita ese material en vez de crear uno nuevo. */
+  material?: Material;
+}) {
+  const esEdicion = material !== undefined;
   const { data: categorias } = useCategorias();
+  const { data: unidades } = useUnidades();
   const crear = useCrearMaterial();
+  const actualizar = useActualizarMaterial(material?.id ?? '');
   const crearCategoria = useCrearCategoria();
+  const guardando = crear.isPending || actualizar.isPending;
+  const errorGuardar = crear.error ?? actualizar.error;
   const [form, setForm] = useState<CrearMaterialInput>({
-    nombre: '',
-    categoriaId: '',
-    unidad: 'u',
-    stockMinimo: 0,
+    nombre: material?.nombre ?? '',
+    categoriaId: material?.categoriaId ?? '',
+    unidad: material?.unidad ?? 'u',
+    stockMinimo: material?.stockMinimo ?? 0,
+    notas: material?.notas ?? undefined,
   });
   // Alta rápida de categoría desde el mismo formulario.
   const [modoNuevaCat, setModoNuevaCat] = useState(false);
@@ -249,17 +300,17 @@ function FormularioMaterial({ onListo }: { onListo: () => void }) {
     });
   };
 
-  const enviar = (e: React.FormEvent) => {
+  const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
-    crear.mutate(
-      { ...form, stockMinimo: Number(form.stockMinimo) || 0 },
-      { onSuccess: onListo },
-    );
+    const datos = { ...form, stockMinimo: Number(form.stockMinimo) || 0 };
+    if (esEdicion) await actualizar.mutateAsync(datos);
+    else await crear.mutateAsync(datos);
+    onListo();
   };
 
   return (
     <form onSubmit={enviar}>
-      {crear.error && <MensajeError error={crear.error} />}
+      {errorGuardar && <MensajeError error={errorGuardar} />}
 
       <div className="campo">
         <label>Nombre</label>
@@ -339,12 +390,21 @@ function FormularioMaterial({ onListo }: { onListo: () => void }) {
         </div>
         <div className="campo">
           <label>Unidad</label>
+          {/* datalist: sugiere las unidades ya usadas mas las habituales, sin
+              dejar de ser texto libre. Evita que "lt", "Lt" y "litros" terminen
+              siendo tres unidades distintas. */}
           <input
             required
             value={form.unidad}
             onChange={(e) => setForm({ ...form, unidad: e.target.value })}
             placeholder="u, kg, m, lt…"
+            list="unidades-materiales"
           />
+          <datalist id="unidades-materiales">
+            {[...new Set([...(unidades ?? []), ...UNIDADES_HABITUALES])].map((u) => (
+              <option key={u} value={u} />
+            ))}
+          </datalist>
         </div>
       </div>
 
@@ -366,8 +426,8 @@ function FormularioMaterial({ onListo }: { onListo: () => void }) {
         <button type="button" className="btn" onClick={onListo}>
           Cancelar
         </button>
-        <button type="submit" className="btn btn-primario" disabled={crear.isPending}>
-          {crear.isPending ? 'Guardando…' : 'Crear material'}
+        <button type="submit" className="btn btn-primario" disabled={guardando}>
+          {guardando ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Crear material'}
         </button>
       </div>
     </form>

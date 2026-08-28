@@ -1207,3 +1207,15 @@ button {
   margin-top: 0.15rem;
   flex: 0 0 auto;
 }
+
+/* Botones de envío de la orden: se apilan a lo ancho en celular. */
+.acciones-envio {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.acciones-envio .btn {
+  flex: 1 1 auto;
+  text-align: center;
+  text-decoration: none;
+}

@@ -74,6 +74,8 @@ const orden: OrdenCompra = {
   proveedorId: 'prov-1',
   proveedorNombre: 'Ferretería Central',
   proveedorCuit: '30-12345678-9',
+  proveedorEmail: 'ventas@ferreteria.com.ar',
+  proveedorTelefono: '3564 123456',
   fecha: '2026-08-25T10:00:00.000Z',
   observaciones: 'Entregar en portería',
   creadoPorNombre: 'Maxi',

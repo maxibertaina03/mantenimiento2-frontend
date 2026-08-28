@@ -91,3 +91,12 @@ export function useEliminarMaterial() {
     onSuccess: () => qc.invalidateQueries({ queryKey: clavesMateriales.base }),
   });
 }
+
+/** Unidades ya usadas, para sugerirlas en el formulario. */
+export function useUnidades() {
+  return useQuery({
+    queryKey: ['materiales', 'unidades'],
+    queryFn: () => apiRequest<string[]>('/materiales/unidades'),
+    staleTime: 60_000,
+  });
+}

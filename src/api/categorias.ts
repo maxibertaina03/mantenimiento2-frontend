@@ -21,3 +21,25 @@ export function useCrearCategoria() {
     onSuccess: () => qc.invalidateQueries({ queryKey: claves.todas }),
   });
 }
+
+export function useActualizarCategoria() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...datos }: { id: string; nombre?: string; descripcion?: string }) =>
+      apiRequest<Categoria>(`/categorias-material/${id}`, { method: 'PATCH', body: datos }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: claves.todas });
+      // El nombre de la categoría se muestra en el listado de materiales.
+      qc.invalidateQueries({ queryKey: ['materiales'] });
+    },
+  });
+}
+
+export function useEliminarCategoria() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiRequest<void>(`/categorias-material/${id}`, { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: claves.todas }),
+  });
+}

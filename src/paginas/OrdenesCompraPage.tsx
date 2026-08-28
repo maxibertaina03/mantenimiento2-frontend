@@ -15,6 +15,7 @@ import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
 import { formatearFecha, formatearNumero } from '@/lib/formato';
 import { descargarPdfOrdenCompra } from '@/lib/pdfOrdenCompra';
+import { EnviarOrden } from '@/componentes/EnviarOrden';
 import { ETIQUETA_ESTADO_ORDEN } from '@/tipos/ordenCompra';
 import type {
   EstadoOrdenCompra,
@@ -45,6 +46,7 @@ export function OrdenesCompraPage() {
   const [estado, setEstado] = useState<EstadoOrdenCompra | ''>('');
   const [modalAlta, setModalAlta] = useState(false);
   const [ordenAbierta, setOrdenAbierta] = useState<OrdenCompra | null>(null);
+  const [ordenAEnviar, setOrdenAEnviar] = useState<OrdenCompra | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -169,9 +171,20 @@ export function OrdenesCompraPage() {
         </div>
       )}
 
-      <ModalNuevaOrden abierto={modalAlta} onCerrar={() => setModalAlta(false)} />
+      <ModalNuevaOrden
+        abierto={modalAlta}
+        onCerrar={() => setModalAlta(false)}
+        onEnviar={setOrdenAEnviar}
+      />
+      {ordenAEnviar && (
+        <EnviarOrden orden={ordenAEnviar} onCerrar={() => setOrdenAEnviar(null)} />
+      )}
       {ordenAbierta && (
-        <ModalDetalleOrden orden={ordenAbierta} onCerrar={() => setOrdenAbierta(null)} />
+        <ModalDetalleOrden
+          orden={ordenAbierta}
+          onCerrar={() => setOrdenAbierta(null)}
+          onEnviar={setOrdenAEnviar}
+        />
       )}
     </>
   );
@@ -185,7 +198,16 @@ interface RenglonBorrador extends RenglonInput {
   unidad: string;
 }
 
-function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => void }) {
+function ModalNuevaOrden({
+  abierto,
+  onCerrar,
+  onEnviar,
+}: {
+  abierto: boolean;
+  onCerrar: () => void;
+  /** Se llama tras imprimir, para ofrecer el envío al proveedor. */
+  onEnviar: (orden: OrdenCompra) => void;
+}) {
   const [proveedorId, setProveedorId] = useState('');
   const [observaciones, setObservaciones] = useState('');
   const [renglones, setRenglones] = useState<RenglonBorrador[]>([]);
@@ -265,6 +287,8 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
 
     await descargarPdfOrdenCompra(orden);
     await emitir.mutateAsync(orden.id);
+    // El PDF ya está bajado: ahora se ofrece a quién mandárselo.
+    onEnviar(orden);
   };
 
   return (
@@ -412,7 +436,15 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
 
 // ─────────────────────── Detalle de la orden ───────────────────────
 
-function ModalDetalleOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar: () => void }) {
+function ModalDetalleOrden({
+  orden,
+  onCerrar,
+  onEnviar,
+}: {
+  orden: OrdenCompra;
+  onCerrar: () => void;
+  onEnviar: (orden: OrdenCompra) => void;
+}) {
   const emitir = useEmitirOrden(orden.id);
   const recibir = useRecibirOrden(orden.id);
   const anular = useAnularOrden(orden.id);
@@ -554,6 +586,11 @@ function ModalDetalleOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar: 
           <button className="btn" onClick={() => descargarPdfOrdenCompra(orden)}>
             🖨 Descargar PDF
           </button>
+          {orden.estado !== 'BORRADOR' && (
+            <button className="btn" onClick={() => onEnviar(orden)}>
+              ✉ Enviar al proveedor
+            </button>
+          )}
 
           {orden.estado === 'BORRADOR' && (
             <button
@@ -565,6 +602,7 @@ function ModalDetalleOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar: 
                 // mercaderia.
                 await descargarPdfOrdenCompra(orden);
                 await emitir.mutateAsync();
+                onEnviar(orden);
                 onCerrar();
               }}
             >
