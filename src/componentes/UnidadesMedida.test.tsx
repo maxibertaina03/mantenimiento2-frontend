@@ -184,6 +184,26 @@ describe('UnidadesMedida — carga masiva', () => {
     );
   });
 
+  it('una vez hecha, el aviso se cierra y no vuelve', async () => {
+    // Es una carga de una sola vez: dejarla a la vista despues invita a
+    // repetirla y pisar las unidades corregidas a mano.
+    conPendientes(831);
+    const usuario = userEvent.setup();
+    abrir();
+    await screen.findByText(/831 material/i);
+
+    await usuario.selectOptions(
+      screen.getByRole('combobox'),
+      screen.getByRole('option', { name: /Unidad \(u\)/ }),
+    );
+    await usuario.click(screen.getByRole('button', { name: /asignar a los 831/i }));
+    await screen.findByText(/no vuelve a aparecer/i);
+
+    await usuario.click(screen.getByRole('button', { name: /entendido/i }));
+    expect(screen.queryByText(/quedaron con la unidad/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/material\(es\) sin unidad/i)).not.toBeInTheDocument();
+  });
+
   it('el boton esta deshabilitado hasta elegir una unidad', async () => {
     conPendientes(831);
     abrir();

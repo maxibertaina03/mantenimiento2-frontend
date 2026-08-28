@@ -203,10 +203,13 @@ function CargaMasiva({ unidades }: { unidades: UnidadMedida[] }) {
   const asignar = useAsignarUnidadMasiva();
   const [unidadId, setUnidadId] = useState('');
   const [hecho, setHecho] = useState<number | null>(null);
+  const [oculto, setOculto] = useState(false);
 
   const sinUnidad = pendientes?.sinUnidad ?? 0;
-  // Con todo asignado el bloque no aporta nada, salvo para mostrar el resultado.
-  if (sinUnidad === 0 && hecho === null) return null;
+  // Es una carga de una sola vez: una vez que no quedan materiales sin unidad,
+  // el bloque no vuelve a mostrarse (la unidad es obligatoria al crear, así que
+  // el hueco no se puede volver a abrir).
+  if (oculto || (sinUnidad === 0 && hecho === null)) return null;
 
   const elegida = unidades.find((u) => u.id === unidadId);
 
@@ -223,10 +226,17 @@ function CargaMasiva({ unidades }: { unidades: UnidadMedida[] }) {
   return (
     <div className="alerta alerta-aviso">
       {hecho !== null ? (
-        <p>
-          Listo: {hecho} material(es) quedaron con la unidad asignada. Ajustá desde cada material
-          los que necesiten otra.
-        </p>
+        <>
+          <p>
+            Listo: {hecho} material(es) quedaron con la unidad asignada. Ajustá desde cada
+            material los que necesiten otra. Este aviso no vuelve a aparecer.
+          </p>
+          <div className="acciones">
+            <button className="btn" onClick={() => setOculto(true)}>
+              Entendido
+            </button>
+          </div>
+        </>
       ) : (
         <>
           <p>

@@ -1,5 +1,6 @@
 import {
   MAIL_ADMINISTRACION,
+  WHATSAPP_ADMINISTRACION,
   enlaceCorreo,
   enlaceWhatsapp,
   esEmailValido,
@@ -20,6 +21,8 @@ import type { OrdenCompra } from '@/tipos/ordenCompra';
 export function EnviarOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar: () => void }) {
   const tieneEmail = esEmailValido(orden.proveedorEmail);
   const urlWhatsapp = enlaceWhatsapp(orden, orden.proveedorTelefono);
+  // Provisorio, para probar el circuito sin escribirle a un proveedor real.
+  const urlWhatsappAdmin = enlaceWhatsapp(orden, WHATSAPP_ADMINISTRACION);
   const urlCorreo = enlaceCorreo(orden, orden.proveedorEmail);
 
   return (
@@ -47,6 +50,10 @@ export function EnviarOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar:
             <span className="texto-suave texto-chico">Copia interna</span>
             <span>{MAIL_ADMINISTRACION}</span>
           </div>
+          <div className="dato">
+            <span className="texto-suave texto-chico">WhatsApp de administración</span>
+            <span>{WHATSAPP_ADMINISTRACION}</span>
+          </div>
         </div>
 
         <h3 className="subtitulo-form">Enviar por</h3>
@@ -57,18 +64,24 @@ export function EnviarOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar:
             ✉ Correo
           </a>
 
-          {urlWhatsapp ? (
+          {urlWhatsappAdmin && (
             <a
               className="btn btn-primario"
-              href={urlWhatsapp}
+              href={urlWhatsappAdmin}
               target="_blank"
               rel="noopener noreferrer"
             >
-              💬 WhatsApp
+              💬 WhatsApp a administración
+            </a>
+          )}
+
+          {urlWhatsapp ? (
+            <a className="btn" href={urlWhatsapp} target="_blank" rel="noopener noreferrer">
+              💬 WhatsApp al proveedor
             </a>
           ) : (
             <button className="btn" disabled title="El proveedor no tiene teléfono cargado">
-              💬 WhatsApp
+              💬 WhatsApp al proveedor
             </button>
           )}
 

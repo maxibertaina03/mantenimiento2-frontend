@@ -4,6 +4,15 @@ import type { OrdenCompra } from '@/tipos/ordenCompra';
 export const MAIL_ADMINISTRACION = 'administracion@lacteoslastres.com.ar';
 
 /**
+ * WhatsApp de administración de la empresa.
+ *
+ * PROVISORIO: por ahora las órdenes se mandan acá para probar el circuito sin
+ * escribirle a un proveedor de verdad. Cuando se confirme que funciona, el
+ * envío al proveedor es el botón de al lado (usa el teléfono de su ficha).
+ */
+export const WHATSAPP_ADMINISTRACION = '+54 9 3534 40-3519';
+
+/**
  * Armado de los envíos de una orden de compra: correo y WhatsApp.
  *
  * El PDF NO se puede adjuntar automáticamente: ni `mailto:` ni la API de

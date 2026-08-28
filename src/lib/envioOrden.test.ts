@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   MAIL_ADMINISTRACION,
+  WHATSAPP_ADMINISTRACION,
   aNumeroWhatsapp,
   armarMensaje,
   enlaceCorreo,
@@ -160,5 +161,19 @@ describe('enlaceWhatsapp', () => {
     expect(enlaceWhatsapp(orden, null)).toBeNull();
     expect(enlaceWhatsapp(orden, '')).toBeNull();
     expect(enlaceWhatsapp(orden, 'no tiene')).toBeNull();
+  });
+});
+
+describe('WHATSAPP_ADMINISTRACION', () => {
+  it('el numero de administracion se normaliza bien', () => {
+    // Es el destino provisorio para probar el circuito sin escribirle a un
+    // proveedor real: si no normalizara, el boton llevaria a un chat vacio.
+    expect(aNumeroWhatsapp(WHATSAPP_ADMINISTRACION)).toBe('5493534403519');
+  });
+
+  it('arma un enlace valido con la orden', () => {
+    const url = enlaceWhatsapp(orden, WHATSAPP_ADMINISTRACION);
+    expect(url?.startsWith('https://wa.me/5493534403519?text=')).toBe(true);
+    expect(decodeURIComponent(url!)).toContain('OC-2026-0007');
   });
 });
