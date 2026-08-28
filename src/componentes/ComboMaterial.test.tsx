@@ -207,15 +207,33 @@ describe('ComboMaterial — alta desde el combo', () => {
     expect(alCrear).toHaveBeenCalledWith('Valvula esferica');
   });
 
-  it('REGRESION: no ofrece crear con el campo vacio', async () => {
-    // Sin texto no habria nombre para el material nuevo.
+  it('REGRESION: con el campo vacio tambien ofrece crear', async () => {
+    // Antes solo aparecia al escribir algo, asi que la funcion quedaba
+    // invisible justo para quien no sabe que existe.
     const alCrear = vi.fn();
     const usuario = userEvent.setup();
     render(<ComboMaterial materialId="" onCambio={() => {}} onCrear={alCrear} />, {
       wrapper: envoltorio(),
     });
     await usuario.click(screen.getByRole('textbox'));
-    expect(screen.queryByText(/Crear el material/i)).not.toBeInTheDocument();
+
+    const boton = await screen.findByRole('button', { name: /Crear un material nuevo/i });
+    await usuario.click(boton);
+    expect(alCrear).toHaveBeenCalledWith('');
+  });
+
+  it('la opcion sigue apareciendo aunque haya resultados', async () => {
+    // Puede que el material exista con un nombre parecido pero no sea el mismo.
+    const alCrear = vi.fn();
+    const usuario = userEvent.setup();
+    render(<ComboMaterial materialId="" onCambio={() => {}} onCrear={alCrear} />, {
+      wrapper: envoltorio(),
+    });
+    await usuario.click(screen.getByRole('textbox'));
+    await usuario.type(screen.getByRole('textbox'), 'Cable');
+
+    expect(await screen.findByText('Cable 2.5mm')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Crear el material «Cable»/i })).toBeInTheDocument();
   });
 
   it('el texto se recorta antes de mandarlo', async () => {

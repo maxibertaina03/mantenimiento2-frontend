@@ -49,8 +49,9 @@ export function ComboMaterial({ materialId, onCambio, onCrear }: Props) {
 
   const { data, isFetching } = useMateriales(1, 20, abierto ? busq : '');
 
-  // Solo con algo escrito: sin texto no habría nombre para el material nuevo.
-  const puedeCrear = Boolean(onCrear) && texto.trim().length > 0;
+  // Se ofrece siempre, con o sin texto. Antes solo aparecía al escribir algo, y
+  // así la función quedaba invisible justo para quien no sabe que existe.
+  const buscado = texto.trim();
 
   const elegir = (m: Material) => {
     setSeleccionado(m);
@@ -86,27 +87,30 @@ export function ComboMaterial({ materialId, onCambio, onCrear }: Props) {
                 </span>
               </button>
             ))}
-          {!isFetching && data && data.datos.length === 0 && !puedeCrear && (
+          {!isFetching && data && data.datos.length === 0 && !onCrear && (
             <div className="combo-item texto-suave">Sin resultados</div>
-          )}
-          {/* El alta va al final: primero se ve si el material ya existe, para
-              no terminar con el mismo material cargado dos veces. */}
-          {!isFetching && puedeCrear && (
-            <button
-              type="button"
-              className="combo-item combo-item-crear"
-              onClick={() => {
-                setAbierto(false);
-                onCrear!(texto.trim());
-              }}
-            >
-              ＋ Crear el material «{texto.trim()}»
-            </button>
           )}
           {!isFetching && data && data.total > data.datos.length && (
             <div className="combo-item texto-suave" style={{ fontSize: '0.75rem' }}>
               Mostrando {data.datos.length} de {data.total}. Escribí para afinar la búsqueda.
             </div>
+          )}
+          {!isFetching && data && data.datos.length === 0 && onCrear && (
+            <div className="combo-item texto-suave">Sin resultados</div>
+          )}
+          {/* Pegado al pie de la lista: con veinte resultados, al final habría
+              que scrollear para descubrir que se puede crear. */}
+          {onCrear && (
+            <button
+              type="button"
+              className="combo-crear"
+              onClick={() => {
+                setAbierto(false);
+                onCrear(buscado);
+              }}
+            >
+              ＋ {buscado ? `Crear el material «${buscado}»` : 'Crear un material nuevo'}
+            </button>
           )}
         </div>
       )}
