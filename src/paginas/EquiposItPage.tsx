@@ -2,12 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   useAsignacionesEquipo,
   useAsignarEquipo,
+  useActualizarEquipo,
   useCrearEquipo,
   useEliminarEquipo,
   useEquipos,
   useResumenEquipos,
+  useUbicaciones,
 } from '@/api/equiposIt';
 import { useUsuarios } from '@/api/usuarios';
+import { AccionesFila } from '@/componentes/AccionesFila';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { CampoNumero } from '@/componentes/CampoNumero';
 import { ImportarEquipos } from '@/componentes/ImportarEquipos';
@@ -56,6 +59,7 @@ export function EquiposItPage() {
   const [modalImportar, setModalImportar] = useState(false);
   const [equipoDetalle, setEquipoDetalle] = useState<EquipoIt | null>(null);
   const [equipoAsignar, setEquipoAsignar] = useState<EquipoIt | null>(null);
+  const [equipoEditar, setEquipoEditar] = useState<EquipoIt | null>(null);
 
   // Debounce de la búsqueda para no pegarle a la API en cada tecla.
   useEffect(() => {
@@ -198,12 +202,18 @@ export function EquiposItPage() {
                   </td>
                   <td className="celda-acciones">
                     <div className="fila-acciones">
-                    <button className="btn btn-sm" onClick={() => setEquipoDetalle(equipo)}>
-                      Ver
-                    </button>
-                    <button className="btn btn-sm" onClick={() => setEquipoAsignar(equipo)}>
-                      Asignar
-                    </button>
+                      <AccionesFila
+                        descripcion={`${equipo.marca} ${equipo.modelo}`}
+                        onVer={() => setEquipoDetalle(equipo)}
+                        onEditar={() => setEquipoEditar(equipo)}
+                      />
+                      <button
+                        className="btn btn-sm"
+                        onClick={() => setEquipoAsignar(equipo)}
+                        title="Asignar o devolver a depósito"
+                      >
+                        Asignar
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -237,8 +247,19 @@ export function EquiposItPage() {
 
       <ImportarEquipos abierto={modalImportar} onCerrar={() => setModalImportar(false)} />
       {modalAlta && <ModalAltaEquipo alCerrar={() => setModalAlta(false)} />}
+      {equipoEditar && (
+        <ModalAltaEquipo equipo={equipoEditar} alCerrar={() => setEquipoEditar(null)} />
+      )}
       {equipoDetalle && (
-        <ModalDetalleEquipo equipo={equipoDetalle} alCerrar={() => setEquipoDetalle(null)} />
+        <ModalDetalleEquipo
+          equipo={equipoDetalle}
+          alCerrar={() => setEquipoDetalle(null)}
+          alEditar={() => {
+            const e = equipoDetalle;
+            setEquipoDetalle(null);
+            setEquipoEditar(e);
+          }}
+        />
       )}
       {equipoAsignar && (
         <ModalAsignar equipo={equipoAsignar} alCerrar={() => setEquipoAsignar(null)} />
@@ -249,9 +270,54 @@ export function EquiposItPage() {
 
 // ─────────────────────────── Alta ───────────────────────────
 
-function ModalAltaEquipo({ alCerrar }: { alCerrar: () => void }) {
-  const [form, setForm] = useState<CrearEquipoInput>(FORMULARIO_VACIO);
+/** Toma del equipo solo los campos que el formulario edita. */
+function aFormulario(equipo: EquipoIt): CrearEquipoInput {
+  return {
+    codigoInterno: equipo.codigoInterno ?? undefined,
+    tipo: equipo.tipo,
+    estado: equipo.estado,
+    marca: equipo.marca,
+    modelo: equipo.modelo,
+    numeroSerie: equipo.numeroSerie ?? undefined,
+    procesador: equipo.procesador ?? undefined,
+    memoriaRamGb: equipo.memoriaRamGb ?? undefined,
+    discoTipo: equipo.discoTipo ?? undefined,
+    discoCapacidadGb: equipo.discoCapacidadGb ?? undefined,
+    sistemaOperativo: equipo.sistemaOperativo ?? undefined,
+    direccionIp: equipo.direccionIp ?? undefined,
+    direccionMac: equipo.direccionMac ?? undefined,
+    nombreEnRed: equipo.nombreEnRed ?? undefined,
+    accesoRemoto: equipo.accesoRemoto,
+    accesoRemotoId: equipo.accesoRemotoId ?? undefined,
+    ubicacion: equipo.ubicacion ?? undefined,
+    proveedorId: equipo.proveedorId ?? undefined,
+    fechaCompra: equipo.fechaCompra ?? undefined,
+    garantiaHasta: equipo.garantiaHasta ?? undefined,
+    notas: equipo.notas ?? undefined,
+  };
+}
+
+/**
+ * Mismo formulario para dar de alta y para editar: los campos son los mismos y
+ * mantener dos copias garantizaba que se desincronizaran.
+ */
+function ModalAltaEquipo({
+  alCerrar,
+  equipo,
+}: {
+  alCerrar: () => void;
+  /** Si viene, el formulario edita ese equipo en vez de crear uno nuevo. */
+  equipo?: EquipoIt;
+}) {
+  const esEdicion = equipo !== undefined;
+  const [form, setForm] = useState<CrearEquipoInput>(
+    equipo ? aFormulario(equipo) : FORMULARIO_VACIO,
+  );
   const crear = useCrearEquipo();
+  const actualizar = useActualizarEquipo(equipo?.id ?? '');
+  const { data: ubicaciones } = useUbicaciones();
+  const guardando = crear.isPending || actualizar.isPending;
+  const errorGuardar = crear.error ?? actualizar.error;
 
   // Una cámara o un monitor no llevan procesador/RAM/disco.
   const conEspecificaciones = requiereEspecificacionesDePc(form.tipo);
@@ -271,12 +337,21 @@ function ModalAltaEquipo({ alCerrar }: { alCerrar: () => void }) {
 
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
-    await crear.mutateAsync(limpiar(form));
+    if (esEdicion) {
+      await actualizar.mutateAsync(limpiar(form));
+    } else {
+      await crear.mutateAsync(limpiar(form));
+    }
     alCerrar();
   };
 
   return (
-    <Modal titulo="Nuevo equipo" abierto tamano="ancho" onCerrar={alCerrar}>
+    <Modal
+      titulo={esEdicion ? `Editar ${equipo.marca} ${equipo.modelo}` : 'Nuevo equipo'}
+      abierto
+      tamano="ancho"
+      onCerrar={alCerrar}
+    >
       <form onSubmit={enviar} className="formulario-modal">
         <div className="grilla-campos">
           <label>
@@ -289,6 +364,19 @@ function ModalAltaEquipo({ alCerrar }: { alCerrar: () => void }) {
               {TIPOS.map((t) => (
                 <option key={t} value={t}>
                   {ETIQUETA_TIPO[t]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Estado
+            <select
+              value={form.estado ?? 'EN_DEPOSITO'}
+              onChange={(e) => cambiar('estado', e.target.value as EstadoEquipoIt)}
+            >
+              {ESTADOS.map((es) => (
+                <option key={es} value={es}>
+                  {ETIQUETA_ESTADO[es]}
                 </option>
               ))}
             </select>
@@ -329,11 +417,19 @@ function ModalAltaEquipo({ alCerrar }: { alCerrar: () => void }) {
           </label>
           <label>
             Ubicación
+            {/* datalist: sugiere las ubicaciones ya usadas pero deja escribir
+                una nueva. No es un catálogo cerrado. */}
             <input
               value={form.ubicacion ?? ''}
               onChange={(e) => cambiar('ubicacion', e.target.value)}
               placeholder="Oficina administración"
+              list="ubicaciones-equipos"
             />
+            <datalist id="ubicaciones-equipos">
+              {(ubicaciones ?? []).map((u) => (
+                <option key={u} value={u} />
+              ))}
+            </datalist>
           </label>
         </div>
 
@@ -481,14 +577,14 @@ function ModalAltaEquipo({ alCerrar }: { alCerrar: () => void }) {
           />
         </label>
 
-        {crear.error && <MensajeError error={crear.error} />}
+        {errorGuardar && <MensajeError error={errorGuardar} />}
 
         <div className="acciones">
           <button type="button" className="btn" onClick={alCerrar}>
             Cancelar
           </button>
-          <button type="submit" className="btn btn-primario" disabled={crear.isPending}>
-            {crear.isPending ? 'Guardando…' : 'Guardar equipo'}
+          <button type="submit" className="btn btn-primario" disabled={guardando}>
+            {guardando ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Guardar equipo'}
           </button>
         </div>
       </form>
@@ -508,7 +604,15 @@ function Dato({ etiqueta, valor }: { etiqueta: string; valor: string | number | 
   );
 }
 
-function ModalDetalleEquipo({ equipo, alCerrar }: { equipo: EquipoIt; alCerrar: () => void }) {
+function ModalDetalleEquipo({
+  equipo,
+  alCerrar,
+  alEditar,
+}: {
+  equipo: EquipoIt;
+  alCerrar: () => void;
+  alEditar: () => void;
+}) {
   const { data: historial } = useAsignacionesEquipo(equipo.id);
   const eliminar = useEliminarEquipo();
 
@@ -609,6 +713,9 @@ function ModalDetalleEquipo({ equipo, alCerrar }: { equipo: EquipoIt; alCerrar: 
         {eliminar.error && <MensajeError error={eliminar.error} />}
 
         <div className="acciones">
+          <button className="btn btn-primario" onClick={alEditar}>
+            ✏️ Editar
+          </button>
           <button
             className="btn btn-peligro"
             disabled={eliminar.isPending}

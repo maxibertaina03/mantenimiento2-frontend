@@ -66,6 +66,15 @@ export function useAsignacionesEquipo(id: string) {
   });
 }
 
+/** Ubicaciones ya usadas, para sugerirlas en el formulario. */
+export function useUbicaciones() {
+  return useQuery({
+    queryKey: ['equipos-it', 'ubicaciones'],
+    queryFn: () => apiRequest<string[]>('/equipos-it/ubicaciones'),
+    staleTime: 60_000,
+  });
+}
+
 export function useResumenEquipos() {
   return useQuery({
     queryKey: clavesEquipos.resumen,
