@@ -7,11 +7,12 @@ import {
   useCrearMaterial,
   useEliminarMaterial,
   useMateriales,
-  useUnidades,
 } from '@/api/materiales';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { AccionesFila } from '@/componentes/AccionesFila';
 import { CategoriasMaterial } from '@/componentes/CategoriasMaterial';
+import { UnidadesMedida } from '@/componentes/UnidadesMedida';
+import { useUnidadesMedida } from '@/api/unidadesMedida';
 import { CampoNumero } from '@/componentes/CampoNumero';
 import { Modal } from '@/componentes/Modal';
 import { descargarCsv, generarCsv, sufijoFechaArchivo } from '@/lib/csv';
@@ -22,10 +23,6 @@ import type { CrearMaterialInput, Material } from '@/tipos/material';
 const LIMITE = 20;
 
 /** Unidades que se ofrecen aunque todavía no las use ningún material. */
-const UNIDADES_HABITUALES = [
-  'u', 'kg', 'g', 'lt', 'ml', 'm', 'cm', 'mm', 'm2', 'm3', 'par', 'caja', 'rollo', 'juego',
-];
-
 export function MaterialesPage() {
   const navegar = useNavigate();
   const eliminar = useEliminarMaterial();
@@ -46,6 +43,7 @@ export function MaterialesPage() {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [editando, setEditando] = useState<Material | null>(null);
   const [modalCategorias, setModalCategorias] = useState(false);
+  const [modalUnidades, setModalUnidades] = useState(false);
   const [exportando, setExportando] = useState(false);
   const [errorExport, setErrorExport] = useState<string | null>(null);
 
@@ -110,6 +108,9 @@ export function MaterialesPage() {
           </button>
           <button className="btn" onClick={() => setModalCategorias(true)}>
             ⚙ Categorías
+          </button>
+          <button className="btn" onClick={() => setModalUnidades(true)}>
+            ⚙ Unidades
           </button>
           <button className="btn btn-primario" onClick={() => setModalAbierto(true)}>
             + Nuevo material
@@ -253,6 +254,8 @@ export function MaterialesPage() {
         abierto={modalCategorias}
         onCerrar={() => setModalCategorias(false)}
       />
+
+      <UnidadesMedida abierto={modalUnidades} onCerrar={() => setModalUnidades(false)} />
     </>
   );
 }
@@ -271,7 +274,8 @@ function FormularioMaterial({
 }) {
   const esEdicion = material !== undefined;
   const { data: categorias } = useCategorias();
-  const { data: unidades } = useUnidades();
+  // soloActivas: las unidades dadas de baja no se ofrecen para cargar nuevas.
+  const { data: unidades } = useUnidadesMedida(true);
   const crear = useCrearMaterial();
   const actualizar = useActualizarMaterial(material?.id ?? '');
   const crearCategoria = useCrearCategoria();
@@ -280,7 +284,7 @@ function FormularioMaterial({
   const [form, setForm] = useState<CrearMaterialInput>({
     nombre: material?.nombre ?? '',
     categoriaId: material?.categoriaId ?? '',
-    unidad: material?.unidad ?? 'u',
+    unidadId: material?.unidadId ?? '',
     stockMinimo: material?.stockMinimo ?? 0,
     notas: material?.notas ?? undefined,
   });
@@ -389,22 +393,22 @@ function FormularioMaterial({
           )}
         </div>
         <div className="campo">
-          <label>Unidad</label>
-          {/* datalist: sugiere las unidades ya usadas mas las habituales, sin
-              dejar de ser texto libre. Evita que "lt", "Lt" y "litros" terminen
-              siendo tres unidades distintas. */}
-          <input
+          <label>Unidad *</label>
+          {/* Desplegable del catálogo, no texto libre: si cada uno escribiera la
+              suya, "lt", "Lt" y "litros" volverían a ser tres unidades y los
+              reportes por unidad no cerrarían. */}
+          <select
             required
-            value={form.unidad}
-            onChange={(e) => setForm({ ...form, unidad: e.target.value })}
-            placeholder="u, kg, m, lt…"
-            list="unidades-materiales"
-          />
-          <datalist id="unidades-materiales">
-            {[...new Set([...(unidades ?? []), ...UNIDADES_HABITUALES])].map((u) => (
-              <option key={u} value={u} />
+            value={form.unidadId}
+            onChange={(e) => setForm({ ...form, unidadId: e.target.value })}
+          >
+            <option value="">Elegí una unidad…</option>
+            {(unidades ?? []).map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.nombre} ({u.simbolo})
+              </option>
             ))}
-          </datalist>
+          </select>
         </div>
       </div>
 

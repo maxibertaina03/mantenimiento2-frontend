@@ -5,6 +5,9 @@ export interface Material {
   nombre: string;
   categoriaId: string;
   categoriaNombre: string | null;
+  unidadId: string | null;
+  unidadNombre: string | null;
+  /** Símbolo de la unidad, o "" si el material todavía no tiene una cargada. */
   unidad: string;
   stockActual: number;
   stockMinimo: number;
@@ -22,7 +25,8 @@ export interface MaterialConHistorial extends Material {
 export interface CrearMaterialInput {
   nombre: string;
   categoriaId: string;
-  unidad: string;
+  /** Id del catálogo de unidades. Obligatorio al crear. */
+  unidadId: string;
   stockMinimo?: number;
   notas?: string;
 }
