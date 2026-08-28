@@ -10,6 +10,7 @@ import { useUsuarioActual } from '@/api/usuarios';
 import { BadgeMovimiento } from '@/componentes/BadgeMovimiento';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { CampoNumero } from '@/componentes/CampoNumero';
+import { AccionesFila } from '@/componentes/AccionesFila';
 import { Modal } from '@/componentes/Modal';
 import { descargarCsv, generarCsv, sufijoFechaArchivo } from '@/lib/csv';
 import { exportarPdf } from '@/lib/pdf';
@@ -226,8 +227,8 @@ export function MovimientosPage() {
 
       {data && data.datos.length > 0 && (
         <>
-          <div className="tabla-scroll">
-          <table className="tabla">
+          <div className="tabla-scroll tabla-cards-contenedor">
+          <table className="tabla tabla-cards">
             <thead>
               <tr>
                 <th>Fecha</th>
@@ -245,34 +246,26 @@ export function MovimientosPage() {
             <tbody>
               {data.datos.map((m: Movimiento) => (
                 <tr key={m.id}>
-                  <td>{formatearFecha(m.fecha)}</td>
-                  <td>{m.materialNombre ?? '—'}</td>
-                  <td>
+                  <td data-etiqueta="Fecha">{formatearFecha(m.fecha)}</td>
+                  <td data-etiqueta="Material">{m.materialNombre ?? '—'}</td>
+                  <td data-etiqueta="Tipo">
                     <BadgeMovimiento tipo={m.tipo} />
                   </td>
-                  <td>{m.motivo}</td>
-                  <td className="num">{formatearNumero(m.cantidad)}</td>
-                  <td>{m.proveedorNombre ?? '—'}</td>
-                  <td>{m.usuarioNombre ?? '—'}</td>
-                  <td>{m.referenciaTrabajo ?? '—'}</td>
-                  <td>{m.notas ?? '—'}</td>
-                  <td>
-                    <div className="fila-acciones">
-                      {m.editado && (
-                        <button
-                          className="btn btn-sm"
-                          onClick={() => setViendo(m)}
-                          title="Ver historial de cambios"
-                        >
-                          ✎ editado
-                        </button>
-                      )}
-                      {puedeEditar(m) && (
-                        <button className="btn btn-sm" onClick={() => setEditando(m)}>
-                          Editar
-                        </button>
-                      )}
-                    </div>
+                  <td data-etiqueta="Motivo">{m.motivo}</td>
+                  <td className="num" data-etiqueta="Cantidad">
+                    {formatearNumero(m.cantidad)}
+                  </td>
+                  <td data-etiqueta="Proveedor">{m.proveedorNombre ?? '—'}</td>
+                  <td data-etiqueta="Usuario">{m.usuarioNombre ?? '—'}</td>
+                  <td data-etiqueta="Referencia">{m.referenciaTrabajo ?? '—'}</td>
+                  <td data-etiqueta="Notas">{m.notas ?? '—'}</td>
+                  <td className="celda-acciones">
+                    <AccionesFila
+                      descripcion={`el movimiento de ${m.materialNombre ?? 'material'}`}
+                      onVer={m.editado ? () => setViendo(m) : undefined}
+                      onEditar={puedeEditar(m) ? () => setEditando(m) : undefined}
+                    />
+                    {m.editado && <span className="texto-suave texto-chico">editado</span>}
                   </td>
                 </tr>
               ))}
@@ -281,7 +274,7 @@ export function MovimientosPage() {
           </div>
 
           {/* ── Paginación ── */}
-          <div className="acciones" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="acciones paginacion">
             <span className="texto-suave">
               {data.total} movimiento(s){isFetching ? ' · actualizando…' : ''}
             </span>

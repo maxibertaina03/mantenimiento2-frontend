@@ -71,8 +71,8 @@ export function MaterialDetallePage() {
       {material.movimientos.length === 0 ? (
         <EstadoVacio>Este material no tiene movimientos todavía.</EstadoVacio>
       ) : (
-        <div className="tabla-scroll">
-        <table className="tabla">
+        <div className="tabla-scroll tabla-cards-contenedor">
+        <table className="tabla tabla-cards">
           <thead>
             <tr>
               <th>Fecha</th>
@@ -86,14 +86,16 @@ export function MaterialDetallePage() {
           <tbody>
             {material.movimientos.map((m) => (
               <tr key={m.id}>
-                <td>{formatearFecha(m.fecha)}</td>
-                <td>
+                <td data-etiqueta="Fecha">{formatearFecha(m.fecha)}</td>
+                <td data-etiqueta="Tipo">
                   <BadgeMovimiento tipo={m.tipo} />
                 </td>
-                <td>{m.motivo}</td>
-                <td className="num">{formatearNumero(m.cantidad)}</td>
-                <td>{m.referenciaTrabajo ?? '—'}</td>
-                <td>{m.notas ?? '—'}</td>
+                <td data-etiqueta="Motivo">{m.motivo}</td>
+                <td className="num" data-etiqueta="Cantidad">
+                  {formatearNumero(m.cantidad)}
+                </td>
+                <td data-etiqueta="Referencia">{m.referenciaTrabajo ?? '—'}</td>
+                <td data-etiqueta="Notas">{m.notas ?? '—'}</td>
               </tr>
             ))}
           </tbody>

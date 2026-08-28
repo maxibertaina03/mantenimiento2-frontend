@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCategorias, useCrearCategoria } from '@/api/categorias';
 import {
   obtenerTodosLosMateriales,
   useCrearMaterial,
+  useEliminarMaterial,
   useMateriales,
 } from '@/api/materiales';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
+import { AccionesFila } from '@/componentes/AccionesFila';
 import { CampoNumero } from '@/componentes/CampoNumero';
 import { Modal } from '@/componentes/Modal';
 import { descargarCsv, generarCsv, sufijoFechaArchivo } from '@/lib/csv';
@@ -17,6 +19,8 @@ import type { CrearMaterialInput } from '@/tipos/material';
 const LIMITE = 20;
 
 export function MaterialesPage() {
+  const navegar = useNavigate();
+  const eliminar = useEliminarMaterial();
   const [buscar, setBuscar] = useState('');
   const [busquedaDebounced, setBusquedaDebounced] = useState('');
   const [pagina, setPagina] = useState(1);
@@ -117,10 +121,11 @@ export function MaterialesPage() {
 
       {isLoading && <Cargando />}
       {error && <MensajeError error={error} />}
+      {eliminar.error && <MensajeError error={eliminar.error} />}
 
       {data && (
-        <div className="tabla-scroll">
-        <table className="tabla">
+        <div className="tabla-scroll tabla-cards-contenedor">
+        <table className="tabla tabla-cards">
           <thead>
             <tr>
               <th>Material</th>
@@ -129,24 +134,46 @@ export function MaterialesPage() {
               <th className="num">Stock actual</th>
               <th className="num">Stock mínimo</th>
               <th>Estado</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {data.datos.map((m) => (
-              <tr key={m.id}>
-                <td>
-                  <Link to={`/materiales/${m.id}`}>{m.nombre}</Link>
+              <tr
+                key={m.id}
+                className="fila-clickeable"
+                onClick={() => navegar(`/materiales/${m.id}`)}
+              >
+                <td data-etiqueta="Material">
+                  <Link to={`/materiales/${m.id}`} onClick={(e) => e.stopPropagation()}>
+                    {m.nombre}
+                  </Link>
                 </td>
-                <td>{m.categoriaNombre ?? '—'}</td>
-                <td>{m.unidad || '—'}</td>
-                <td className="num">{formatearNumero(m.stockActual)}</td>
-                <td className="num">{formatearNumero(m.stockMinimo)}</td>
-                <td>
+                <td data-etiqueta="Categoría">{m.categoriaNombre ?? '—'}</td>
+                <td data-etiqueta="Unidad">{m.unidad || '—'}</td>
+                <td className="num" data-etiqueta="Stock actual">
+                  {formatearNumero(m.stockActual)}
+                </td>
+                <td className="num" data-etiqueta="Stock mínimo">
+                  {formatearNumero(m.stockMinimo)}
+                </td>
+                <td data-etiqueta="Estado">
                   {m.bajoStock ? (
                     <span className="badge badge-bajo">Bajo stock</span>
                   ) : (
                     <span className="texto-suave">OK</span>
                   )}
+                </td>
+                {/* stopPropagation: los botones no deben navegar al detalle. */}
+                <td className="celda-acciones" onClick={(e) => e.stopPropagation()}>
+                  <AccionesFila
+                    descripcion={m.nombre}
+                    onVer={() => navegar(`/materiales/${m.id}`)}
+                    onEditar={() => navegar(`/materiales/${m.id}`)}
+                    onEliminar={() => {
+                      if (confirm(`¿Eliminar el material "${m.nombre}"?`)) eliminar.mutate(m.id);
+                    }}
+                  />
                 </td>
               </tr>
             ))}

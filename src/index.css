@@ -1152,3 +1152,45 @@ button {
     text-align: center;
   }
 }
+
+/* ═══════════ Acciones de fila (ver / editar / eliminar) ═══════════ */
+.acciones-fila {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.btn-icono {
+  padding: 0.35rem 0.5rem;
+  line-height: 1;
+  font-size: 1rem;
+  min-width: 2.2rem;
+}
+.btn-icono-peligro:hover {
+  background: var(--color-peligro, #dc2626);
+  border-color: var(--color-peligro, #dc2626);
+  color: #fff;
+}
+
+/* La fila entera abre el detalle. El cursor lo anticipa. */
+.fila-clickeable {
+  cursor: pointer;
+}
+.fila-clickeable:focus-visible {
+  outline: 2px solid var(--color-primario, #2563eb);
+  outline-offset: -2px;
+}
+
+@media (max-width: 700px) {
+  /* En tarjeta, las acciones van a lo ancho y con altura tactil. */
+  .tabla-cards .acciones-fila {
+    width: 100%;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+  .tabla-cards .btn-icono {
+    flex: 1 1 auto;
+    min-height: 40px;
+    font-size: 1.05rem;
+  }
+}

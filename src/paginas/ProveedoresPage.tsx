@@ -6,6 +6,7 @@ import {
   useProveedores,
 } from '@/api/proveedores';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
+import { AccionesFila, DatoFicha } from '@/componentes/AccionesFila';
 import { Modal } from '@/componentes/Modal';
 import type { CrearProveedorInput, Proveedor } from '@/tipos/proveedor';
 
@@ -29,6 +30,7 @@ export function ProveedoresPage() {
   const eliminar = useEliminarProveedor();
   const [edicion, setEdicion] = useState<Proveedor | null>(null);
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [detalle, setDetalle] = useState<Proveedor | null>(null);
 
   const totalPaginas = data ? Math.max(1, Math.ceil(data.total / LIMITE)) : 1;
 
@@ -73,8 +75,8 @@ export function ProveedoresPage() {
       {eliminar.error && <MensajeError error={eliminar.error} />}
 
       {data && (
-        <div className="tabla-scroll">
-        <table className="tabla">
+        <div className="tabla-scroll tabla-cards-contenedor">
+        <table className="tabla tabla-cards">
           <thead>
             <tr>
               <th>Nombre</th>
@@ -86,20 +88,19 @@ export function ProveedoresPage() {
           </thead>
           <tbody>
             {data.datos.map((p) => (
-              <tr key={p.id}>
-                <td>{p.nombre}</td>
-                <td>{p.cuit ?? '—'}</td>
-                <td>{p.email ?? '—'}</td>
-                <td>{p.telefono ?? '—'}</td>
-                <td>
-                  <div className="fila-acciones">
-                    <button className="btn btn-sm" onClick={() => abrirEdicion(p)}>
-                      Editar
-                    </button>
-                    <button className="btn btn-sm btn-peligro" onClick={() => borrar(p)}>
-                      Eliminar
-                    </button>
-                  </div>
+              <tr key={p.id} className="fila-clickeable" onClick={() => setDetalle(p)}>
+                <td data-etiqueta="Nombre">{p.nombre}</td>
+                <td data-etiqueta="CUIT">{p.cuit ?? '—'}</td>
+                <td data-etiqueta="Email">{p.email ?? '—'}</td>
+                <td data-etiqueta="Teléfono">{p.telefono ?? '—'}</td>
+                {/* stopPropagation: los botones no deben abrir la ficha. */}
+                <td className="celda-acciones" onClick={(e) => e.stopPropagation()}>
+                  <AccionesFila
+                    descripcion={p.nombre}
+                    onVer={() => setDetalle(p)}
+                    onEditar={() => abrirEdicion(p)}
+                    onEliminar={() => borrar(p)}
+                  />
                 </td>
               </tr>
             ))}
@@ -140,6 +141,56 @@ export function ProveedoresPage() {
           </div>
         </div>
       )}
+
+      <Modal
+        titulo={detalle?.nombre ?? ''}
+        abierto={detalle !== null}
+        onCerrar={() => setDetalle(null)}
+      >
+        {detalle && (
+          <div className="formulario-modal">
+            <div className="grilla-datos">
+              <DatoFicha etiqueta="Nombre" valor={detalle.nombre} />
+              <DatoFicha etiqueta="CUIT" valor={detalle.cuit} />
+              <DatoFicha etiqueta="Email" valor={detalle.email} />
+              <DatoFicha etiqueta="Teléfono" valor={detalle.telefono} />
+            </div>
+            {detalle.notas && (
+              <>
+                <h3 className="subtitulo-form">Notas</h3>
+                <p className="texto-suave">{detalle.notas}</p>
+              </>
+            )}
+            {!detalle.cuit && !detalle.email && !detalle.telefono && !detalle.notas && (
+              <p className="texto-suave">
+                Solo tiene cargado el nombre. Tocá «Editar» para completar los datos.
+              </p>
+            )}
+            <div className="acciones">
+              <button
+                className="btn btn-peligro"
+                onClick={() => {
+                  const p = detalle;
+                  setDetalle(null);
+                  borrar(p);
+                }}
+              >
+                Eliminar
+              </button>
+              <button
+                className="btn btn-primario"
+                onClick={() => {
+                  const p = detalle;
+                  setDetalle(null);
+                  abrirEdicion(p);
+                }}
+              >
+                Editar
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <Modal
         titulo={edicion ? 'Editar proveedor' : 'Nuevo proveedor'}
