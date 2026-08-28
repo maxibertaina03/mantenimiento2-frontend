@@ -1,15 +1,3 @@
-export type TipoEquipoIt =
-  | 'PC'
-  | 'NOTEBOOK'
-  | 'SERVIDOR'
-  | 'CELULAR'
-  | 'CAMARA_SEGURIDAD'
-  | 'TABLET'
-  | 'IMPRESORA'
-  | 'MONITOR'
-  | 'EQUIPO_RED'
-  | 'OTRO';
-
 export type EstadoEquipoIt = 'EN_USO' | 'EN_DEPOSITO' | 'EN_REPARACION' | 'DADO_DE_BAJA';
 
 export type TipoDisco = 'HDD' | 'SSD' | 'NVME' | 'EMMC';
@@ -23,19 +11,28 @@ export type TipoAccesoRemoto =
   | 'SSH'
   | 'OTRO';
 
-/** Etiquetas legibles para la UI (el backend usa los enums de arriba). */
-export const ETIQUETA_TIPO: Record<TipoEquipoIt, string> = {
-  PC: 'PC de escritorio',
-  NOTEBOOK: 'Notebook',
-  SERVIDOR: 'Servidor',
-  CELULAR: 'Celular',
-  CAMARA_SEGURIDAD: 'Cámara de seguridad',
-  TABLET: 'Tablet',
-  IMPRESORA: 'Impresora',
-  MONITOR: 'Monitor',
-  EQUIPO_RED: 'Equipo de red',
-  OTRO: 'Otro',
-};
+/** Un tipo del catálogo administrable. */
+export interface TipoEquipo {
+  id: string;
+  nombre: string;
+  alias: string | null;
+  /** Si el formulario debe pedir procesador, RAM y disco. */
+  llevaEspecificaciones: boolean;
+  orden: number;
+  activo: boolean;
+  /** Cuántos equipos lo usan: define si se puede borrar. */
+  equipos: number;
+}
+
+export interface CrearTipoEquipoInput {
+  nombre: string;
+  alias?: string;
+  llevaEspecificaciones?: boolean;
+  orden?: number;
+  activo?: boolean;
+}
+
+export type ActualizarTipoEquipoInput = Partial<CrearTipoEquipoInput>;
 
 export const ETIQUETA_ESTADO: Record<EstadoEquipoIt, string> = {
   EN_USO: 'En uso',
@@ -54,25 +51,13 @@ export const ETIQUETA_ACCESO: Record<TipoAccesoRemoto, string> = {
   OTRO: 'Otro',
 };
 
-/**
- * Tipos que NO son computadoras: no tiene sentido pedirles procesador, RAM ni
- * disco. Espeja la regla del backend (EquiposItService).
- */
-const SIN_ESPECIFICACIONES_DE_PC: TipoEquipoIt[] = [
-  'CAMARA_SEGURIDAD',
-  'MONITOR',
-  'IMPRESORA',
-  'EQUIPO_RED',
-];
-
-export function requiereEspecificacionesDePc(tipo: TipoEquipoIt): boolean {
-  return !SIN_ESPECIFICACIONES_DE_PC.includes(tipo);
-}
-
 export interface EquipoIt {
   id: string;
   codigoInterno: string | null;
-  tipo: TipoEquipoIt;
+  tipoId: string;
+  tipoNombre: string | null;
+  /** Si corresponde pedir procesador, RAM y disco (viene del catálogo). */
+  llevaEspecificaciones: boolean;
   estado: EstadoEquipoIt;
   marca: string;
   modelo: string;
@@ -112,14 +97,14 @@ export interface AsignacionEquipo {
 }
 
 export interface ResumenEquipos {
-  porTipo: { tipo: TipoEquipoIt; cantidad: number }[];
+  porTipo: { tipoId: string; nombre: string; cantidad: number }[];
   porEstado: { estado: EstadoEquipoIt; cantidad: number }[];
   total: number;
 }
 
 export interface CrearEquipoInput {
   codigoInterno?: string;
-  tipo: TipoEquipoIt;
+  tipoId: string;
   estado?: EstadoEquipoIt;
   marca: string;
   modelo: string;

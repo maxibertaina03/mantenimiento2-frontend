@@ -7,6 +7,7 @@ import {
   useEliminarEquipo,
   useEquipos,
   useResumenEquipos,
+  useTiposEquipo,
   useUbicaciones,
 } from '@/api/equiposIt';
 import { useUsuarios } from '@/api/usuarios';
@@ -14,24 +15,14 @@ import { AccionesFila } from '@/componentes/AccionesFila';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { CampoNumero } from '@/componentes/CampoNumero';
 import { ImportarEquipos } from '@/componentes/ImportarEquipos';
+import { TiposEquipo } from '@/componentes/TiposEquipo';
 import { Modal } from '@/componentes/Modal';
 import { formatearFecha, formatearFechaSola } from '@/lib/formato';
-import {
-  ETIQUETA_ACCESO,
-  ETIQUETA_ESTADO,
-  ETIQUETA_TIPO,
-  requiereEspecificacionesDePc,
-} from '@/tipos/equipoIt';
-import type {
-  CrearEquipoInput,
-  EquipoIt,
-  EstadoEquipoIt,
-  TipoEquipoIt,
-} from '@/tipos/equipoIt';
+import { ETIQUETA_ACCESO, ETIQUETA_ESTADO } from '@/tipos/equipoIt';
+import type { CrearEquipoInput, EquipoIt, EstadoEquipoIt } from '@/tipos/equipoIt';
 
 const LIMITE = 20;
 
-const TIPOS = Object.keys(ETIQUETA_TIPO) as TipoEquipoIt[];
 const ESTADOS = Object.keys(ETIQUETA_ESTADO) as EstadoEquipoIt[];
 
 /** Clase del badge según el estado, para que se lea de un vistazo. */
@@ -42,8 +33,9 @@ const CLASE_ESTADO: Record<EstadoEquipoIt, string> = {
   DADO_DE_BAJA: 'badge badge-error',
 };
 
+/** El tipo se completa con el primero del catálogo al abrir el formulario. */
 const FORMULARIO_VACIO: CrearEquipoInput = {
-  tipo: 'PC',
+  tipoId: '',
   marca: '',
   modelo: '',
 };
@@ -52,11 +44,12 @@ export function EquiposItPage() {
   const [pagina, setPagina] = useState(1);
   const [busqueda, setBusqueda] = useState('');
   const [busquedaDebounced, setBusquedaDebounced] = useState('');
-  const [tipo, setTipo] = useState<TipoEquipoIt | ''>('');
+  const [tipoId, setTipoId] = useState('');
   const [estado, setEstado] = useState<EstadoEquipoIt | ''>('');
 
   const [modalAlta, setModalAlta] = useState(false);
   const [modalImportar, setModalImportar] = useState(false);
+  const [modalTipos, setModalTipos] = useState(false);
   const [equipoDetalle, setEquipoDetalle] = useState<EquipoIt | null>(null);
   const [equipoAsignar, setEquipoAsignar] = useState<EquipoIt | null>(null);
   const [equipoEditar, setEquipoEditar] = useState<EquipoIt | null>(null);
@@ -72,9 +65,10 @@ export function EquiposItPage() {
 
   const { data, isLoading, error } = useEquipos(pagina, LIMITE, {
     buscar: busquedaDebounced,
-    tipo,
+    tipoId,
     estado,
   });
+  const { data: tiposCatalogo } = useTiposEquipo();
   const { data: resumen } = useResumenEquipos();
 
   const totalPaginas = data ? Math.max(1, Math.ceil(data.total / LIMITE)) : 1;
@@ -89,6 +83,9 @@ export function EquiposItPage() {
           </p>
         </div>
         <div className="fila-acciones">
+          <button className="btn" onClick={() => setModalTipos(true)}>
+            ⚙ Tipos
+          </button>
           <button className="btn" onClick={() => setModalImportar(true)}>
             ↑ Importar CSV
           </button>
@@ -121,17 +118,17 @@ export function EquiposItPage() {
           onChange={(e) => setBusqueda(e.target.value)}
         />
         <select
-          value={tipo}
+          value={tipoId}
           onChange={(e) => {
-            setTipo(e.target.value as TipoEquipoIt | '');
+            setTipoId(e.target.value);
             setPagina(1);
           }}
           aria-label="Filtrar por tipo"
         >
           <option value="">Todos los tipos</option>
-          {TIPOS.map((t) => (
-            <option key={t} value={t}>
-              {ETIQUETA_TIPO[t]}
+          {(tiposCatalogo ?? []).map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.nombre}
             </option>
           ))}
         </select>
@@ -157,7 +154,7 @@ export function EquiposItPage() {
 
       {data && data.datos.length === 0 && (
         <EstadoVacio>
-          {busquedaDebounced || tipo || estado
+          {busquedaDebounced || tipoId || estado
             ? 'No hay equipos que coincidan con el filtro.'
             : 'Todavía no cargaste ningún equipo.'}
         </EstadoVacio>
@@ -181,7 +178,7 @@ export function EquiposItPage() {
               {data.datos.map((equipo) => (
                 <tr key={equipo.id}>
                   <td data-etiqueta="Código">{equipo.codigoInterno ?? '—'}</td>
-                  <td data-etiqueta="Tipo">{ETIQUETA_TIPO[equipo.tipo]}</td>
+                  <td data-etiqueta="Tipo">{equipo.tipoNombre ?? '—'}</td>
                   <td data-etiqueta="Equipo">
                     <strong>{equipo.marca}</strong> {equipo.modelo}
                     {equipo.direccionIp && (
@@ -246,6 +243,7 @@ export function EquiposItPage() {
       )}
 
       <ImportarEquipos abierto={modalImportar} onCerrar={() => setModalImportar(false)} />
+      <TiposEquipo abierto={modalTipos} onCerrar={() => setModalTipos(false)} />
       {modalAlta && <ModalAltaEquipo alCerrar={() => setModalAlta(false)} />}
       {equipoEditar && (
         <ModalAltaEquipo equipo={equipoEditar} alCerrar={() => setEquipoEditar(null)} />
@@ -274,7 +272,7 @@ export function EquiposItPage() {
 function aFormulario(equipo: EquipoIt): CrearEquipoInput {
   return {
     codigoInterno: equipo.codigoInterno ?? undefined,
-    tipo: equipo.tipo,
+    tipoId: equipo.tipoId,
     estado: equipo.estado,
     marca: equipo.marca,
     modelo: equipo.modelo,
@@ -316,11 +314,21 @@ function ModalAltaEquipo({
   const crear = useCrearEquipo();
   const actualizar = useActualizarEquipo(equipo?.id ?? '');
   const { data: ubicaciones } = useUbicaciones();
+  const { data: tiposActivos } = useTiposEquipo(true);
+
+  // Al abrir el alta, se preselecciona el primer tipo del catálogo.
+  useEffect(() => {
+    if (!esEdicion && !form.tipoId && tiposActivos?.length) {
+      setForm((f) => ({ ...f, tipoId: tiposActivos[0].id }));
+    }
+  }, [tiposActivos, esEdicion, form.tipoId]);
   const guardando = crear.isPending || actualizar.isPending;
   const errorGuardar = crear.error ?? actualizar.error;
 
-  // Una cámara o un monitor no llevan procesador/RAM/disco.
-  const conEspecificaciones = requiereEspecificacionesDePc(form.tipo);
+  // Si el tipo elegido lleva especificaciones lo dice el catálogo: una cámara
+  // o una impresora no tienen procesador ni RAM.
+  const conEspecificaciones =
+    (tiposActivos ?? []).find((t) => t.id === form.tipoId)?.llevaEspecificaciones ?? true;
 
   const cambiar = <K extends keyof CrearEquipoInput>(campo: K, valor: CrearEquipoInput[K]) =>
     setForm((f) => ({ ...f, [campo]: valor }));
@@ -357,13 +365,13 @@ function ModalAltaEquipo({
           <label>
             Tipo *
             <select
-              value={form.tipo}
-              onChange={(e) => cambiar('tipo', e.target.value as TipoEquipoIt)}
+              value={form.tipoId}
+              onChange={(e) => cambiar('tipoId', e.target.value)}
               required
             >
-              {TIPOS.map((t) => (
-                <option key={t} value={t}>
-                  {ETIQUETA_TIPO[t]}
+              {(tiposActivos ?? []).map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nombre}
                 </option>
               ))}
             </select>
@@ -621,7 +629,7 @@ function ModalDetalleEquipo({
       <div className="formulario-modal">
         <div className="grilla-datos">
           <Dato etiqueta="Código interno" valor={equipo.codigoInterno} />
-          <Dato etiqueta="Tipo" valor={ETIQUETA_TIPO[equipo.tipo]} />
+          <Dato etiqueta="Tipo" valor={equipo.tipoNombre} />
           <Dato etiqueta="Estado" valor={ETIQUETA_ESTADO[equipo.estado]} />
           <Dato etiqueta="Nº de serie" valor={equipo.numeroSerie} />
           <Dato etiqueta="Ubicación" valor={equipo.ubicacion} />

@@ -3,6 +3,7 @@ import { apiRequest } from '@/lib/apiClient';
 import type { RespuestaPaginada } from '@/tipos/comunes';
 import type {
   ActualizarEquipoInput,
+  ActualizarTipoEquipoInput,
   AsignacionEquipo,
   AsignarEquipoInput,
   CrearEquipoInput,
@@ -11,7 +12,8 @@ import type {
   FilaImportacion,
   ResultadoImportacion,
   ResumenEquipos,
-  TipoEquipoIt,
+  CrearTipoEquipoInput,
+  TipoEquipo,
 } from '@/tipos/equipoIt';
 
 export const clavesEquipos = {
@@ -25,14 +27,14 @@ export const clavesEquipos = {
 
 interface FiltrosEquipos {
   buscar?: string;
-  tipo?: TipoEquipoIt | '';
+  tipoId?: string;
   estado?: EstadoEquipoIt | '';
 }
 
 export function useEquipos(pagina = 1, limite = 20, filtros: FiltrosEquipos = {}) {
   const normalizados = {
     buscar: filtros.buscar ?? '',
-    tipo: filtros.tipo ?? '',
+    tipoId: filtros.tipoId ?? '',
     estado: filtros.estado ?? '',
   };
   return useQuery({
@@ -43,7 +45,7 @@ export function useEquipos(pagina = 1, limite = 20, filtros: FiltrosEquipos = {}
           pagina,
           limite,
           buscar: normalizados.buscar || undefined,
-          tipo: normalizados.tipo || undefined,
+          tipoId: normalizados.tipoId || undefined,
           estado: normalizados.estado || undefined,
         },
       }),
@@ -128,5 +130,54 @@ export function useImportarEquipos() {
       // La importación puede dar de alta personas nuevas.
       qc.invalidateQueries({ queryKey: ['usuarios'] });
     },
+  });
+}
+
+// ─────────────── Catálogo de tipos de equipo ───────────────
+
+export const clavesTipos = ['tipos-equipo'] as const;
+
+/** Catálogo de tipos. `soloActivos` para el formulario de alta. */
+export function useTiposEquipo(soloActivos = false) {
+  return useQuery({
+    queryKey: [...clavesTipos, soloActivos],
+    queryFn: () =>
+      apiRequest<TipoEquipo[]>('/tipos-equipo', {
+        query: soloActivos ? { soloActivos: 'true' } : undefined,
+      }),
+    staleTime: 60_000,
+  });
+}
+
+export function useCrearTipoEquipo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CrearTipoEquipoInput) =>
+      apiRequest<TipoEquipo>('/tipos-equipo', { method: 'POST', body: input }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: clavesTipos });
+      // El nombre del tipo se muestra en el listado de equipos.
+      qc.invalidateQueries({ queryKey: clavesEquipos.base });
+    },
+  });
+}
+
+export function useActualizarTipoEquipo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...datos }: { id: string } & ActualizarTipoEquipoInput) =>
+      apiRequest<TipoEquipo>(`/tipos-equipo/${id}`, { method: 'PATCH', body: datos }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: clavesTipos });
+      qc.invalidateQueries({ queryKey: clavesEquipos.base });
+    },
+  });
+}
+
+export function useEliminarTipoEquipo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => apiRequest<void>(`/tipos-equipo/${id}`, { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesTipos }),
   });
 }
