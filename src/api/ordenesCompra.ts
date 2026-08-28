@@ -104,3 +104,26 @@ export function useEliminarOrden() {
     onSuccess: () => qc.invalidateQueries({ queryKey: clavesOrdenes.base }),
   });
 }
+
+export interface ResultadoEnvio {
+  para: string[];
+  copia: string[];
+  responderA: string | null;
+}
+
+/**
+ * Envía la orden por correo desde el servidor, con el PDF adjunto.
+ *
+ * Solo viaja el PDF: los destinatarios y el texto los arma el backend con los
+ * datos de la orden. Si el servidor no tiene el correo configurado responde
+ * 503 y la pantalla ofrece el envío manual.
+ */
+export function useEnviarOrdenPorCorreo() {
+  return useMutation({
+    mutationFn: ({ id, pdfBase64 }: { id: string; pdfBase64: string }) =>
+      apiRequest<ResultadoEnvio>(`/ordenes-compra/${id}/enviar-correo`, {
+        method: 'POST',
+        body: { pdfBase64 },
+      }),
+  });
+}

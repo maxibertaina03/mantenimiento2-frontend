@@ -69,12 +69,16 @@ async function logoComoPng(lado = 512): Promise<string | null> {
 }
 
 /**
- * Genera e inicia la descarga del PDF de una orden de compra.
+ * Arma el PDF de una orden y devuelve el documento, sin guardarlo.
+ *
+ * Se separa del guardado porque el mismo PDF tiene dos destinos: la descarga y
+ * el adjunto que se manda al backend para el envío automático. Generarlo dos
+ * veces con código distinto garantizaría que en algún momento se despeguen.
  *
  * jsPDF y autotable se cargan dinámicamente para que no pesen en el bundle
  * inicial: solo se descargan cuando alguien imprime una orden.
  */
-export async function descargarPdfOrdenCompra(orden: OrdenCompra): Promise<void> {
+async function construirPdf(orden: OrdenCompra) {
   const [{ default: JsPDF }, { default: autoTable }] = await Promise.all([
     import('jspdf'),
     import('jspdf-autotable'),
@@ -240,5 +244,23 @@ export async function descargarPdfOrdenCompra(orden: OrdenCompra): Promise<void>
     { align: 'center' },
   );
 
+  return doc;
+}
+
+/** Genera el PDF e inicia la descarga. */
+export async function descargarPdfOrdenCompra(orden: OrdenCompra): Promise<void> {
+  const doc = await construirPdf(orden);
   doc.save(`${orden.numero}.pdf`);
+}
+
+/**
+ * El mismo PDF, en base64, para mandarlo al backend como adjunto.
+ *
+ * Se saca el prefijo `data:application/pdf;base64,` que agrega jsPDF: el
+ * backend espera base64 puro y con el prefijo el Buffer saldría corrupto.
+ */
+export async function pdfOrdenComoBase64(orden: OrdenCompra): Promise<string> {
+  const doc = await construirPdf(orden);
+  const conPrefijo = doc.output('datauristring');
+  return conPrefijo.slice(conPrefijo.indexOf(',') + 1);
 }
