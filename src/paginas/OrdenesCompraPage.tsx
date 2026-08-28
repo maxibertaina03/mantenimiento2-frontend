@@ -17,6 +17,7 @@ import { Modal } from '@/componentes/Modal';
 import { formatearFecha, formatearNumero } from '@/lib/formato';
 import { descargarPdfOrdenCompra } from '@/lib/pdfOrdenCompra';
 import { EnviarOrden } from '@/componentes/EnviarOrden';
+import { useUsuarioActual } from '@/api/usuarios';
 import { ETIQUETA_ESTADO_ORDEN } from '@/tipos/ordenCompra';
 import type {
   EstadoOrdenCompra,
@@ -48,6 +49,11 @@ export function OrdenesCompraPage() {
   const [modalAlta, setModalAlta] = useState(false);
   const [ordenAbierta, setOrdenAbierta] = useState<OrdenCompra | null>(null);
   const [ordenAEnviar, setOrdenAEnviar] = useState<OrdenCompra | null>(null);
+  // El envío por correo y WhatsApp está en prueba: por ahora solo lo ve un
+  // admin. Un operario sigue con el flujo de siempre, descargar el PDF.
+  const { data: usuario } = useUsuarioActual();
+  const puedeEnviar = usuario?.rol === 'ADMIN';
+  const alEnviar = puedeEnviar ? setOrdenAEnviar : undefined;
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -175,7 +181,7 @@ export function OrdenesCompraPage() {
       <ModalNuevaOrden
         abierto={modalAlta}
         onCerrar={() => setModalAlta(false)}
-        onEnviar={setOrdenAEnviar}
+        onEnviar={alEnviar}
       />
       {ordenAEnviar && (
         <EnviarOrden orden={ordenAEnviar} onCerrar={() => setOrdenAEnviar(null)} />
@@ -184,7 +190,7 @@ export function OrdenesCompraPage() {
         <ModalDetalleOrden
           orden={ordenAbierta}
           onCerrar={() => setOrdenAbierta(null)}
-          onEnviar={setOrdenAEnviar}
+          onEnviar={alEnviar}
         />
       )}
     </>
@@ -207,7 +213,7 @@ function ModalNuevaOrden({
   abierto: boolean;
   onCerrar: () => void;
   /** Se llama tras imprimir, para ofrecer el envío al proveedor. */
-  onEnviar: (orden: OrdenCompra) => void;
+  onEnviar?: (orden: OrdenCompra) => void;
 }) {
   const [proveedorId, setProveedorId] = useState('');
   const [observaciones, setObservaciones] = useState('');
@@ -298,8 +304,9 @@ function ModalNuevaOrden({
 
     await descargarPdfOrdenCompra(orden);
     await emitir.mutateAsync(orden.id);
-    // El PDF ya está bajado: ahora se ofrece a quién mandárselo.
-    onEnviar(orden);
+    // El PDF ya está bajado: ahora se ofrece a quién mandárselo. Si no hay
+    // onEnviar (operario), termina acá, como antes del envío automático.
+    onEnviar?.(orden);
   };
 
   return (
@@ -468,7 +475,7 @@ function ModalDetalleOrden({
 }: {
   orden: OrdenCompra;
   onCerrar: () => void;
-  onEnviar: (orden: OrdenCompra) => void;
+  onEnviar?: (orden: OrdenCompra) => void;
 }) {
   const emitir = useEmitirOrden(orden.id);
   const recibir = useRecibirOrden(orden.id);
@@ -611,7 +618,7 @@ function ModalDetalleOrden({
           <button className="btn" onClick={() => descargarPdfOrdenCompra(orden)}>
             🖨 Descargar PDF
           </button>
-          {orden.estado !== 'BORRADOR' && (
+          {onEnviar && orden.estado !== 'BORRADOR' && (
             <button className="btn" onClick={() => onEnviar(orden)}>
               ✉ Enviar al proveedor
             </button>
@@ -627,7 +634,7 @@ function ModalDetalleOrden({
                 // mercaderia.
                 await descargarPdfOrdenCompra(orden);
                 await emitir.mutateAsync();
-                onEnviar(orden);
+                onEnviar?.(orden);
                 onCerrar();
               }}
             >
