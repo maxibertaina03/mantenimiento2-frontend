@@ -12,6 +12,8 @@ import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { AccionesFila } from '@/componentes/AccionesFila';
 import { CategoriasMaterial } from '@/componentes/CategoriasMaterial';
 import { UnidadesMedida } from '@/componentes/UnidadesMedida';
+import { FiltrosMateriales, contarFiltros } from '@/componentes/FiltrosMateriales';
+import type { FiltrosMateriales as Filtros } from '@/api/materiales';
 import { useUnidadesMedida } from '@/api/unidadesMedida';
 import { CampoNumero } from '@/componentes/CampoNumero';
 import { Modal } from '@/componentes/Modal';
@@ -39,7 +41,13 @@ export function MaterialesPage() {
     return () => clearTimeout(t);
   }, [buscar]);
 
-  const { data, isLoading, error, isFetching } = useMateriales(pagina, LIMITE, busquedaDebounced);
+  // Los filtros viven acá y no en el componente: el listado, la exportación y
+  // la paginación tienen que ver todos lo mismo.
+  const [filtros, setFiltros] = useState<Filtros>({});
+  const [panelFiltros, setPanelFiltros] = useState(false);
+  const filtrosConBusqueda: Filtros = { ...filtros, buscar: busquedaDebounced };
+
+  const { data, isLoading, error, isFetching } = useMateriales(pagina, LIMITE, filtrosConBusqueda);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [editando, setEditando] = useState<Material | null>(null);
   const [modalCategorias, setModalCategorias] = useState(false);
@@ -128,8 +136,26 @@ export function MaterialesPage() {
           onChange={(e) => setBuscar(e.target.value)}
           autoFocus
         />
+        <button
+          className={contarFiltros(filtros) > 0 ? 'btn btn-primario' : 'btn'}
+          onClick={() => setPanelFiltros((v) => !v)}
+        >
+          ⚗ Filtros{contarFiltros(filtros) > 0 ? ` (${contarFiltros(filtros)})` : ''}
+        </button>
         {isFetching && <span className="texto-suave">buscando…</span>}
       </div>
+
+      {panelFiltros && (
+        <FiltrosMateriales
+          filtros={filtros}
+          onCambio={(f) => {
+            setFiltros(f);
+            // Volver a la primera página: con el filtro nuevo, la página en la
+            // que estabas puede ya no existir y la tabla saldría vacía.
+            setPagina(1);
+          }}
+        />
+      )}
 
       {errorExport && <MensajeError error={new Error(errorExport)} />}
 

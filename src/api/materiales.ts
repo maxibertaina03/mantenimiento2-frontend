@@ -8,21 +8,55 @@ import type {
   MaterialConHistorial,
 } from '@/tipos/material';
 
+/** Filtros del listado. Todo opcional: sin nada, trae el catálogo entero. */
+export interface FiltrosMateriales {
+  buscar?: string;
+  categoriaId?: string;
+  unidadId?: string;
+  /** Al menos este stock. */
+  stockMin?: number;
+  /** Como mucho este stock. */
+  stockMax?: number;
+  /** Solo los que están en (o por debajo de) su stock mínimo. */
+  bajoStock?: boolean;
+  /** Solo los que todavía no tienen unidad cargada. */
+  sinUnidad?: boolean;
+  ordenarPor?: 'nombre' | 'stock' | 'categoria' | 'unidad';
+  direccion?: 'asc' | 'desc';
+}
+
 export const clavesMateriales = {
   base: ['materiales'] as const,
-  lista: (pagina: number, limite: number, buscar: string) =>
-    ['materiales', 'lista', pagina, limite, buscar] as const,
+  lista: (pagina: number, limite: number, filtros: FiltrosMateriales) =>
+    ['materiales', 'lista', pagina, limite, filtros] as const,
   bajoStock: ['materiales', 'bajo-stock'] as const,
   detalle: (id: string) => ['materiales', 'detalle', id] as const,
   historial: (id: string) => ['materiales', 'historial', id] as const,
 };
 
-export function useMateriales(pagina = 1, limite = 20, buscar = '') {
+export function useMateriales(pagina = 1, limite = 20, filtros: FiltrosMateriales | string = {}) {
+  // Acepta un string por comodidad de quien solo busca por nombre (el combo).
+  const f: FiltrosMateriales = typeof filtros === 'string' ? { buscar: filtros } : filtros;
+
   return useQuery({
-    queryKey: clavesMateriales.lista(pagina, limite, buscar),
+    queryKey: clavesMateriales.lista(pagina, limite, f),
     queryFn: () =>
       apiRequest<RespuestaPaginada<Material>>('/materiales', {
-        query: { pagina, limite, buscar: buscar || undefined },
+        query: {
+          pagina,
+          limite,
+          buscar: f.buscar || undefined,
+          categoriaId: f.categoriaId || undefined,
+          unidadId: f.unidadId || undefined,
+          // `?? undefined` y no `||`: con `||` un 0 se descartaría, y "stock
+          // exactamente 0" es justo el filtro más útil para ver qué falta.
+          stockMin: f.stockMin ?? undefined,
+          stockMax: f.stockMax ?? undefined,
+          bajoStock: f.bajoStock ? 'true' : undefined,
+          sinUnidad: f.sinUnidad ? 'true' : undefined,
+          ordenarPor: f.ordenarPor || undefined,
+          direccion: f.direccion || undefined,
+        },
       }),
   });
 }

@@ -1240,3 +1240,41 @@ button {
 .combo-crear:hover {
   background: var(--color-borde);
 }
+
+/* Filtros del listado de materiales. */
+.filtros-materiales {
+  margin-bottom: 1rem;
+}
+.filtros-grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+.filtros-grilla label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--color-texto-suave);
+}
+.filtros-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-borde);
+}
+.filtro-check {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.filtro-check input {
+  width: auto;
+  margin: 0;
+}
