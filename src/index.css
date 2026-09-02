@@ -1279,7 +1279,7 @@ button {
   margin: 0;
 }
 
-/* Etiquetas de estado y criticidad de los equipos. */
+/* Etiquetas de estado de los equipos y avisos varios. */
 .etiqueta {
   display: inline-block;
   padding: 0.15rem 0.5rem;
@@ -1292,9 +1292,7 @@ button {
 .estado-en_reparacion { background: var(--color-alerta-fondo); color: var(--color-alerta-texto); }
 .estado-fuera_de_servicio { background: #fee2e2; color: #991b1b; }
 .estado-dado_de_baja { background: #e5e7eb; color: #4b5563; }
-.criticidad-alta { background: #fee2e2; color: #991b1b; }
-.criticidad-media { background: var(--color-alerta-fondo); color: var(--color-alerta-texto); }
-.criticidad-baja { background: #e5e7eb; color: #4b5563; }
+.etiqueta-aviso { background: var(--color-alerta-fondo); color: var(--color-alerta-texto); }
 
 /* Resumen de la detección al importar equipos. */
 .cifras-importacion {

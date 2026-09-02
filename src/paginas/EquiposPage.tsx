@@ -15,26 +15,14 @@ import { HistorialEquipo } from '@/componentes/HistorialEquipo';
 import { ImportarEquiposPlanta } from '@/componentes/ImportarEquiposPlanta';
 import { Modal } from '@/componentes/Modal';
 import { formatearFechaSola } from '@/lib/formato';
-import {
-  CRITICIDADES,
-  ESTADOS_EQUIPO,
-  ETIQUETA_CRITICIDAD,
-  ETIQUETA_ESTADO_EQUIPO,
-  TRANSICIONES_ESTADO,
-} from '@/tipos/equipo';
-import type {
-  CrearEquipoInput,
-  Criticidad,
-  Equipo,
-  EstadoEquipo,
-  FiltrosEquipos,
-} from '@/tipos/equipo';
+import { ESTADOS_EQUIPO, ETIQUETA_ESTADO_EQUIPO, TRANSICIONES_ESTADO } from '@/tipos/equipo';
+import type { CrearEquipoInput, Equipo, EstadoEquipo, FiltrosEquipos } from '@/tipos/equipo';
 
 const LIMITE = 20;
 
 /** Cuántos filtros achican el listado. El orden no cuenta: no saca filas. */
 function contarFiltros(f: FiltrosEquipos): number {
-  return [f.ubicacionId, f.tipoId, f.estado, f.criticidad, f.garantiaVencida || undefined].filter(
+  return [f.ubicacionId, f.tipoId, f.estado, f.garantiaVencida || undefined].filter(
     (v) => v !== undefined && v !== '',
   ).length;
 }
@@ -164,22 +152,6 @@ export function EquiposPage() {
               </select>
             </label>
 
-            <label>
-              Criticidad
-              <select
-                value={filtros.criticidad ?? ''}
-                onChange={(e) =>
-                  cambiarFiltro({ criticidad: (e.target.value || undefined) as Criticidad })
-                }
-              >
-                <option value="">Todas</option>
-                {CRITICIDADES.map((c) => (
-                  <option key={c} value={c}>
-                    {ETIQUETA_CRITICIDAD[c]}
-                  </option>
-                ))}
-              </select>
-            </label>
 
             <label>
               Ordenar por
@@ -192,7 +164,6 @@ export function EquiposPage() {
                 <option value="nombre">Nombre</option>
                 <option value="codigo">Código</option>
                 <option value="ubicacion">Ubicación</option>
-                <option value="criticidad">Criticidad</option>
               </select>
             </label>
 
@@ -247,7 +218,6 @@ export function EquiposPage() {
                 <th>Ubicación</th>
                 <th>Tipo</th>
                 <th>Estado</th>
-                <th>Criticidad</th>
                 <th />
               </tr>
             </thead>
@@ -263,11 +233,6 @@ export function EquiposPage() {
                   <td data-etiqueta="Estado">
                     <span className={`etiqueta estado-${e.estado.toLowerCase()}`}>
                       {ETIQUETA_ESTADO_EQUIPO[e.estado]}
-                    </span>
-                  </td>
-                  <td data-etiqueta="Criticidad">
-                    <span className={`etiqueta criticidad-${e.criticidad.toLowerCase()}`}>
-                      {ETIQUETA_CRITICIDAD[e.criticidad]}
                     </span>
                   </td>
                   <td className="celda-acciones" onClick={(ev) => ev.stopPropagation()}>
@@ -346,7 +311,6 @@ function FichaEquipo({ equipo, onCerrar }: { equipo: Equipo; onCerrar: () => voi
           {dato('Estado', ETIQUETA_ESTADO_EQUIPO[equipo.estado])}
           {dato('Ubicación', equipo.ubicacionNombre)}
           {dato('Tipo', equipo.tipoNombre)}
-          {dato('Criticidad', ETIQUETA_CRITICIDAD[equipo.criticidad])}
           {dato('Marca', equipo.marca)}
           {dato('Modelo', equipo.modelo)}
           {dato('N° de serie', equipo.numeroSerie)}
@@ -402,7 +366,6 @@ function FormularioEquipo({ equipo, alCerrar }: { equipo?: Equipo; alCerrar: () 
     numeroSerie: equipo?.numeroSerie ?? '',
     ubicacionId: equipo?.ubicacionId ?? '',
     tipoId: equipo?.tipoId ?? '',
-    criticidad: equipo?.criticidad ?? 'MEDIA',
     horasUso: equipo?.horasUso ?? undefined,
     fechaAlta: equipo?.fechaAlta?.slice(0, 10) ?? '',
     garantiaHasta: equipo?.garantiaHasta?.slice(0, 10) ?? '',
@@ -426,7 +389,6 @@ function FormularioEquipo({ equipo, alCerrar }: { equipo?: Equipo; alCerrar: () 
       numeroSerie: oNull(form.numeroSerie),
       ubicacionId: oNull(form.ubicacionId),
       tipoId: oNull(form.tipoId),
-      criticidad: form.criticidad,
       horasUso: form.horasUso ?? null,
       fechaAlta: oNull(form.fechaAlta),
       garantiaHasta: oNull(form.garantiaHasta),
@@ -506,19 +468,6 @@ function FormularioEquipo({ equipo, alCerrar }: { equipo?: Equipo; alCerrar: () 
         </div>
 
         <div className="fila-campos">
-          <div className="campo">
-            <label>Criticidad</label>
-            <select
-              value={form.criticidad ?? 'MEDIA'}
-              onChange={(e) => cambiar({ criticidad: e.target.value as Criticidad })}
-            >
-              {CRITICIDADES.map((c) => (
-                <option key={c} value={c}>
-                  {ETIQUETA_CRITICIDAD[c]}
-                </option>
-              ))}
-            </select>
-          </div>
           {esEdicion && (
             <div className="campo">
               <label>Estado</label>

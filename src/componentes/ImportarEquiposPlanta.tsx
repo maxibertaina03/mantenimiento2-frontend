@@ -196,7 +196,7 @@ export function ImportarEquiposPlanta({ onCerrar }: { onCerrar: () => void }) {
                         {eq.advertencias.map((a) => (
                           <span
                             key={a}
-                            className="etiqueta criticidad-media"
+                            className="etiqueta etiqueta-aviso"
                             title={EXPLICACION_ADVERTENCIA[a]}
                           >
                             {ETIQUETA_ADVERTENCIA[a]}

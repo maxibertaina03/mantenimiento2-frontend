@@ -31,7 +31,6 @@ export function useEquipos(pagina = 1, limite = 20, filtros: FiltrosEquipos = {}
           ubicacionId: filtros.ubicacionId || undefined,
           tipoId: filtros.tipoId || undefined,
           estado: filtros.estado || undefined,
-          criticidad: filtros.criticidad || undefined,
           garantiaVencida: filtros.garantiaVencida ? 'true' : undefined,
           ordenarPor: filtros.ordenarPor || undefined,
           direccion: filtros.direccion || undefined,

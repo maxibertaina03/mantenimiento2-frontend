@@ -13,15 +13,6 @@ export const ETIQUETA_ESTADO_EQUIPO: Record<EstadoEquipo, string> = {
   DADO_DE_BAJA: 'Dado de baja',
 };
 
-export const CRITICIDADES = ['ALTA', 'MEDIA', 'BAJA'] as const;
-export type Criticidad = (typeof CRITICIDADES)[number];
-
-export const ETIQUETA_CRITICIDAD: Record<Criticidad, string> = {
-  ALTA: 'Alta',
-  MEDIA: 'Media',
-  BAJA: 'Baja',
-};
-
 /**
  * Desde qué estados se puede pasar a cada otro.
  *
@@ -50,7 +41,6 @@ export interface Equipo {
   tipoId: string | null;
   tipoNombre: string | null;
   estado: EstadoEquipo;
-  criticidad: Criticidad;
   fotoUrl: string | null;
   proveedorId: string | null;
   proveedorNombre: string | null;
@@ -71,7 +61,6 @@ export interface CrearEquipoInput {
   ubicacionId?: string | null;
   tipoId?: string | null;
   proveedorId?: string | null;
-  criticidad?: Criticidad;
   fotoUrl?: string | null;
   horasUso?: number | null;
   fechaAlta?: string | null;
@@ -85,9 +74,8 @@ export interface FiltrosEquipos {
   ubicacionId?: string;
   tipoId?: string;
   estado?: EstadoEquipo;
-  criticidad?: Criticidad;
   garantiaVencida?: boolean;
-  ordenarPor?: 'nombre' | 'codigo' | 'ubicacion' | 'criticidad';
+  ordenarPor?: 'nombre' | 'codigo' | 'ubicacion';
   direccion?: 'asc' | 'desc';
 }
 
