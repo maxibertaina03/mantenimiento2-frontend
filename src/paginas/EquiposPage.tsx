@@ -11,6 +11,7 @@ import { AccionesFila } from '@/componentes/AccionesFila';
 import { CampoNumero } from '@/componentes/CampoNumero';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { FotoEquipo } from '@/componentes/FotoEquipo';
+import { HistorialEquipo } from '@/componentes/HistorialEquipo';
 import { ImportarEquiposPlanta } from '@/componentes/ImportarEquiposPlanta';
 import { Modal } from '@/componentes/Modal';
 import { formatearFechaSola } from '@/lib/formato';
@@ -367,10 +368,11 @@ function FichaEquipo({ equipo, onCerrar }: { equipo: Equipo; onCerrar: () => voi
           </div>
         )}
 
+        <HistorialEquipo equipo={equipo} />
+
         <p className="texto-suave texto-chico">
           {almacen.data?.disponible === false && 'La carga de fotos no está configurada. '}
-          El historial de intervenciones y los planes de mantenimiento llegan en las próximas
-          fases.
+          Los planes de mantenimiento y los avisos por correo llegan en las próximas fases.
         </p>
 
         <div className="acciones">

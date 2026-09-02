@@ -113,3 +113,64 @@ export interface ResultadoImportacionEquipos {
   ubicacionesCreadas: string[];
   fallidos: { nombre: string; motivo: string }[];
 }
+
+// ── Historial de intervenciones ──
+export const TIPOS_INTERVENCION = ['PREVENTIVO', 'CORRECTIVO', 'MEJORA'] as const;
+export type TipoIntervencion = (typeof TIPOS_INTERVENCION)[number];
+
+export const ETIQUETA_TIPO_INTERVENCION: Record<TipoIntervencion, string> = {
+  PREVENTIVO: 'Preventivo',
+  CORRECTIVO: 'Correctivo',
+  MEJORA: 'Mejora',
+};
+
+export const EJECUTORES = ['INTERNO', 'EXTERNO'] as const;
+export type Ejecutor = (typeof EJECUTORES)[number];
+
+export const ETIQUETA_EJECUTOR: Record<Ejecutor, string> = {
+  INTERNO: 'En fábrica',
+  EXTERNO: 'Servicio externo',
+};
+
+export interface Intervencion {
+  id: string;
+  equipoId: string;
+  tipo: TipoIntervencion;
+  fecha: string;
+  ejecutor: Ejecutor;
+  usuarioId: string | null;
+  usuarioNombre: string | null;
+  proveedorId: string | null;
+  proveedorNombre: string | null;
+  descripcion: string;
+  costoManoObra: number | null;
+  horasParada: number | null;
+  documentoUrl: string | null;
+  registradoPorNombre: string | null;
+  creadoEn: string;
+}
+
+export interface ResumenMantenimiento {
+  ultimaFecha: string | null;
+  cantidad: number;
+  correctivos: number;
+  preventivos: number;
+  costoTotal: number;
+  horasParadaTotal: number;
+}
+
+export interface HistorialEquipo {
+  intervenciones: Intervencion[];
+  resumen: ResumenMantenimiento;
+}
+
+export interface RegistrarIntervencionInput {
+  tipo: TipoIntervencion;
+  fecha: string;
+  ejecutor: Ejecutor;
+  usuarioId?: string | null;
+  proveedorId?: string | null;
+  descripcion: string;
+  costoManoObra?: number | null;
+  horasParada?: number | null;
+}
