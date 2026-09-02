@@ -1278,3 +1278,20 @@ button {
   width: auto;
   margin: 0;
 }
+
+/* Etiquetas de estado y criticidad de los equipos. */
+.etiqueta {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.estado-operativo { background: #dcfce7; color: #166534; }
+.estado-en_reparacion { background: var(--color-alerta-fondo); color: var(--color-alerta-texto); }
+.estado-fuera_de_servicio { background: #fee2e2; color: #991b1b; }
+.estado-dado_de_baja { background: #e5e7eb; color: #4b5563; }
+.criticidad-alta { background: #fee2e2; color: #991b1b; }
+.criticidad-media { background: var(--color-alerta-fondo); color: var(--color-alerta-texto); }
+.criticidad-baja { background: #e5e7eb; color: #4b5563; }
