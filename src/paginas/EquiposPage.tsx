@@ -9,6 +9,7 @@ import { useCatalogoEquipos } from '@/api/catalogosEquipo';
 import { AccionesFila } from '@/componentes/AccionesFila';
 import { CampoNumero } from '@/componentes/CampoNumero';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
+import { ImportarEquiposPlanta } from '@/componentes/ImportarEquiposPlanta';
 import { Modal } from '@/componentes/Modal';
 import { formatearFechaSola } from '@/lib/formato';
 import {
@@ -44,6 +45,7 @@ export function EquiposPage() {
   const [editando, setEditando] = useState<Equipo | null>(null);
   const [creando, setCreando] = useState(false);
   const [viendo, setViendo] = useState<Equipo | null>(null);
+  const [importando, setImportando] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -83,6 +85,9 @@ export function EquiposPage() {
       <div className="cabecera-pagina">
         <h1>Equipos</h1>
         <div className="fila-acciones">
+          <button className="btn" onClick={() => setImportando(true)}>
+            ⬆ Importar carpeta
+          </button>
           <button className="btn btn-primario" onClick={() => setCreando(true)}>
             + Nuevo equipo
           </button>
@@ -305,6 +310,8 @@ export function EquiposPage() {
       )}
 
       {viendo && <FichaEquipo equipo={viendo} onCerrar={() => setViendo(null)} />}
+
+      {importando && <ImportarEquiposPlanta onCerrar={() => setImportando(false)} />}
     </>
   );
 }

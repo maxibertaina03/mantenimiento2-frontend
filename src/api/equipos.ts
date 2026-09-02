@@ -4,8 +4,10 @@ import type { RespuestaPaginada } from '@/tipos/comunes';
 import type {
   ActualizarEquipoInput,
   CrearEquipoInput,
+  DeteccionImportacion,
   Equipo,
   FiltrosEquipos,
+  ResultadoImportacionEquipos,
 } from '@/tipos/equipo';
 
 export const clavesEquipos = {
@@ -67,5 +69,39 @@ export function useEliminarEquipo() {
   return useMutation({
     mutationFn: (id: string) => apiRequest<void>(`/equipos/${id}`, { method: 'DELETE' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: clavesEquipos.base }),
+  });
+}
+
+/**
+ * Le pregunta al servidor qué equipos saldrían de una carpeta, sin crear nada.
+ *
+ * Solo viajan los NOMBRES de los archivos, no los archivos. La regla de qué es
+ * un equipo vive en el dominio del backend, así existe una sola copia: si la
+ * pantalla la repitiera, en algún momento las dos versiones diferirían y
+ * mostraría algo distinto de lo que después importa.
+ */
+export function useDetectarImportacion() {
+  return useMutation({
+    mutationFn: (datos: { rutas: string[]; carpetasExcluidas?: string[] }) =>
+      apiRequest<DeteccionImportacion>('/equipos/detectar-importacion', {
+        method: 'POST',
+        body: datos,
+      }),
+  });
+}
+
+export function useImportarEquiposPlanta() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (datos: { filas: { nombre: string; ubicacion: string }[] }) =>
+      apiRequest<ResultadoImportacionEquipos>('/equipos/importar', {
+        method: 'POST',
+        body: datos,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: clavesEquipos.base });
+      // La importación crea ubicaciones nuevas.
+      qc.invalidateQueries({ queryKey: ['ubicaciones-equipo'] });
+    },
   });
 }

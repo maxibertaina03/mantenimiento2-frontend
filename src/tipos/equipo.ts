@@ -90,3 +90,26 @@ export interface FiltrosEquipos {
   ordenarPor?: 'nombre' | 'codigo' | 'ubicacion' | 'criticidad';
   direccion?: 'asc' | 'desc';
 }
+
+// ── Importación desde la carpeta de fotos ──
+export type Advertencia = 'posible_equipo_it' | 'posible_duplicado' | 'nombre_automatico';
+
+export interface EquipoDetectado {
+  nombre: string;
+  ubicacion: string;
+  ruta: string;
+  advertencias: Advertencia[];
+}
+
+export interface DeteccionImportacion {
+  equipos: EquipoDetectado[];
+  descartados: { ruta: string; motivo: string }[];
+  ubicaciones: string[];
+}
+
+export interface ResultadoImportacionEquipos {
+  creados: number;
+  yaExistian: number;
+  ubicacionesCreadas: string[];
+  fallidos: { nombre: string; motivo: string }[];
+}
