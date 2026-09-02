@@ -105,3 +105,32 @@ export function useImportarEquiposPlanta() {
     },
   });
 }
+
+/** Si el servidor tiene almacén de fotos configurado. */
+export function useAlmacenDisponible() {
+  return useQuery({
+    queryKey: ['equipos', 'almacen'],
+    queryFn: () => apiRequest<{ disponible: boolean }>('/equipos/almacen/estado'),
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useCambiarFotoEquipo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      imagenBase64,
+      nombreArchivo,
+    }: {
+      id: string;
+      imagenBase64: string;
+      nombreArchivo: string;
+    }) =>
+      apiRequest<Equipo>(`/equipos/${id}/foto`, {
+        method: 'POST',
+        body: { imagenBase64, nombreArchivo },
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesEquipos.base }),
+  });
+}

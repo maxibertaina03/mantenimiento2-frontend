@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   useActualizarEquipo,
+  useAlmacenDisponible,
   useCrearEquipo,
   useEliminarEquipo,
   useEquipos,
@@ -9,6 +10,7 @@ import { useCatalogoEquipos } from '@/api/catalogosEquipo';
 import { AccionesFila } from '@/componentes/AccionesFila';
 import { CampoNumero } from '@/componentes/CampoNumero';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
+import { FotoEquipo } from '@/componentes/FotoEquipo';
 import { ImportarEquiposPlanta } from '@/componentes/ImportarEquiposPlanta';
 import { Modal } from '@/componentes/Modal';
 import { formatearFechaSola } from '@/lib/formato';
@@ -318,6 +320,10 @@ export function EquiposPage() {
 
 /** La ficha, al tocar la fila. En el celular es la forma de ver todo el detalle. */
 function FichaEquipo({ equipo, onCerrar }: { equipo: Equipo; onCerrar: () => void }) {
+  // Si el servidor no tiene almacén, no se ofrece cargar fotos: prometer algo
+  // que va a fallar es peor que no ofrecerlo.
+  const almacen = useAlmacenDisponible();
+
   const dato = (etiqueta: string, valor: string | null | undefined) => (
     <div className="dato">
       <span className="texto-suave texto-chico">{etiqueta}</span>
@@ -328,12 +334,10 @@ function FichaEquipo({ equipo, onCerrar }: { equipo: Equipo; onCerrar: () => voi
   return (
     <Modal titulo={equipo.nombre} abierto tamano="ancho" onCerrar={onCerrar}>
       <div className="formulario-modal">
-        {equipo.fotoUrl && (
-          <img
-            src={equipo.fotoUrl}
-            alt={equipo.nombre}
-            style={{ width: '100%', maxHeight: 280, objectFit: 'contain', borderRadius: 8 }}
-          />
+        {almacen.data?.disponible ? (
+          <FotoEquipo equipo={equipo} />
+        ) : (
+          equipo.fotoUrl && <img src={equipo.fotoUrl} alt={equipo.nombre} className="foto-equipo" />
         )}
 
         <div className="grilla-datos">
@@ -364,6 +368,7 @@ function FichaEquipo({ equipo, onCerrar }: { equipo: Equipo; onCerrar: () => voi
         )}
 
         <p className="texto-suave texto-chico">
+          {almacen.data?.disponible === false && 'La carga de fotos no está configurada. '}
           El historial de intervenciones y los planes de mantenimiento llegan en las próximas
           fases.
         </p>
