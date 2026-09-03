@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { EquiposPage } from '@/paginas/EquiposPage';
+import { InicioPage } from '@/paginas/InicioPage';
 import { ServiciosPage } from '@/paginas/ServiciosPage';
 import { Layout } from './componentes/Layout';
 import { RutaSoloAdmin } from './componentes/RutaSoloAdmin';
@@ -16,7 +17,11 @@ export function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route index element={<Navigate to="/materiales" replace />} />
+        {/* La entrada contesta "que hay que hacer hoy". Antes era el listado
+            de 920 materiales, que no contesta nada: hay que saber de antemano
+            que buscar. */}
+        <Route index element={<InicioPage />} />
+        <Route path="/inicio" element={<InicioPage />} />
         <Route path="/materiales" element={<MaterialesPage />} />
         <Route path="/materiales/:id" element={<MaterialDetallePage />} />
         <Route path="/movimientos" element={<MovimientosPage />} />
@@ -41,7 +46,7 @@ export function App() {
             </RutaSoloAdmin>
           }
         />
-        <Route path="*" element={<Navigate to="/materiales" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
   );

@@ -99,6 +99,35 @@ h2 {
   flex-wrap: wrap;
 }
 
+/* Cabecera de cada bloque de la pantalla de inicio: titulo + contador. */
+.cabecera-bloque {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+.cabecera-bloque h2 {
+  margin: 0;
+}
+
+/* Listas de la pantalla de inicio: un renglon por cosa pendiente. */
+.lista-inicio {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+.lista-inicio li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--color-borde);
+}
+.lista-inicio li:last-child {
+  border-bottom: none;
+}
+
 /* Panel de aviso: un material fuera de circulacion, y usos parecidos. */
 .panel-aviso {
   background: var(--color-alerta-fondo);

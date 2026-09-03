@@ -83,6 +83,21 @@ export async function obtenerTodosLosMateriales(
   return acumulado;
 }
 
+/** A cuántos materiales puede avisar la alerta de bajo stock, y a cuántos no. */
+export interface CoberturaAlertas {
+  enUso: number;
+  conMinimo: number;
+  sinMinimo: number;
+  bajoStock: number;
+}
+
+export function useCoberturaAlertas() {
+  return useQuery({
+    queryKey: ['materiales', 'cobertura-alertas'] as const,
+    queryFn: () => apiRequest<CoberturaAlertas>('/materiales/cobertura-alertas'),
+  });
+}
+
 export function useMaterialesBajoStock() {
   return useQuery({
     queryKey: clavesMateriales.bajoStock,

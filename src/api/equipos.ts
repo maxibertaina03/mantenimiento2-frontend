@@ -169,10 +169,18 @@ export function usePlanesDeEquipo(equipoId: string) {
 }
 
 /** Lo que vence, de lo más urgente a lo menos. Es la pantalla del día a día. */
-export function usePlanesQueVencen(dias = 7) {
+/**
+ * Los servicios que vencen.
+ *
+ * `habilitado` existe porque el endpoint es solo para admins: pedirlo desde una
+ * pantalla que ve todo el mundo le daría 403 a los operarios, y el error
+ * aparecería en la consola de cada uno sin que nada esté mal.
+ */
+export function usePlanesQueVencen(dias = 7, habilitado = true) {
   return useQuery({
     queryKey: ['equipos', 'planes', 'vencen', dias],
     queryFn: () => apiRequest<PlanQueVence[]>('/equipos/planes/vencen', { query: { dias } }),
+    enabled: habilitado,
   });
 }
 

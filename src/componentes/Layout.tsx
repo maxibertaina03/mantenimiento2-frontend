@@ -47,6 +47,9 @@ export function Layout() {
           <span>Mantenimiento</span>
         </div>
         <nav onClick={cerrar}>
+          <NavLink to="/inicio" className={claseNav}>
+            Hoy
+          </NavLink>
           <NavLink to="/materiales" className={claseNav}>
             Materiales
           </NavLink>
