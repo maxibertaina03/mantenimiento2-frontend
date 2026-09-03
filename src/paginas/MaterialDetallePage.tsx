@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useMaterialConHistorial } from '@/api/materiales';
+import { useActualizarMaterial, useMaterialConHistorial } from '@/api/materiales';
 import { BadgeMovimiento } from '@/componentes/BadgeMovimiento';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { formatearFecha, formatearNumero } from '@/lib/formato';
@@ -8,6 +8,7 @@ export function MaterialDetallePage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const { data: material, isLoading, error } = useMaterialConHistorial(id);
+  const actualizar = useActualizarMaterial(id);
 
   if (isLoading) return <Cargando />;
   if (error) return <MensajeError error={error} />;
@@ -22,13 +23,34 @@ export function MaterialDetallePage() {
           </Link>
           <h1 style={{ marginTop: '0.4rem' }}>{material.nombre}</h1>
         </div>
-        <button
-          className="btn btn-primario"
-          onClick={() => navigate(`/movimientos/nuevo?materialId=${material.id}`)}
-        >
-          + Registrar movimiento
-        </button>
+        <div className="acciones-cabecera">
+          {material.activo && (
+            <button
+              className="btn btn-primario"
+              onClick={() => navigate(`/movimientos/nuevo?materialId=${material.id}`)}
+            >
+              + Registrar movimiento
+            </button>
+          )}
+          <button
+            className="btn"
+            disabled={actualizar.isPending}
+            onClick={() => actualizar.mutate({ activo: !material.activo })}
+          >
+            {material.activo ? 'Sacar de circulación' : 'Volver a poner en uso'}
+          </button>
+        </div>
       </div>
+
+      {!material.activo && (
+        <div className="panel panel-aviso">
+          <b>Este material está fuera de circulación.</b> No se puede usar en movimientos ni
+          en órdenes de compra nuevas. Su historial se conserva entero y se puede volver a
+          poner en uso cuando haga falta.
+        </div>
+      )}
+
+      {actualizar.error && <MensajeError error={actualizar.error} />}
 
       <div className="panel">
         <div className="grilla-2">

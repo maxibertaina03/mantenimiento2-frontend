@@ -6,6 +6,7 @@ import type {
   CrearMaterialInput,
   Material,
   MaterialConHistorial,
+  VistaMaterial,
 } from '@/tipos/material';
 
 /** Filtros del listado. Todo opcional: sin nada, trae el catálogo entero. */
@@ -21,6 +22,8 @@ export interface FiltrosMateriales {
   bajoStock?: boolean;
   /** Solo los que todavía no tienen unidad cargada. */
   sinUnidad?: boolean;
+  /** Por defecto el listado esconde los materiales jubilados. */
+  mostrar?: VistaMaterial;
   ordenarPor?: 'nombre' | 'stock' | 'categoria' | 'unidad';
   direccion?: 'asc' | 'desc';
 }
@@ -54,6 +57,7 @@ export function useMateriales(pagina = 1, limite = 20, filtros: FiltrosMateriale
           stockMax: f.stockMax ?? undefined,
           bajoStock: f.bajoStock ? 'true' : undefined,
           sinUnidad: f.sinUnidad ? 'true' : undefined,
+          mostrar: f.mostrar || undefined,
           ordenarPor: f.ordenarPor || undefined,
           direccion: f.direccion || undefined,
         },
@@ -62,13 +66,15 @@ export function useMateriales(pagina = 1, limite = 20, filtros: FiltrosMateriale
 }
 
 /** Trae TODOS los materiales (recorriendo páginas) para exportar. */
-export async function obtenerTodosLosMateriales(): Promise<Material[]> {
+export async function obtenerTodosLosMateriales(
+  mostrar: VistaMaterial = 'activos',
+): Promise<Material[]> {
   const limite = 100;
   const acumulado: Material[] = [];
   let pagina = 1;
   for (;;) {
     const resp = await apiRequest<RespuestaPaginada<Material>>('/materiales', {
-      query: { pagina, limite },
+      query: { pagina, limite, mostrar },
     });
     acumulado.push(...resp.datos);
     if (acumulado.length >= resp.total || resp.datos.length === 0) break;

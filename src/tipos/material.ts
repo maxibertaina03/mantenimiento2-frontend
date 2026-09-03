@@ -12,6 +12,8 @@ export interface Material {
   stockActual: number;
   stockMinimo: number;
   bajoStock: boolean;
+  /** false = jubilado: conserva su historial pero ya no se ofrece al cargar. */
+  activo: boolean;
   notas: string | null;
   creadoEn: string;
   actualizadoEn: string;
@@ -31,4 +33,10 @@ export interface CrearMaterialInput {
   notas?: string;
 }
 
-export type ActualizarMaterialInput = Partial<CrearMaterialInput>;
+export type ActualizarMaterialInput = Partial<CrearMaterialInput> & {
+  /** Sacar de circulación (false) o volver a ponerlo en uso (true). */
+  activo?: boolean;
+};
+
+/** Qué materiales trae el listado. Por defecto, solo los que están en uso. */
+export type VistaMaterial = 'activos' | 'inactivos' | 'todos';

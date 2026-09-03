@@ -12,6 +12,8 @@ export function contarFiltros(f: Filtros): number {
     f.stockMax,
     f.bajoStock || undefined,
     f.sinUnidad || undefined,
+    // 'activos' es lo normal, no cuenta como filtro puesto.
+    f.mostrar && f.mostrar !== 'activos' ? f.mostrar : undefined,
   ].filter((v) => v !== undefined && v !== '').length;
 }
 
@@ -98,6 +100,18 @@ export function FiltrosMateriales({
             valor={filtros.stockMax}
             onCambio={(v) => cambiar({ stockMax: v })}
           />
+        </label>
+
+        <label>
+          Mostrar
+          <select
+            value={filtros.mostrar ?? 'activos'}
+            onChange={(e) => cambiar({ mostrar: e.target.value as Filtros['mostrar'] })}
+          >
+            <option value="activos">Solo los que están en uso</option>
+            <option value="inactivos">Solo los fuera de circulación</option>
+            <option value="todos">Todos</option>
+          </select>
         </label>
 
         <label>

@@ -52,6 +52,17 @@ describe('contarFiltros', () => {
     expect(contarFiltros({})).toBe(0);
   });
 
+  it('REGRESION: ver solo los materiales en uso NO cuenta como filtro', () => {
+    // Es lo normal: si contara, el boton mostraria un "(1)" permanente y el
+    // aviso de "listado acotado" perderia sentido de tanto aparecer.
+    expect(contarFiltros({ mostrar: 'activos' })).toBe(0);
+  });
+
+  it('pedir los jubilados SI cuenta: el listado deja de ser el habitual', () => {
+    expect(contarFiltros({ mostrar: 'inactivos' })).toBe(1);
+    expect(contarFiltros({ mostrar: 'todos' })).toBe(1);
+  });
+
   it('REGRESION: la busqueda por nombre NO cuenta como filtro', () => {
     // Tiene su propio campo visible; contarla haria aparecer un "(1)" en el
     // boton de filtros cada vez que alguien escribe en el buscador.

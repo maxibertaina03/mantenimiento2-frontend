@@ -92,6 +92,20 @@ h2 {
   gap: 1rem;
 }
 
+/* Los botones de la cabecera, para que no se peguen entre si. */
+.acciones-cabecera {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Panel de aviso: un material fuera de circulacion, y usos parecidos. */
+.panel-aviso {
+  background: var(--color-alerta-fondo);
+  color: var(--color-alerta-texto);
+  border-color: currentColor;
+}
+
 /* ── Panel / card ── */
 .panel {
   background: var(--color-panel);

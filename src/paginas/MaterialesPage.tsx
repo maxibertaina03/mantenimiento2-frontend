@@ -198,7 +198,11 @@ export function MaterialesPage() {
                   {formatearNumero(m.stockMinimo)}
                 </td>
                 <td data-etiqueta="Estado">
-                  {m.bajoStock ? (
+                  {/* Jubilado primero: si esta fuera de circulacion, que le
+                      falte stock es lo de menos. */}
+                  {!m.activo ? (
+                    <span className="badge">Fuera de circulación</span>
+                  ) : m.bajoStock ? (
                     <span className="badge badge-bajo">Bajo stock</span>
                   ) : (
                     <span className="texto-suave">OK</span>
