@@ -116,6 +116,12 @@ export function ServiciosPage() {
         No aparecen los equipos fuera de servicio ni dados de baja: no tiene sentido pedir un
         service para algo que está desafectado.
       </p>
+
+      <p className="texto-suave texto-chico">
+        Todos los días sale un correo con lo que vence dentro de la semana y con lo que ya
+        venció. No se repite mientras no haya nada nuevo: un mismo aviso todas las mañanas
+        termina en una regla de bandeja que lo archiva sin leer.
+      </p>
     </>
   );
 }
