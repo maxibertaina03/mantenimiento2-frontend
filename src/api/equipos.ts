@@ -6,7 +6,10 @@ import type {
   CrearEquipoInput,
   DeteccionImportacion,
   Equipo,
+  CrearPlanInput,
   HistorialEquipo,
+  PlanMantenimiento,
+  PlanQueVence,
   FiltrosEquipos,
   RegistrarIntervencionInput,
   ResultadoImportacionEquipos,
@@ -154,5 +157,54 @@ export function useRegistrarIntervencion(equipoId: string) {
       // El resumen de la ficha cambia con cada intervención.
       qc.invalidateQueries({ queryKey: clavesEquipos.base });
     },
+  });
+}
+
+export function usePlanesDeEquipo(equipoId: string) {
+  return useQuery({
+    queryKey: ['equipos', 'planes', equipoId],
+    queryFn: () => apiRequest<PlanMantenimiento[]>(`/equipos/${equipoId}/planes`),
+    enabled: equipoId !== '',
+  });
+}
+
+/** Lo que vence, de lo más urgente a lo menos. Es la pantalla del día a día. */
+export function usePlanesQueVencen(dias = 7) {
+  return useQuery({
+    queryKey: ['equipos', 'planes', 'vencen', dias],
+    queryFn: () => apiRequest<PlanQueVence[]>('/equipos/planes/vencen', { query: { dias } }),
+  });
+}
+
+/** Invalida todo lo que un cambio de plan puede haber movido. */
+function invalidarPlanes(qc: ReturnType<typeof useQueryClient>, equipoId: string) {
+  qc.invalidateQueries({ queryKey: ['equipos', 'planes', equipoId] });
+  qc.invalidateQueries({ queryKey: ['equipos', 'planes', 'vencen'] });
+}
+
+export function useCrearPlan(equipoId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (datos: CrearPlanInput) =>
+      apiRequest<PlanMantenimiento>(`/equipos/${equipoId}/planes`, { method: 'POST', body: datos }),
+    onSuccess: () => invalidarPlanes(qc, equipoId),
+  });
+}
+
+export function useActualizarPlan(equipoId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ planId, ...datos }: { planId: string } & Partial<CrearPlanInput> & { activo?: boolean }) =>
+      apiRequest<PlanMantenimiento>(`/equipos/planes/${planId}`, { method: 'PATCH', body: datos }),
+    onSuccess: () => invalidarPlanes(qc, equipoId),
+  });
+}
+
+export function useEliminarPlan(equipoId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (planId: string) =>
+      apiRequest<void>(`/equipos/planes/${planId}`, { method: 'DELETE' }),
+    onSuccess: () => invalidarPlanes(qc, equipoId),
   });
 }

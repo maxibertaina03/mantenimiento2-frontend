@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { EquiposPage } from '@/paginas/EquiposPage';
+import { ServiciosPage } from '@/paginas/ServiciosPage';
 import { Layout } from './componentes/Layout';
 import { RutaSoloAdmin } from './componentes/RutaSoloAdmin';
 import { EquiposItPage } from './paginas/EquiposItPage';
@@ -30,6 +31,7 @@ export function App() {
           }
         />
         <Route path="/equipos" element={<EquiposPage />} />
+        <Route path="/servicios" element={<ServiciosPage />} />
         <Route path="/proveedores" element={<ProveedoresPage />} />
         <Route
           path="/usuarios"

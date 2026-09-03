@@ -1382,3 +1382,39 @@ button {
 .tipo-correctivo { background: #fee2e2; color: #991b1b; }
 .tipo-preventivo { background: #dcfce7; color: #166534; }
 .tipo-mejora { background: #dbeafe; color: #1e40af; }
+
+/* Planes de mantenimiento. */
+.lista-planes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+.plan {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--color-borde);
+  border-left: 3px solid var(--color-borde);
+  border-radius: 0 var(--radio) var(--radio) 0;
+  background: var(--color-panel);
+}
+/* El borde dice de un vistazo qué urge, sin leer la fila. */
+.plan-vencido { border-left-color: var(--color-peligro); }
+.plan-por_vencer { border-left-color: var(--color-alerta-borde); }
+.plan-al_dia { border-left-color: var(--color-exito); }
+.plan-datos { flex: 1 1 260px; min-width: 0; }
+.plan-acciones { display: flex; align-items: center; gap: 0.4rem; }
+.plan-etq-vencido { background: #fee2e2; color: #991b1b; }
+.plan-etq-por_vencer { background: var(--color-alerta-fondo); color: var(--color-alerta-texto); }
+.plan-etq-al_dia { background: #dcfce7; color: #166534; }
+.sugerencias-periodicidad {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+}

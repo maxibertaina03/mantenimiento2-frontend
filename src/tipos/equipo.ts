@@ -162,3 +162,40 @@ export interface RegistrarIntervencionInput {
   costoManoObra?: number | null;
   horasParada?: number | null;
 }
+
+// ── Planes de mantenimiento ──
+export const ESTADOS_PLAN = ['VENCIDO', 'POR_VENCER', 'AL_DIA'] as const;
+export type EstadoPlan = (typeof ESTADOS_PLAN)[number];
+
+export const ETIQUETA_ESTADO_PLAN: Record<EstadoPlan, string> = {
+  VENCIDO: 'Vencido',
+  POR_VENCER: 'Por vencer',
+  AL_DIA: 'Al día',
+};
+
+export interface PlanMantenimiento {
+  id: string;
+  equipoId: string;
+  nombre: string;
+  tareas: string | null;
+  periodicidadDias: number;
+  proximaFecha: string;
+  activo: boolean;
+  estado: EstadoPlan;
+  /** Negativo si ya venció. */
+  diasParaVencer: number;
+}
+
+/** Un plan que vence, con los datos de su equipo para la pantalla del día. */
+export interface PlanQueVence extends PlanMantenimiento {
+  equipoNombre: string;
+  equipoEstado: string;
+  ubicacionNombre: string | null;
+}
+
+export interface CrearPlanInput {
+  nombre: string;
+  tareas?: string | null;
+  periodicidadDias: number;
+  proximaFecha: string;
+}
