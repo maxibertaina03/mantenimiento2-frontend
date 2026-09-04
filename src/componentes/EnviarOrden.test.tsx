@@ -367,3 +367,58 @@ describe('EnviarOrden — cargar el contacto del proveedor', () => {
     expect(screen.getByText(/no parece una dirección/i)).toBeInTheDocument();
   });
 });
+
+describe('EnviarOrden — sin copia interna configurada', () => {
+  /**
+   * Hoy la copia interna esta apagada: el servidor de correo de la empresa
+   * rechaza todo lo que sale por Brevo con 550 Blacklisted [France, Europe],
+   * asi que rebotaba siempre. La constancia la da la lista de envios.
+   */
+  const sinCopiaInterna = (envios: unknown[] = []) => {
+    apiRequestMock.mockImplementation((rutaCruda: string) => {
+      const ruta = String(rutaCruda ?? '');
+      if (ruta.endsWith('/configuracion-envio')) {
+        return Promise.resolve({
+          mailAdministracion: null,
+          whatsappAdministracion: '+54 9 3534 40-3519',
+          correoConfigurado: true,
+        });
+      }
+      if (ruta.endsWith('/envios')) return Promise.resolve(envios);
+      return Promise.resolve({ ...RESULTADO_ENVIO, copia: [] });
+    });
+  };
+
+  it('no promete una copia interna que no existe', async () => {
+    sinCopiaInterna();
+    abrir();
+
+    await screen.findByRole('button', { name: /al proveedor/i });
+    expect(screen.queryByText(/copia interna/i)).not.toBeInTheDocument();
+  });
+
+  it('con correo del proveedor, se puede mandar igual', async () => {
+    sinCopiaInterna();
+    abrir();
+
+    expect(await screen.findByRole('button', { name: /enviar por correo/i })).toBeEnabled();
+  });
+
+  it('REGRESION: sin correo del proveedor tampoco, no ofrece mandar a la nada', async () => {
+    // Mandar un correo sin destinatario no falla: simplemente no le llega a
+    // nadie, y la orden quedaria marcada como enviada.
+    sinCopiaInterna();
+    abrir({ ...orden, proveedorEmail: null });
+
+    expect(await screen.findByRole('button', { name: /enviar por correo/i })).toBeDisabled();
+    expect(screen.getByText(/no hay a dónde mandarla/i)).toBeInTheDocument();
+  });
+
+  it('y ahi manda a cargar el correo o usar WhatsApp', async () => {
+    sinCopiaInterna();
+    abrir({ ...orden, proveedorEmail: null });
+
+    expect(await screen.findByText(/mandásela por WhatsApp/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /al proveedor/i })).toBeEnabled();
+  });
+});

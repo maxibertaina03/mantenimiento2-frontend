@@ -136,7 +136,8 @@ export function useEnviarOrdenPorCorreo() {
 
 /** Casilla y WhatsApp de administración, y si el correo automático está andando. */
 export interface ConfiguracionEnvio {
-  mailAdministracion: string;
+  /** null cuando no hay copia interna configurada: la orden va solo al proveedor. */
+  mailAdministracion: string | null;
   whatsappAdministracion: string | null;
   correoConfigurado: boolean;
 }

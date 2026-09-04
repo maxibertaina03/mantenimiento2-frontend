@@ -43,6 +43,10 @@ export function EnviarOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar:
   const numeroAdmin = aNumeroWhatsapp(config?.whatsappAdministracion);
   const urlCorreoManual = enlaceCorreo(orden, orden.proveedorEmail, config?.mailAdministracion);
 
+  // Sin correo del proveedor y sin copia interna no hay destinatario. El
+  // servidor lo rechaza igual; esto evita ofrecer un botón que no puede andar.
+  const hayDondeMandar = tieneEmail || Boolean(config?.mailAdministracion);
+
   const enviar = useEnviarOrdenPorCorreo();
   const registrarWhatsapp = useRegistrarEnvioWhatsapp();
   const [enviado, setEnviado] = useState<{ para: string[]; copia: string[] } | null>(null);
@@ -105,10 +109,12 @@ export function EnviarOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar:
                 <span className="texto-suave texto-chico">Teléfono</span>
                 <span>{orden.proveedorTelefono || 'Sin teléfono cargado'}</span>
               </div>
-              <div className="dato">
-                <span className="texto-suave texto-chico">Copia interna</span>
-                <span>{config?.mailAdministracion ?? '—'}</span>
-              </div>
+              {config?.mailAdministracion && (
+                <div className="dato">
+                  <span className="texto-suave texto-chico">Copia interna</span>
+                  <span>{config.mailAdministracion}</span>
+                </div>
+              )}
             </div>
 
             <ContactoProveedor
@@ -162,26 +168,31 @@ export function EnviarOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar:
             ) : (
               <>
                 <p className="texto-suave texto-chico">
-                  Sale desde el sistema con el PDF adjunto
                   {tieneEmail ? (
                     <>
-                      {' '}
-                      a <strong>{orden.proveedorEmail}</strong>, con copia a administración.
+                      Sale desde el sistema con el PDF adjunto a{' '}
+                      <strong>{orden.proveedorEmail}</strong>
+                      {config?.mailAdministracion ? ', con copia interna.' : '.'} Si el proveedor
+                      responde, la respuesta te llega a vos.
+                    </>
+                  ) : config?.mailAdministracion ? (
+                    <>
+                      El proveedor no tiene correo cargado, así que la orden va a la casilla
+                      interna. Cargáselo arriba y sale directo.
                     </>
                   ) : (
                     <>
-                      {' '}
-                      a <strong>administración</strong>: el proveedor no tiene correo cargado.
-                      Cargáselo arriba y sale directo.
+                      <strong>El proveedor no tiene correo cargado</strong>, así que no hay a
+                      dónde mandarla. Cargáselo arriba, o mandásela por WhatsApp.
                     </>
-                  )}{' '}
-                  Si el proveedor responde, la respuesta te llega a vos.
+                  )}
                 </p>
                 <div className="acciones-envio">
                   <button
                     className="btn btn-primario"
                     onClick={enviarPorCorreo}
-                    disabled={enviar.isPending}
+                    disabled={enviar.isPending || !hayDondeMandar}
+                    title={hayDondeMandar ? undefined : 'No hay ninguna dirección a la que mandarla'}
                   >
                     {enviar.isPending ? 'Enviando…' : '✉ Enviar por correo'}
                   </button>
