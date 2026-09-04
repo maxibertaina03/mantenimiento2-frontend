@@ -106,6 +106,8 @@ export function useEliminarOrden() {
 }
 
 export interface ResultadoEnvio {
+  /** En qué estado quedó la orden: al mandarla, un BORRADOR pasa a EMITIDA. */
+  estado: EstadoOrdenCompra;
   para: string[];
   copia: string[];
   responderA: string | null;
@@ -119,11 +121,68 @@ export interface ResultadoEnvio {
  * 503 y la pantalla ofrece el envío manual.
  */
 export function useEnviarOrdenPorCorreo() {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, pdfBase64 }: { id: string; pdfBase64: string }) =>
       apiRequest<ResultadoEnvio>(`/ordenes-compra/${id}/enviar-correo`, {
         method: 'POST',
         body: { pdfBase64 },
       }),
+    // Mandarla la emite: la lista y la ficha tienen que reflejar el estado
+    // nuevo, o queda mostrando un BORRADOR que ya no se puede editar.
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesOrdenes.base }),
+  });
+}
+
+/** Casilla y WhatsApp de administración, y si el correo automático está andando. */
+export interface ConfiguracionEnvio {
+  mailAdministracion: string;
+  whatsappAdministracion: string | null;
+  correoConfigurado: boolean;
+}
+
+export function useConfiguracionEnvio() {
+  return useQuery({
+    queryKey: ['ordenes-compra', 'configuracion-envio'] as const,
+    queryFn: () => apiRequest<ConfiguracionEnvio>('/ordenes-compra/configuracion-envio'),
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** Por dónde y cuándo salió una orden. */
+export interface EnvioDeOrden {
+  id: string;
+  via: 'CORREO' | 'WHATSAPP';
+  destinatarios: string;
+  /** false en WhatsApp: el sistema abre el chat, pero quien manda es la persona. */
+  automatico: boolean;
+  enviadoEn: string;
+  usuarioNombre: string | null;
+}
+
+export function useEnviosDeOrden(id: string, habilitado = true) {
+  return useQuery({
+    queryKey: ['ordenes-compra', 'envios', id] as const,
+    queryFn: () => apiRequest<EnvioDeOrden[]>(`/ordenes-compra/${id}/envios`),
+    enabled: habilitado && !!id,
+  });
+}
+
+/**
+ * Deja constancia de que la orden se mandó por WhatsApp.
+ *
+ * WhatsApp no sale solo: el sistema abre el chat con el texto escrito y la
+ * persona toca enviar y adjunta el PDF. Se registra al abrir el chat, que es lo
+ * último que el sistema llega a ver.
+ */
+export function useRegistrarEnvioWhatsapp() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, numero }: { id: string; numero: string }) =>
+      apiRequest<OrdenCompra>(`/ordenes-compra/${id}/registrar-whatsapp`, {
+        method: 'POST',
+        body: { numero },
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesOrdenes.base }),
   });
 }

@@ -1,16 +1,13 @@
 import type { OrdenCompra } from '@/tipos/ordenCompra';
 
-/** Copia interna que recibe todas las órdenes emitidas. */
-export const MAIL_ADMINISTRACION = 'administracion@lacteoslastres.com.ar';
-
 /**
- * WhatsApp de administración de la empresa.
+ * Copia interna que recibe todas las órdenes emitidas.
  *
- * PROVISORIO: por ahora las órdenes se mandan acá para probar el circuito sin
- * escribirle a un proveedor de verdad. Cuando se confirme que funciona, el
- * envío al proveedor es el botón de al lado (usa el teléfono de su ficha).
+ * Es solo el valor de reserva: el bueno lo da el servidor
+ * (`/ordenes-compra/configuracion-envio`). Estaba escrito acá Y en el backend,
+ * y el día que cambie hay que acordarse de los dos lados.
  */
-export const WHATSAPP_ADMINISTRACION = '+54 9 3534 40-3519';
+export const MAIL_ADMINISTRACION_POR_DEFECTO = 'administracion@lacteoslastres.com.ar';
 
 /**
  * Armado de los envíos de una orden de compra: correo y WhatsApp.
@@ -126,12 +123,17 @@ export function armarMensaje(orden: OrdenCompra): MensajeOrden {
  * Si el proveedor tiene correo va como destinatario y administración en copia;
  * si no, administración es el destinatario, así queda constancia igual.
  */
-export function enlaceCorreo(orden: OrdenCompra, emailProveedor?: string | null): string {
+export function enlaceCorreo(
+  orden: OrdenCompra,
+  emailProveedor?: string | null,
+  mailAdministracion?: string | null,
+): string {
   const { asunto, cuerpo } = armarMensaje(orden);
   const tieneProveedor = esEmailValido(emailProveedor);
+  const interno = mailAdministracion?.trim() || MAIL_ADMINISTRACION_POR_DEFECTO;
 
-  const para = tieneProveedor ? emailProveedor!.trim() : MAIL_ADMINISTRACION;
-  const cc = tieneProveedor ? MAIL_ADMINISTRACION : '';
+  const para = tieneProveedor ? emailProveedor!.trim() : interno;
+  const cc = tieneProveedor ? interno : '';
 
   const parametros = new URLSearchParams({ subject: asunto, body: cuerpo });
   if (cc) parametros.set('cc', cc);

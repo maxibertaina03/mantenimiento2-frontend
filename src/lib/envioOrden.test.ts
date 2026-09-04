@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  MAIL_ADMINISTRACION,
-  WHATSAPP_ADMINISTRACION,
+  MAIL_ADMINISTRACION_POR_DEFECTO,
   aNumeroWhatsapp,
   armarMensaje,
   enlaceCorreo,
@@ -114,19 +113,19 @@ describe('enlaceCorreo', () => {
   it('con correo del proveedor: va a él, con administración en copia', () => {
     const url = enlaceCorreo(orden, orden.proveedorEmail);
     expect(url.startsWith('mailto:ventas%40ferreteria.com.ar')).toBe(true);
-    expect(url).toContain(`cc=${encodeURIComponent(MAIL_ADMINISTRACION)}`);
+    expect(url).toContain(`cc=${encodeURIComponent(MAIL_ADMINISTRACION_POR_DEFECTO)}`);
   });
 
   it('REGRESION: sin correo del proveedor, la orden igual va a administración', () => {
     // Si no, el envío se perdería del todo y no quedaría constancia interna.
     const url = enlaceCorreo(orden, null);
-    expect(url.startsWith(`mailto:${encodeURIComponent(MAIL_ADMINISTRACION)}`)).toBe(true);
+    expect(url.startsWith(`mailto:${encodeURIComponent(MAIL_ADMINISTRACION_POR_DEFECTO)}`)).toBe(true);
     expect(url).not.toContain('cc=');
   });
 
   it('un correo inválido se trata como si no hubiera', () => {
     const url = enlaceCorreo(orden, 'no-es-un-mail');
-    expect(url.startsWith(`mailto:${encodeURIComponent(MAIL_ADMINISTRACION)}`)).toBe(true);
+    expect(url.startsWith(`mailto:${encodeURIComponent(MAIL_ADMINISTRACION_POR_DEFECTO)}`)).toBe(true);
   });
 
   it('REGRESION: los espacios no quedan como "+" en el cuerpo', () => {
@@ -164,16 +163,39 @@ describe('enlaceWhatsapp', () => {
   });
 });
 
-describe('WHATSAPP_ADMINISTRACION', () => {
-  it('el numero de administracion se normaliza bien', () => {
-    // Es el destino provisorio para probar el circuito sin escribirle a un
-    // proveedor real: si no normalizara, el boton llevaria a un chat vacio.
-    expect(aNumeroWhatsapp(WHATSAPP_ADMINISTRACION)).toBe('5493534403519');
+describe('el numero de administracion que manda el servidor', () => {
+  // Ya no es una constante del frontend: viene de WHATSAPP_ADMINISTRACION en el
+  // servidor, escrito como lo escribiria una persona. Lo que se prueba es que
+  // ese formato se normalice, porque si no el boton lleva a un chat vacio.
+  const COMO_LO_MANDA_EL_SERVIDOR = '+54 9 3534 40-3519';
+
+  it('se normaliza bien', () => {
+    expect(aNumeroWhatsapp(COMO_LO_MANDA_EL_SERVIDOR)).toBe('5493534403519');
   });
 
   it('arma un enlace valido con la orden', () => {
-    const url = enlaceWhatsapp(orden, WHATSAPP_ADMINISTRACION);
+    const url = enlaceWhatsapp(orden, COMO_LO_MANDA_EL_SERVIDOR);
     expect(url?.startsWith('https://wa.me/5493534403519?text=')).toBe(true);
     expect(decodeURIComponent(url!)).toContain('OC-2026-0007');
+  });
+
+  it('si el servidor no lo tiene cargado, no se arma ningun enlace', () => {
+    // `whatsappAdministracion` es null cuando falta la variable de entorno.
+    expect(enlaceWhatsapp(orden, null)).toBeNull();
+  });
+});
+
+describe('enlaceCorreo con la casilla que manda el servidor', () => {
+  it('usa la casilla del servidor en vez de la de reserva', () => {
+    // El valor bueno lo da /ordenes-compra/configuracion-envio: la constante
+    // del frontend quedo solo como reserva.
+    const url = enlaceCorreo(orden, 'proveedor@x.com', 'otra-casilla@empresa.com');
+    expect(url).toContain(encodeURIComponent('otra-casilla@empresa.com'));
+    expect(url).not.toContain(encodeURIComponent(MAIL_ADMINISTRACION_POR_DEFECTO));
+  });
+
+  it('sin dato del servidor cae en la de reserva', () => {
+    const url = enlaceCorreo(orden, 'proveedor@x.com', null);
+    expect(url).toContain(encodeURIComponent(MAIL_ADMINISTRACION_POR_DEFECTO));
   });
 });

@@ -83,14 +83,42 @@ function envolver(nodo: ReactNode) {
 const abrir = (o: OrdenCompra = orden) =>
   render(envolver(<EnviarOrden orden={o} onCerrar={() => {}} />));
 
+const RESULTADO_ENVIO = {
+  para: ['ventas@ferreteria.com.ar'],
+  copia: ['administracion@lacteoslastres.com.ar'],
+  responderA: 'mantenimiento@lacteoslastres.com.ar',
+  estado: 'EMITIDA',
+};
+
+/** La respuesta de cada ruta. `envios` arranca vacio salvo que se pida otra cosa. */
+function servidor(opciones: { envios?: unknown[]; whatsappAdmin?: string | null } = {}) {
+  apiRequestMock.mockImplementation((rutaCruda: string) => {
+    const ruta = String(rutaCruda ?? '');
+    if (ruta.endsWith('/configuracion-envio')) {
+      return Promise.resolve({
+        mailAdministracion: 'administracion@lacteoslastres.com.ar',
+        whatsappAdministracion:
+          opciones.whatsappAdmin === undefined ? '+54 9 3534 40-3519' : opciones.whatsappAdmin,
+        correoConfigurado: true,
+      });
+    }
+    if (ruta.endsWith('/envios')) return Promise.resolve(opciones.envios ?? []);
+    return Promise.resolve(RESULTADO_ENVIO);
+  });
+}
+
+/** El envio por correo, entre todas las llamadas que hace la pantalla. */
+const llamadaDeEnvio = () =>
+  apiRequestMock.mock.calls.find(([ruta]) => String(ruta).endsWith('/enviar-correo'));
+
+const abrirMock = vi.fn();
+
 beforeEach(() => {
   apiRequestMock.mockReset();
   descargarMock.mockReset();
-  apiRequestMock.mockResolvedValue({
-    para: ['ventas@ferreteria.com.ar'],
-    copia: ['administracion@lacteoslastres.com.ar'],
-    responderA: 'mantenimiento@lacteoslastres.com.ar',
-  });
+  abrirMock.mockReset();
+  vi.stubGlobal('open', abrirMock);
+  servidor();
 });
 
 describe('EnviarOrden — correo automático', () => {
@@ -101,9 +129,8 @@ describe('EnviarOrden — correo automático', () => {
     abrir();
     await usuario.click(screen.getByRole('button', { name: /enviar por correo/i }));
 
-    await waitFor(() => expect(apiRequestMock).toHaveBeenCalled());
-    const [ruta, opciones] = apiRequestMock.mock.calls[0];
-    expect(ruta).toBe('/ordenes-compra/oc-1/enviar-correo');
+    await waitFor(() => expect(llamadaDeEnvio()).toBeDefined());
+    const [, opciones] = llamadaDeEnvio()!;
     expect(Object.keys(opciones.body)).toEqual(['pdfBase64']);
   });
 
@@ -125,7 +152,13 @@ describe('EnviarOrden — correo automático', () => {
   it('REGRESION: si el servidor no tiene SMTP, ofrece mandarla a mano', async () => {
     // El 503 no es un fallo del usuario ni algo para reintentar: sin esta
     // salida, quedaria sin poder mandar la orden.
-    apiRequestMock.mockRejectedValue(new ApiError(503, 'SMTP no configurado'));
+    servidor();
+    const original = apiRequestMock.getMockImplementation()!;
+    apiRequestMock.mockImplementation((ruta: string, ...resto: unknown[]) =>
+      String(ruta).endsWith('/enviar-correo')
+        ? Promise.reject(new ApiError(503, 'SMTP no configurado'))
+        : original(ruta, ...resto),
+    );
     const usuario = userEvent.setup();
     abrir();
     await usuario.click(screen.getByRole('button', { name: /enviar por correo/i }));
@@ -135,7 +168,13 @@ describe('EnviarOrden — correo automático', () => {
   });
 
   it('un error que NO es 503 se muestra, sin caer al modo manual', async () => {
-    apiRequestMock.mockRejectedValue(new ApiError(500, 'Gmail rechazo el envio'));
+    servidor();
+    const original = apiRequestMock.getMockImplementation()!;
+    apiRequestMock.mockImplementation((ruta: string, ...resto: unknown[]) =>
+      String(ruta).endsWith('/enviar-correo')
+        ? Promise.reject(new ApiError(500, 'Gmail rechazo el envio'))
+        : original(ruta, ...resto),
+    );
     const usuario = userEvent.setup();
     abrir();
     await usuario.click(screen.getByRole('button', { name: /enviar por correo/i }));
@@ -146,16 +185,70 @@ describe('EnviarOrden — correo automático', () => {
 });
 
 describe('EnviarOrden — WhatsApp', () => {
-  it('el boton de administracion apunta al numero de la empresa', () => {
+  it('el boton del proveedor abre el chat con el telefono de su ficha', async () => {
+    const usuario = userEvent.setup();
     abrir();
-    const enlace = screen.getByRole('link', { name: /a administración/i });
-    expect(enlace).toHaveAttribute('href', expect.stringContaining('wa.me/5493534403519'));
+    await usuario.click(await screen.findByRole('button', { name: /al proveedor/i }));
+
+    expect(abrirMock).toHaveBeenCalledWith(
+      expect.stringContaining('wa.me/5493564123456'),
+      '_blank',
+      expect.anything(),
+    );
   });
 
-  it('el boton del proveedor usa el telefono de su ficha', () => {
+  it('el boton de administracion usa el numero que manda el servidor', async () => {
+    const usuario = userEvent.setup();
     abrir();
-    const enlace = screen.getByRole('link', { name: /al proveedor/i });
-    expect(enlace).toHaveAttribute('href', expect.stringContaining('wa.me/5493564123456'));
+    await usuario.click(await screen.findByRole('button', { name: /a administración/i }));
+
+    expect(abrirMock).toHaveBeenCalledWith(
+      expect.stringContaining('wa.me/5493534403519'),
+      '_blank',
+      expect.anything(),
+    );
+  });
+
+  it('REGRESION: abrir el chat deja constancia del envio', async () => {
+    // Sin esto la orden queda en BORRADOR y editable despues de que el
+    // proveedor la recibio, y "¿ya se la mandamos?" no tiene respuesta.
+    const usuario = userEvent.setup();
+    abrir();
+    await usuario.click(await screen.findByRole('button', { name: /al proveedor/i }));
+
+    await waitFor(() => {
+      const registro = apiRequestMock.mock.calls.find(([r]) =>
+        String(r).endsWith('/registrar-whatsapp'),
+      );
+      expect(registro).toBeDefined();
+      expect(registro![1].body).toEqual({ numero: '5493564123456' });
+    });
+  });
+
+  it('REGRESION: si no se puede registrar, el chat se abre igual', async () => {
+    // El chat ya se abrio antes de que el registro fallara: frenar a la persona
+    // por eso no arregla nada y le impide mandar la orden.
+    servidor();
+    const original = apiRequestMock.getMockImplementation()!;
+    apiRequestMock.mockImplementation((ruta: string, ...resto: unknown[]) =>
+      String(ruta).endsWith('/registrar-whatsapp')
+        ? Promise.reject(new ApiError(500, 'se cayo la base'))
+        : original(ruta, ...resto),
+    );
+    const usuario = userEvent.setup();
+    abrir();
+    await usuario.click(await screen.findByRole('button', { name: /al proveedor/i }));
+
+    expect(abrirMock).toHaveBeenCalled();
+  });
+
+  it('sin numero de administracion cargado, ese boton no aparece', async () => {
+    // `whatsappAdministracion` es null cuando falta la variable en el servidor.
+    servidor({ whatsappAdmin: null });
+    abrir();
+
+    expect(await screen.findByRole('button', { name: /al proveedor/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /a administración/i })).not.toBeInTheDocument();
   });
 
   it('REGRESION: sin telefono usable, el boton queda deshabilitado y explica por que', () => {
@@ -167,7 +260,7 @@ describe('EnviarOrden — WhatsApp', () => {
 
   it('avisa que el PDF de WhatsApp se adjunta a mano', () => {
     abrir();
-    expect(screen.getByText(/hay que adjuntarlo a mano/i)).toBeInTheDocument();
+    expect(screen.getByText(/adjuntá el PDF/i)).toBeInTheDocument();
   });
 
   it('se puede volver a descargar el PDF', async () => {
@@ -175,5 +268,102 @@ describe('EnviarOrden — WhatsApp', () => {
     abrir();
     await usuario.click(screen.getByRole('button', { name: /descargar el pdf/i }));
     expect(descargarMock).toHaveBeenCalledWith(orden);
+  });
+});
+
+describe('EnviarOrden — constancia de lo ya enviado', () => {
+  it('muestra por donde salio la orden y cuando', async () => {
+    // Sin esto, "¿ya se la mandamos a Ferretería Central?" solo se contesta
+    // buscando en la casilla de quien la haya mandado.
+    servidor({
+      envios: [
+        {
+          id: 'e1',
+          via: 'CORREO',
+          destinatarios: 'ventas@ferreteria.com.ar',
+          automatico: true,
+          enviadoEn: '2026-09-04T13:00:00.000Z',
+          usuarioNombre: 'Máximo',
+        },
+      ],
+    });
+    abrir();
+
+    const historial = await screen.findByRole('list');
+    expect(historial).toHaveTextContent('ventas@ferreteria.com.ar');
+    expect(historial).toHaveTextContent('Máximo');
+  });
+
+  it('distingue lo que mando el sistema de lo que mando una persona', async () => {
+    // WhatsApp no sale solo: marcarlo igual que el correo haria leer el
+    // registro como una confirmacion de entrega, que no lo es.
+    servidor({
+      envios: [
+        {
+          id: 'e2',
+          via: 'WHATSAPP',
+          destinatarios: '5493564123456',
+          automatico: false,
+          enviadoEn: '2026-09-04T13:00:00.000Z',
+          usuarioNombre: null,
+        },
+      ],
+    });
+    abrir();
+
+    expect(await screen.findByText(/\(a mano\)/)).toBeInTheDocument();
+  });
+
+  it('sin envios previos no muestra la seccion', async () => {
+    servidor({ envios: [] });
+    abrir();
+
+    await screen.findByRole('button', { name: /al proveedor/i });
+    expect(screen.queryByText(/ya se mandó/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('EnviarOrden — cargar el contacto del proveedor', () => {
+  it('ofrece cargar el correo cuando falta', async () => {
+    // De los 1067 proveedores, 6 tienen correo. El momento en que alguien se
+    // entera de que falta es este, asi que es aca donde tiene que cargarlo.
+    abrir({ ...orden, proveedorEmail: null, proveedorTelefono: null });
+
+    expect(
+      await screen.findByRole('button', { name: /cargar correo o teléfono/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('con el contacto cargado ofrece corregirlo, no cargarlo', async () => {
+    abrir();
+    expect(await screen.findByRole('button', { name: /corregir el contacto/i })).toBeInTheDocument();
+  });
+
+  it('guarda el correo en la ficha del proveedor', async () => {
+    const usuario = userEvent.setup();
+    abrir({ ...orden, proveedorEmail: null, proveedorTelefono: null });
+    await usuario.click(await screen.findByRole('button', { name: /cargar correo/i }));
+    await usuario.type(
+      screen.getByPlaceholderText('compras@proveedor.com.ar'),
+      'compras@ferreteria.com.ar',
+    );
+    await usuario.click(screen.getByRole('button', { name: /^guardar$/i }));
+
+    await waitFor(() => {
+      const guardado = apiRequestMock.mock.calls.find(([r]) => String(r).startsWith('/proveedores/'));
+      expect(guardado).toBeDefined();
+      expect(guardado![1].body.email).toBe('compras@ferreteria.com.ar');
+    });
+  });
+
+  it('REGRESION: no deja guardar un correo que no es un correo', async () => {
+    // Guardarlo haria que la orden rebote sin que nadie se entere.
+    const usuario = userEvent.setup();
+    abrir({ ...orden, proveedorEmail: null, proveedorTelefono: null });
+    await usuario.click(await screen.findByRole('button', { name: /cargar correo/i }));
+    await usuario.type(screen.getByPlaceholderText('compras@proveedor.com.ar'), 'esto-no-es');
+
+    expect(screen.getByRole('button', { name: /^guardar$/i })).toBeDisabled();
+    expect(screen.getByText(/no parece una dirección/i)).toBeInTheDocument();
   });
 });

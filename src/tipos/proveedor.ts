@@ -17,4 +17,12 @@ export interface CrearProveedorInput {
   notas?: string;
 }
 
-export type ActualizarProveedorInput = Partial<CrearProveedorInput>;
+/**
+ * `null` en un campo lo vacía; `undefined` lo deja como estaba.
+ *
+ * La distinción importa al corregir el contacto: borrar un teléfono mal
+ * cargado no es lo mismo que no tocarlo.
+ */
+export type ActualizarProveedorInput = {
+  [K in keyof CrearProveedorInput]?: CrearProveedorInput[K] | null;
+};
