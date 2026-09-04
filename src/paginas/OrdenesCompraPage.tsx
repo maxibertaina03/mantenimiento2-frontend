@@ -53,7 +53,22 @@ export function OrdenesCompraPage() {
   // admin. Un operario sigue con el flujo de siempre, descargar el PDF.
   const { data: usuario } = useUsuarioActual();
   const puedeEnviar = usuario?.rol === 'ADMIN';
-  const alEnviar = puedeEnviar ? setOrdenAEnviar : undefined;
+
+  /**
+   * Abre la pantalla de envío y cierra la que estaba.
+   *
+   * Cerrar las otras es la parte que importa: la de envío se abre desde el
+   * detalle y desde el alta, y dejar las dos abiertas las apilaba una encima de
+   * otra. Cuál tapaba a cuál dependía del orden en el JSX, no de lo que la
+   * persona acababa de tocar, así que el botón parecía no hacer nada.
+   */
+  const alEnviar = puedeEnviar
+    ? (orden: OrdenCompra) => {
+        setOrdenAbierta(null);
+        setModalAlta(false);
+        setOrdenAEnviar(orden);
+      }
+    : undefined;
 
   useEffect(() => {
     const t = setTimeout(() => {
