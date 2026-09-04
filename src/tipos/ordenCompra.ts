@@ -45,6 +45,9 @@ export interface OrdenCompra {
   emitidaEn: string | null;
   recibidaEn: string | null;
   recibidaPorNombre: string | null;
+  /** Comprobante con el que llegó la mercadería. */
+  remito: string | null;
+  factura: string | null;
   renglones: RenglonOrden[];
   total: number | null;
   editable: boolean;
@@ -68,6 +71,8 @@ export type ActualizarOrdenInput = Partial<CrearOrdenInput>;
 
 export interface RecibirOrdenInput {
   fechaRecepcion?: string;
+  /** Remito o factura: hace falta al menos uno para cerrar la orden. */
   remito?: string;
+  factura?: string;
   notas?: string;
 }

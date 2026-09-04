@@ -483,6 +483,10 @@ function ModalDetalleOrden({
   const eliminar = useEliminarOrden();
 
   const [remito, setRemito] = useState('');
+  const [factura, setFactura] = useState('');
+  // Sin comprobante no se cierra la orden: es lo unico que ata la entrada de
+  // stock al papel. El servidor lo rechaza igual; esto evita el viaje.
+  const hayComprobante = remito.trim() !== '' || factura.trim() !== '';
   const [mostrarRecepcion, setMostrarRecepcion] = useState(false);
 
   const errorAccion = emitir.error ?? recibir.error ?? anular.error ?? eliminar.error;
@@ -581,14 +585,28 @@ function ModalDetalleOrden({
 
         {mostrarRecepcion && (
           <div className="panel">
-            <label className="campo">
-              Nº de remito (opcional)
-              <input
-                value={remito}
-                onChange={(e) => setRemito(e.target.value)}
-                placeholder="R-0001-00012345"
-              />
-            </label>
+            <div className="grilla-2">
+              <label className="campo">
+                Nº de remito
+                <input
+                  value={remito}
+                  onChange={(e) => setRemito(e.target.value)}
+                  placeholder="R-0001-00012345"
+                />
+              </label>
+              <label className="campo">
+                Nº de factura
+                <input
+                  value={factura}
+                  onChange={(e) => setFactura(e.target.value)}
+                  placeholder="A-0001-00098765"
+                />
+              </label>
+            </div>
+            <p className="texto-suave texto-chico">
+              Hace falta <strong>uno de los dos</strong>. Es lo que después permite cruzar el
+              stock con el papel que quedó en la empresa.
+            </p>
             <p className="texto-suave texto-chico">
               Al confirmar, la orden queda <strong>finalizada</strong> y cada material de la
               orden suma su cantidad al stock.
@@ -599,9 +617,13 @@ function ModalDetalleOrden({
               </button>
               <button
                 className="btn btn-primario"
-                disabled={recibir.isPending}
+                disabled={recibir.isPending || !hayComprobante}
+                title={hayComprobante ? undefined : 'Cargá el número de remito o el de factura'}
                 onClick={async () => {
-                  await recibir.mutateAsync({ remito: remito || undefined });
+                  await recibir.mutateAsync({
+                    remito: remito.trim() || undefined,
+                    factura: factura.trim() || undefined,
+                  });
                   setMostrarRecepcion(false);
                   onCerrar();
                 }}

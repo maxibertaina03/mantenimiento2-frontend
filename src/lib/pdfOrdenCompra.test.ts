@@ -82,6 +82,8 @@ const orden: OrdenCompra = {
   emitidaEn: '2026-08-25T11:00:00.000Z',
   recibidaEn: null,
   recibidaPorNombre: null,
+  remito: null,
+  factura: null,
   renglones: [
     {
       id: 'r1',

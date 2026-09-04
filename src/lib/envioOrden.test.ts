@@ -24,6 +24,8 @@ const orden: OrdenCompra = {
   emitidaEn: null,
   recibidaEn: null,
   recibidaPorNombre: null,
+  remito: null,
+  factura: null,
   renglones: [
     {
       id: 'r1',
