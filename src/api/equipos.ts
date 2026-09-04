@@ -169,6 +169,28 @@ export function usePlanesDeEquipo(equipoId: string) {
 }
 
 /** Lo que vence, de lo más urgente a lo menos. Es la pantalla del día a día. */
+/** Cuántos equipos hay, en qué estado, y cuántos no tienen ningún plan. */
+export interface ResumenEquipos {
+  total: number;
+  porEstado: Record<string, number>;
+  /** Equipos que necesitan mantenimiento y no tienen ningún plan activo. */
+  sinPlan: number;
+}
+
+/**
+ * El estado del parque de equipos.
+ *
+ * `habilitado` por lo mismo que los planes: el módulo es solo para admins y a
+ * un operario el pedido le daría 403.
+ */
+export function useResumenEquipos(habilitado = true) {
+  return useQuery({
+    queryKey: ['equipos', 'resumen'] as const,
+    queryFn: () => apiRequest<ResumenEquipos>('/equipos/resumen'),
+    enabled: habilitado,
+  });
+}
+
 /**
  * Los servicios que vencen.
  *

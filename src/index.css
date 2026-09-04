@@ -153,6 +153,15 @@ h2 {
   border-bottom: none;
 }
 
+/* Los huecos de carga en la pantalla de inicio: por que el sistema no avisa. */
+.lista-huecos {
+  margin: 0.6rem 0 0;
+  padding-left: 1.1rem;
+}
+.lista-huecos li + li {
+  margin-top: 0.5rem;
+}
+
 /* Panel de aviso: un material fuera de circulacion, y usos parecidos. */
 .panel-aviso {
   background: var(--color-alerta-fondo);
