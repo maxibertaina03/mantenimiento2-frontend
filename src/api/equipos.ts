@@ -33,7 +33,10 @@ export function useEquipos(pagina = 1, limite = 20, filtros: FiltrosEquipos = {}
           buscar: filtros.buscar || undefined,
           ubicacionId: filtros.ubicacionId || undefined,
           tipoId: filtros.tipoId || undefined,
+          marcaId: filtros.marcaId || undefined,
+          modeloId: filtros.modeloId || undefined,
           estado: filtros.estado || undefined,
+          sinQr: filtros.sinQr ? 'true' : undefined,
           garantiaVencida: filtros.garantiaVencida ? 'true' : undefined,
           ordenarPor: filtros.ordenarPor || undefined,
           direccion: filtros.direccion || undefined,
@@ -169,6 +172,24 @@ export function usePlanesDeEquipo(equipoId: string) {
 }
 
 /** Lo que vence, de lo más urgente a lo menos. Es la pantalla del día a día. */
+/**
+ * Deja constancia de que a estos equipos se les imprimió la etiqueta QR.
+ *
+ * Se llama después de mandar a imprimir, para no volver a imprimir las que ya
+ * están pegadas: son 326 máquinas y se etiquetan de a tandas.
+ */
+export function useMarcarQrGenerado() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: string[]) =>
+      apiRequest<{ marcados: number }>('/equipos/qr/marcar-generados', {
+        method: 'POST',
+        body: { ids },
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['equipos'] }),
+  });
+}
+
 /** Cuántos equipos hay, en qué estado, y cuántos no tienen ningún plan. */
 export interface ResumenEquipos {
   total: number;

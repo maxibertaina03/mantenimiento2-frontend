@@ -162,6 +162,65 @@ h2 {
   margin-top: 0.5rem;
 }
 
+/* Solapas de la pantalla de listas de equipos. */
+.solapas {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--color-borde);
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.solapa {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+  color: var(--color-texto-suave);
+  cursor: pointer;
+}
+.solapa:hover { color: var(--color-texto); }
+.solapa.activa {
+  color: var(--color-primario);
+  border-bottom-color: var(--color-primario);
+  font-weight: 600;
+}
+
+/* Alta rapida de un item de catalogo: un campo y un boton. */
+.alta-rapida {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.alta-rapida input { flex: 1 1 12rem; min-width: 0; }
+
+/* Listas de catalogo: nombre a la izquierda, acciones a la derecha. */
+.lista-catalogo {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  max-height: 22rem;
+  overflow-y: auto;
+}
+.lista-catalogo li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--color-borde);
+}
+.lista-catalogo li:last-child { border-bottom: none; }
+.lista-catalogo li.inactivo { opacity: 0.55; }
+.acciones-catalogo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: none;
+}
+.lista-etiquetas { max-height: 16rem; }
+
 /* Panel de aviso: un material fuera de circulacion, y usos parecidos. */
 .panel-aviso {
   background: var(--color-alerta-fondo);

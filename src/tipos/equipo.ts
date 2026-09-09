@@ -33,8 +33,11 @@ export interface Equipo {
   codigoInterno: string | null;
   nombre: string;
   descripcion: string | null;
-  marca: string | null;
-  modelo: string | null;
+  /** Marca y modelo salen de catálogos: viaja el id y el nombre para mostrar. */
+  marcaId: string | null;
+  marcaNombre: string | null;
+  modeloId: string | null;
+  modeloNombre: string | null;
   numeroSerie: string | null;
   ubicacionId: string | null;
   ubicacionNombre: string | null;
@@ -49,14 +52,16 @@ export interface Equipo {
   garantiaHasta: string | null;
   /** Derivado en el servidor: no está guardado en la base. */
   garantiaVencida: boolean;
+  /** Cuándo se imprimió su etiqueta QR. null = todavía no tiene. */
+  qrGeneradoEn: string | null;
 }
 
 export interface CrearEquipoInput {
   nombre: string;
   codigoInterno?: string | null;
   descripcion?: string | null;
-  marca?: string | null;
-  modelo?: string | null;
+  marcaId?: string | null;
+  modeloId?: string | null;
   numeroSerie?: string | null;
   ubicacionId?: string | null;
   tipoId?: string | null;
@@ -73,8 +78,12 @@ export interface FiltrosEquipos {
   buscar?: string;
   ubicacionId?: string;
   tipoId?: string;
+  marcaId?: string;
+  modeloId?: string;
   estado?: EstadoEquipo;
   garantiaVencida?: boolean;
+  /** Solo los que todavía no tienen etiqueta QR impresa. */
+  sinQr?: boolean;
   ordenarPor?: 'nombre' | 'codigo' | 'ubicacion';
   direccion?: 'asc' | 'desc';
 }

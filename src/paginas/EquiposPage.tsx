@@ -15,6 +15,9 @@ import { HistorialEquipo } from '@/componentes/HistorialEquipo';
 import { PlanesEquipo } from '@/componentes/PlanesEquipo';
 import { ImportarEquiposPlanta } from '@/componentes/ImportarEquiposPlanta';
 import { Modal } from '@/componentes/Modal';
+import { CatalogosEquipo } from '@/componentes/CatalogosEquipo';
+import { EtiquetasQr } from '@/componentes/EtiquetasQr';
+import { useModelosDeMarca } from '@/api/catalogosEquipo';
 import { formatearFechaSola } from '@/lib/formato';
 import { ESTADOS_EQUIPO, ETIQUETA_ESTADO_EQUIPO, TRANSICIONES_ESTADO } from '@/tipos/equipo';
 import type { CrearEquipoInput, Equipo, EstadoEquipo, FiltrosEquipos } from '@/tipos/equipo';
@@ -38,6 +41,8 @@ export function EquiposPage() {
   const [creando, setCreando] = useState(false);
   const [viendo, setViendo] = useState<Equipo | null>(null);
   const [importando, setImportando] = useState(false);
+  const [catalogos, setCatalogos] = useState(false);
+  const [etiquetas, setEtiquetas] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -77,6 +82,12 @@ export function EquiposPage() {
       <div className="cabecera-pagina">
         <h1>Equipos</h1>
         <div className="fila-acciones">
+          <button className="btn" onClick={() => setEtiquetas(true)}>
+            ▦ Etiquetas QR
+          </button>
+          <button className="btn" onClick={() => setCatalogos(true)}>
+            ☰ Listas
+          </button>
           <button className="btn" onClick={() => setImportando(true)}>
             ⬆ Importar carpeta
           </button>
@@ -281,6 +292,8 @@ export function EquiposPage() {
       {viendo && <FichaEquipo equipo={viendo} onCerrar={() => setViendo(null)} />}
 
       {importando && <ImportarEquiposPlanta onCerrar={() => setImportando(false)} />}
+      <CatalogosEquipo abierto={catalogos} onCerrar={() => setCatalogos(false)} />
+      {etiquetas && <EtiquetasQr onCerrar={() => setEtiquetas(false)} />}
     </>
   );
 }
@@ -312,8 +325,9 @@ function FichaEquipo({ equipo, onCerrar }: { equipo: Equipo; onCerrar: () => voi
           {dato('Estado', ETIQUETA_ESTADO_EQUIPO[equipo.estado])}
           {dato('Ubicación', equipo.ubicacionNombre)}
           {dato('Tipo', equipo.tipoNombre)}
-          {dato('Marca', equipo.marca)}
-          {dato('Modelo', equipo.modelo)}
+          {dato('Etiqueta QR', equipo.qrGeneradoEn ? 'Impresa' : 'Sin imprimir')}
+          {dato('Marca', equipo.marcaNombre)}
+          {dato('Modelo', equipo.modeloNombre)}
           {dato('N° de serie', equipo.numeroSerie)}
           {dato('Proveedor', equipo.proveedorNombre)}
           {dato('Horas de uso', equipo.horasUso === null ? null : String(equipo.horasUso))}
@@ -354,7 +368,7 @@ function FichaEquipo({ equipo, onCerrar }: { equipo: Equipo; onCerrar: () => voi
 
 function FormularioEquipo({ equipo, alCerrar }: { equipo?: Equipo; alCerrar: () => void }) {
   const esEdicion = equipo !== undefined;
-  const { ubicaciones, tipos } = useCatalogoEquipos();
+  const { ubicaciones, tipos, marcas } = useCatalogoEquipos();
   const crear = useCrearEquipo();
   const actualizar = useActualizarEquipo();
   const guardando = crear.isPending || actualizar.isPending;
@@ -364,8 +378,8 @@ function FormularioEquipo({ equipo, alCerrar }: { equipo?: Equipo; alCerrar: () 
     nombre: equipo?.nombre ?? '',
     codigoInterno: equipo?.codigoInterno ?? '',
     descripcion: equipo?.descripcion ?? '',
-    marca: equipo?.marca ?? '',
-    modelo: equipo?.modelo ?? '',
+    marcaId: equipo?.marcaId ?? '',
+    modeloId: equipo?.modeloId ?? '',
     numeroSerie: equipo?.numeroSerie ?? '',
     ubicacionId: equipo?.ubicacionId ?? '',
     tipoId: equipo?.tipoId ?? '',
@@ -377,6 +391,10 @@ function FormularioEquipo({ equipo, alCerrar }: { equipo?: Equipo; alCerrar: () 
 
   const cambiar = (parcial: Partial<typeof form>) => setForm((f) => ({ ...f, ...parcial }));
 
+  // Los modelos de la marca elegida. Sin marca no se pide nada: la lista de
+  // todos los modelos de todas las marcas no le sirve a nadie.
+  const modelos = useModelosDeMarca(form.marcaId);
+
   // Los campos vacíos viajan como null (borrar) y no como "": el backend
   // normaliza igual, pero mandar "" ensucia el cuerpo de la request.
   const oNull = (v: string | null | undefined) => (v && v.trim() !== '' ? v.trim() : null);
@@ -387,8 +405,8 @@ function FormularioEquipo({ equipo, alCerrar }: { equipo?: Equipo; alCerrar: () 
       nombre: form.nombre.trim(),
       codigoInterno: oNull(form.codigoInterno),
       descripcion: oNull(form.descripcion),
-      marca: oNull(form.marca),
-      modelo: oNull(form.modelo),
+      marcaId: oNull(form.marcaId),
+      modeloId: oNull(form.modeloId),
       numeroSerie: oNull(form.numeroSerie),
       ubicacionId: oNull(form.ubicacionId),
       tipoId: oNull(form.tipoId),
@@ -496,11 +514,41 @@ function FormularioEquipo({ equipo, alCerrar }: { equipo?: Equipo; alCerrar: () 
         <div className="fila-campos">
           <div className="campo">
             <label>Marca</label>
-            <input value={form.marca ?? ''} onChange={(e) => cambiar({ marca: e.target.value })} />
+            <select
+              value={form.marcaId ?? ''}
+              onChange={(e) =>
+                // Cambiar de marca vacía el modelo: el que estaba elegido
+                // pertenece a la marca anterior y no existe en la nueva.
+                cambiar({ marcaId: e.target.value, modeloId: '' })
+              }
+            >
+              <option value="">Sin marca</option>
+              {(marcas.data ?? [])
+                .filter((m) => m.activo || m.id === form.marcaId)
+                .map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.nombre}
+                  </option>
+                ))}
+            </select>
           </div>
           <div className="campo">
             <label>Modelo</label>
-            <input value={form.modelo ?? ''} onChange={(e) => cambiar({ modelo: e.target.value })} />
+            <select
+              value={form.modeloId ?? ''}
+              disabled={!form.marcaId}
+              title={form.marcaId ? undefined : 'Elegí primero la marca'}
+              onChange={(e) => cambiar({ modeloId: e.target.value })}
+            >
+              <option value="">{form.marcaId ? 'Sin modelo' : 'Elegí la marca'}</option>
+              {(modelos.data ?? [])
+                .filter((m) => m.activo || m.id === form.modeloId)
+                .map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.nombre}
+                  </option>
+                ))}
+            </select>
           </div>
           <div className="campo">
             <label>N° de serie</label>
