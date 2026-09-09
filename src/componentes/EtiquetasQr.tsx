@@ -1,11 +1,17 @@
 import { useState } from 'react';
-import { useEquipos, useMarcarQrGenerado } from '@/api/equipos';
+import { useMarcarQrGenerado, useTodosLosEquipos } from '@/api/equipos';
 import { useCatalogoEquipos } from '@/api/catalogosEquipo';
 import { armarEtiquetas, imprimirEtiquetas } from '@/lib/etiquetaQr';
 import { Cargando, EstadoVacio, MensajeError } from './Estados';
 import { Modal } from './Modal';
 
-/** Cuántas etiquetas se imprimen de una tanda. Doce hojas A4. */
+/**
+ * Cuántas etiquetas entran en una tanda: doce hojas A4.
+ *
+ * Es el mismo tope que acepta el endpoint que las marca como impresas. Los
+ * equipos se traen recorriendo páginas, porque el listado no da más de 100 por
+ * vez, y después se corta acá.
+ */
 const MAXIMO_POR_TANDA = 300;
 
 /**
@@ -27,15 +33,16 @@ export function EtiquetasQr({ onCerrar }: { onCerrar: () => void }) {
   const [preparando, setPreparando] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
 
-  const { data, isLoading, error } = useEquipos(1, MAXIMO_POR_TANDA, {
+  const { data, isLoading, error } = useTodosLosEquipos({
     ubicacionId: ubicacionId || undefined,
     sinQr: soloSinEtiqueta || undefined,
     ordenarPor: 'ubicacion',
   });
   const marcar = useMarcarQrGenerado();
 
-  const equipos = data?.datos ?? [];
-  const total = data?.total ?? 0;
+  const todos = data ?? [];
+  const equipos = todos.slice(0, MAXIMO_POR_TANDA);
+  const total = todos.length;
   const hayMasQueUnaTanda = total > equipos.length;
 
   const imprimir = async () => {

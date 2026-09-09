@@ -1,12 +1,9 @@
 import { useRef, useState } from 'react';
-import { useCambiarFotoEquipo, useEquipos } from '@/api/equipos';
+import { useCambiarFotoEquipo, useTodosLosEquipos } from '@/api/equipos';
 import { comprimirImagen } from '@/lib/comprimirImagen';
 import { emparejarFotos, type ResultadoEmparejado } from '@/lib/emparejarFotos';
 import { Cargando, MensajeError } from './Estados';
 import { Modal } from './Modal';
-
-/** Tope de equipos a traer. Hoy son 326; con margen para que crezcan. */
-const LIMITE_EQUIPOS = 1000;
 
 /** Cuántas fotos se suben a la vez. */
 const EN_PARALELO = 3;
@@ -34,7 +31,9 @@ interface Progreso {
  */
 export function CargarFotosPlanta({ onCerrar }: { onCerrar: () => void }) {
   const entrada = useRef<HTMLInputElement>(null);
-  const { data, isLoading, error } = useEquipos(1, LIMITE_EQUIPOS);
+  // Recorre las páginas: el servidor no acepta más de 100 por página, y acá
+  // hace falta el padrón entero para poder cruzarlo con los archivos.
+  const { data, isLoading, error } = useTodosLosEquipos();
   const cambiarFoto = useCambiarFotoEquipo();
 
   const [resultado, setResultado] = useState<ResultadoEmparejado | null>(null);
@@ -42,7 +41,7 @@ export function CargarFotosPlanta({ onCerrar }: { onCerrar: () => void }) {
   const [progreso, setProgreso] = useState<Progreso | null>(null);
   const [terminado, setTerminado] = useState(false);
 
-  const equipos = data?.datos ?? [];
+  const equipos = data ?? [];
 
   const alElegirCarpeta = (ev: React.ChangeEvent<HTMLInputElement>) => {
     const archivos = Array.from(ev.target.files ?? []);

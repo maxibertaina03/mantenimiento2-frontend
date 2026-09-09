@@ -67,8 +67,6 @@ function servidor(opciones: {
   cobertura?: { enUso: number; conMinimo: number; sinMinimo: number; bajoStock: number };
 }) {
   apiRequestMock.mockImplementation((rutaCruda: string, config?: { query?: Record<string, unknown> }) => {
-    // Alguna llamada llega sin ruta y el mock explotaba con un error que no
-    // decia nada. Se normaliza y cae en el `return null` del final.
     const ruta = String(rutaCruda ?? '');
     if (ruta.startsWith('/usuarios/me')) {
       return Promise.resolve({ id: 'u1', nombre: 'Máximo', rol: opciones.rol ?? 'ADMIN' });
@@ -111,7 +109,12 @@ function mostrar() {
   return render(envuelto);
 }
 
-beforeEach(() => apiRequestMock.mockReset());
+// Con llaves a propósito: `() => apiRequestMock.mockReset()` DEVUELVE el mock,
+// y Vitest toma lo que devuelve un hook como función de limpieza, llamándolo
+// sin argumentos al terminar cada prueba.
+beforeEach(() => {
+  apiRequestMock.mockReset();
+});
 
 describe('InicioPage', () => {
   it('lista lo que hay que reponer', async () => {
