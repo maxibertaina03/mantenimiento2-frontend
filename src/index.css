@@ -221,6 +221,23 @@ h2 {
 }
 .lista-etiquetas { max-height: 16rem; }
 
+/* Barra de progreso de la carga masiva de fotos. */
+.barra-progreso {
+  height: 0.6rem;
+  background: var(--color-borde);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0.5rem 0;
+}
+.barra-progreso-relleno {
+  height: 100%;
+  background: var(--color-primario);
+  transition: width 0.2s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .barra-progreso-relleno { transition: none; }
+}
+
 /* Panel de aviso: un material fuera de circulacion, y usos parecidos. */
 .panel-aviso {
   background: var(--color-alerta-fondo);

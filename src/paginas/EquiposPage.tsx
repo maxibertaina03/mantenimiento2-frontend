@@ -17,6 +17,7 @@ import { ImportarEquiposPlanta } from '@/componentes/ImportarEquiposPlanta';
 import { Modal } from '@/componentes/Modal';
 import { CatalogosEquipo } from '@/componentes/CatalogosEquipo';
 import { EtiquetasQr } from '@/componentes/EtiquetasQr';
+import { CargarFotosPlanta } from '@/componentes/CargarFotosPlanta';
 import { useModelosDeMarca } from '@/api/catalogosEquipo';
 import { formatearFechaSola } from '@/lib/formato';
 import { ESTADOS_EQUIPO, ETIQUETA_ESTADO_EQUIPO, TRANSICIONES_ESTADO } from '@/tipos/equipo';
@@ -43,6 +44,7 @@ export function EquiposPage() {
   const [importando, setImportando] = useState(false);
   const [catalogos, setCatalogos] = useState(false);
   const [etiquetas, setEtiquetas] = useState(false);
+  const [fotos, setFotos] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -82,6 +84,9 @@ export function EquiposPage() {
       <div className="cabecera-pagina">
         <h1>Equipos</h1>
         <div className="fila-acciones">
+          <button className="btn" onClick={() => setFotos(true)}>
+            🖼 Cargar fotos
+          </button>
           <button className="btn" onClick={() => setEtiquetas(true)}>
             ▦ Etiquetas QR
           </button>
@@ -294,6 +299,7 @@ export function EquiposPage() {
       {importando && <ImportarEquiposPlanta onCerrar={() => setImportando(false)} />}
       <CatalogosEquipo abierto={catalogos} onCerrar={() => setCatalogos(false)} />
       {etiquetas && <EtiquetasQr onCerrar={() => setEtiquetas(false)} />}
+      {fotos && <CargarFotosPlanta onCerrar={() => setFotos(false)} />}
     </>
   );
 }
