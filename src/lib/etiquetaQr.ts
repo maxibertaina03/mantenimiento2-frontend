@@ -11,9 +11,30 @@ import type { Equipo } from '@/tipos/equipo';
  * y habría que reimprimir 326 etiquetas.
  */
 
+/**
+ * La dirección con la que se arman las etiquetas.
+ *
+ * `VITE_URL_PUBLICA` existe porque la etiqueta se pega en una máquina y se
+ * escanea desde un celular: si se imprime con la dirección del entorno local,
+ * el QR lleva a `http://localhost:5173`, que en el celular no es ningún lado.
+ * Y eso no se descubre hasta tener 326 etiquetas pegadas.
+ *
+ * Sin la variable cae en la dirección desde la que se está usando el sistema,
+ * que es la correcta cuando se imprime desde el sistema publicado.
+ */
+export function baseDeLasEtiquetas(): string {
+  const configurada = import.meta.env.VITE_URL_PUBLICA as string | undefined;
+  return (configurada?.trim() || window.location.origin).replace(/\/+$/, '');
+}
+
+/** Una dirección que solo funciona en la computadora que la generó. */
+export function esDireccionLocal(url: string): boolean {
+  return /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0)(:|\/|$)/i.test(url);
+}
+
 /** A dónde apunta el QR de un equipo. */
-export function urlDeLaFicha(equipoId: string, origen = window.location.origin): string {
-  return `${origen}/equipos?equipo=${equipoId}`;
+export function urlDeLaFicha(equipoId: string, origen = baseDeLasEtiquetas()): string {
+  return `${origen.replace(/\/+$/, '')}/equipos?equipo=${equipoId}`;
 }
 
 /**
@@ -44,7 +65,7 @@ export interface EtiquetaEquipo {
 
 export async function armarEtiquetas(
   equipos: Equipo[],
-  origen = window.location.origin,
+  origen = baseDeLasEtiquetas(),
 ): Promise<EtiquetaEquipo[]> {
   return Promise.all(
     equipos.map(async (equipo) => ({

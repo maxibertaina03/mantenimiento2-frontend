@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   useActualizarEquipo,
   useAlmacenDisponible,
   useCrearEquipo,
   useEliminarEquipo,
+  useEquipo,
   useEquipos,
 } from '@/api/equipos';
 import { useCatalogoEquipos } from '@/api/catalogosEquipo';
@@ -45,6 +47,26 @@ export function EquiposPage() {
   const [catalogos, setCatalogos] = useState(false);
   const [etiquetas, setEtiquetas] = useState(false);
   const [fotos, setFotos] = useState(false);
+
+  // El QR pegado en la máquina y los enlaces de la pantalla Hoy llevan a
+  // /equipos?equipo=<id>. Sin esto la dirección abría el listado y no la ficha,
+  // que es lo que alguien parado frente a la máquina necesita ver.
+  const [parametros, setParametros] = useSearchParams();
+  const idPedido = parametros.get('equipo') ?? '';
+  const equipoPedido = useEquipo(idPedido);
+
+  useEffect(() => {
+    if (equipoPedido.data) setViendo(equipoPedido.data);
+  }, [equipoPedido.data]);
+
+  /** Cierra la ficha y saca el id de la dirección, para que no vuelva a abrirse. */
+  const cerrarFicha = () => {
+    setViendo(null);
+    if (idPedido) {
+      parametros.delete('equipo');
+      setParametros(parametros, { replace: true });
+    }
+  };
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -294,7 +316,24 @@ export function EquiposPage() {
         />
       )}
 
-      {viendo && <FichaEquipo equipo={viendo} onCerrar={() => setViendo(null)} />}
+      {viendo && <FichaEquipo equipo={viendo} onCerrar={cerrarFicha} />}
+
+      {/* Un QR viejo, o una máquina borrada después de pegar la etiqueta. */}
+      {idPedido !== '' && equipoPedido.isError && (
+        <Modal titulo="No se encontró el equipo" abierto onCerrar={cerrarFicha}>
+          <div className="formulario-modal">
+            <p>
+              La etiqueta apunta a un equipo que ya no está en el sistema. Puede que se haya
+              borrado, o que la etiqueta sea de otra base de datos.
+            </p>
+            <div className="acciones">
+              <button className="btn btn-primario" onClick={cerrarFicha}>
+                Ver todos los equipos
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {importando && <ImportarEquiposPlanta onCerrar={() => setImportando(false)} />}
       <CatalogosEquipo abierto={catalogos} onCerrar={() => setCatalogos(false)} />

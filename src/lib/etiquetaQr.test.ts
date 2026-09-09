@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { qrComoImagen, urlDeLaFicha } from './etiquetaQr';
+import { esDireccionLocal, qrComoImagen, urlDeLaFicha } from './etiquetaQr';
 
 /**
  * Las etiquetas que se pegan en las maquinas.
@@ -42,5 +42,34 @@ describe('qrComoImagen', () => {
     const largo = urlDeLaFicha('550e8400-e29b-41d4-a716-446655440000', 'https://mantenimiento.lacteoslastres.com.ar');
     const img = await qrComoImagen(largo);
     expect(img.length).toBeGreaterThan(500);
+  });
+});
+
+
+describe('esDireccionLocal', () => {
+  // Una etiqueta impresa con la direccion local es papel tirado: en el celular
+  // esa direccion no es ningun lado, y no se descubre hasta tener las 326
+  // etiquetas pegadas en la planta.
+  it.each([
+    'http://localhost:5173',
+    'http://localhost',
+    'http://127.0.0.1:5173',
+    'http://0.0.0.0:3000',
+    'http://[::1]:5173',
+  ])('reconoce %s como local', (url) => {
+    expect(esDireccionLocal(url)).toBe(true);
+  });
+
+  it.each([
+    'https://mantenimiento.lacteoslastres.com.ar',
+    'https://mantenimiento2-frontend.vercel.app',
+  ])('%s si sirve', (url) => {
+    expect(esDireccionLocal(url)).toBe(false);
+  });
+
+  it('REGRESION: un dominio que solo EMPIEZA con localhost no es local', () => {
+    // "localhost.miempresa.com" es un dominio de verdad y bloquearlo dejaria
+    // sin poder imprimir a quien lo use.
+    expect(esDireccionLocal('https://localhost.miempresa.com')).toBe(false);
   });
 });

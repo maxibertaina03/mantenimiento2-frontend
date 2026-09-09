@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { useMarcarQrGenerado, useTodosLosEquipos } from '@/api/equipos';
 import { useCatalogoEquipos } from '@/api/catalogosEquipo';
-import { armarEtiquetas, imprimirEtiquetas } from '@/lib/etiquetaQr';
+import {
+  armarEtiquetas,
+  baseDeLasEtiquetas,
+  esDireccionLocal,
+  imprimirEtiquetas,
+} from '@/lib/etiquetaQr';
 import { Cargando, EstadoVacio, MensajeError } from './Estados';
 import { Modal } from './Modal';
 
@@ -42,6 +47,8 @@ export function EtiquetasQr({ onCerrar }: { onCerrar: () => void }) {
 
   const todos = data ?? [];
   const equipos = todos.slice(0, MAXIMO_POR_TANDA);
+  const base = baseDeLasEtiquetas();
+  const direccionInservible = esDireccionLocal(base);
   const total = todos.length;
   const hayMasQueUnaTanda = total > equipos.length;
 
@@ -71,6 +78,21 @@ export function EtiquetasQr({ onCerrar }: { onCerrar: () => void }) {
           Cada etiqueta lleva el nombre de la máquina, su sector y un código QR. Al escanearlo con
           la cámara del celular se abre la ficha del equipo en el sistema.
         </p>
+
+        <p className="texto-suave texto-chico">
+          Los códigos van a apuntar a <code>{base}</code>
+        </p>
+
+        {/* Una etiqueta impresa con la dirección local es papel tirado: en el
+            celular esa dirección no es ningún lado, y no se descubre hasta
+            tenerlas pegadas en la planta. */}
+        {direccionInservible && (
+          <div className="alerta alerta-aviso">
+            <strong>Esa dirección solo funciona en esta computadora.</strong> Si imprimís así, los
+            códigos no van a abrir nada desde el celular. Entrá al sistema por su dirección real y
+            generá las etiquetas desde ahí, o configurá <code>VITE_URL_PUBLICA</code>.
+          </div>
+        )}
 
         <div className="fila-campos">
           <div className="campo">
@@ -145,7 +167,12 @@ export function EtiquetasQr({ onCerrar }: { onCerrar: () => void }) {
           <button
             className="btn btn-primario"
             onClick={imprimir}
-            disabled={equipos.length === 0 || preparando || marcar.isPending}
+            disabled={equipos.length === 0 || preparando || marcar.isPending || direccionInservible}
+            title={
+              direccionInservible
+                ? 'La dirección de los códigos solo funciona en esta computadora'
+                : undefined
+            }
           >
             {preparando ? 'Generando…' : `🖨 Generar e imprimir ${equipos.length}`}
           </button>
