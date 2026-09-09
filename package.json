@@ -14,7 +14,8 @@
     "lint": "eslint . --ext ts,tsx",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:cov": "vitest run --coverage"
+    "test:cov": "vitest run --coverage",
+    "guia:equipos": "node scripts/guia-equipos.mjs \"Equipos - Guia rapida.pdf\""
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.13.0",
