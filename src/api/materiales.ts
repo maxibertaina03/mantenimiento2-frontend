@@ -24,6 +24,8 @@ export interface FiltrosMateriales {
   sinUnidad?: boolean;
   /** Por defecto el listado esconde los materiales jubilados. */
   mostrar?: VistaMaterial;
+  /** Solo los que todavía no tienen etiqueta QR impresa. */
+  sinQr?: boolean;
   ordenarPor?: 'nombre' | 'stock' | 'categoria' | 'unidad';
   direccion?: 'asc' | 'desc';
 }
@@ -58,6 +60,7 @@ export function useMateriales(pagina = 1, limite = 20, filtros: FiltrosMateriale
           bajoStock: f.bajoStock ? 'true' : undefined,
           sinUnidad: f.sinUnidad ? 'true' : undefined,
           mostrar: f.mostrar || undefined,
+          sinQr: f.sinQr ? 'true' : undefined,
           ordenarPor: f.ordenarPor || undefined,
           direccion: f.direccion || undefined,
         },
@@ -68,13 +71,20 @@ export function useMateriales(pagina = 1, limite = 20, filtros: FiltrosMateriale
 /** Trae TODOS los materiales (recorriendo páginas) para exportar. */
 export async function obtenerTodosLosMateriales(
   mostrar: VistaMaterial = 'activos',
+  extra: { sinQr?: boolean; categoriaId?: string } = {},
 ): Promise<Material[]> {
   const limite = 100;
   const acumulado: Material[] = [];
   let pagina = 1;
   for (;;) {
     const resp = await apiRequest<RespuestaPaginada<Material>>('/materiales', {
-      query: { pagina, limite, mostrar },
+      query: {
+        pagina,
+        limite,
+        mostrar,
+        sinQr: extra.sinQr ? 'true' : undefined,
+        categoriaId: extra.categoriaId || undefined,
+      },
     });
     acumulado.push(...resp.datos);
     if (acumulado.length >= resp.total || resp.datos.length === 0) break;
@@ -95,6 +105,35 @@ export function useCoberturaAlertas() {
   return useQuery({
     queryKey: ['materiales', 'cobertura-alertas'] as const,
     queryFn: () => apiRequest<CoberturaAlertas>('/materiales/cobertura-alertas'),
+  });
+}
+
+/**
+ * Deja constancia de que a estos materiales se les imprimió la etiqueta QR.
+ *
+ * Se llama después de mandar a imprimir, para no repetir las que ya están
+ * pegadas en el estante.
+ */
+export function useMarcarQrMaterial() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: string[]) =>
+      apiRequest<{ marcados: number }>('/materiales/qr/marcar-generados', {
+        method: 'POST',
+        body: { ids },
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesMateriales.base }),
+  });
+}
+
+/** Los materiales completos como consulta, para la pantalla de etiquetas. */
+export function useTodosLosMateriales(
+  mostrar: VistaMaterial = 'activos',
+  extra: { sinQr?: boolean; categoriaId?: string } = {},
+) {
+  return useQuery({
+    queryKey: ['materiales', 'todos', mostrar, extra] as const,
+    queryFn: () => obtenerTodosLosMateriales(mostrar, extra),
   });
 }
 

@@ -73,3 +73,66 @@ describe('esDireccionLocal', () => {
     expect(esDireccionLocal('https://localhost.miempresa.com')).toBe(false);
   });
 });
+
+describe('urlDeLaFichaMaterial', () => {
+  it('apunta a la ficha del material', async () => {
+    const { urlDeLaFichaMaterial } = await import('./etiquetaQr');
+    expect(urlDeLaFichaMaterial('mat-1', 'https://x.com')).toBe('https://x.com/materiales/mat-1');
+  });
+
+  it('no arrastra una barra de mas si el origen termina en barra', async () => {
+    const { urlDeLaFichaMaterial } = await import('./etiquetaQr');
+    expect(urlDeLaFichaMaterial('mat-1', 'https://x.com/')).toBe('https://x.com/materiales/mat-1');
+  });
+});
+
+describe('armarEtiquetasMateriales', () => {
+  const material = (over = {}) =>
+    ({
+      id: 'mat-1',
+      nombre: 'Aceite hidráulico ISO 68',
+      categoriaNombre: 'Lubricantes',
+      unidadNombre: 'Litro',
+      stockActual: 12,
+      ...over,
+    }) as never;
+
+  it('la etiqueta lleva nombre, categoria y unidad', async () => {
+    const { armarEtiquetasMateriales } = await import('./etiquetaQr');
+    const [e] = await armarEtiquetasMateriales([material()], 'https://x.com');
+
+    expect(e.titulo).toBe('Aceite hidráulico ISO 68');
+    expect(e.subtitulo).toBe('Lubricantes');
+    expect(e.pie).toBe('Litro');
+  });
+
+  it('REGRESION: NO lleva la cantidad impresa', async () => {
+    // El stock cambia todos los dias: una etiqueta que dice "quedan 12" miente
+    // al dia siguiente, y una etiqueta que miente es peor que ninguna.
+    const { armarEtiquetasMateriales } = await import('./etiquetaQr');
+    const [e] = await armarEtiquetasMateriales([material({ stockActual: 12 })], 'https://x.com');
+
+    const texto = [e.titulo, e.subtitulo, e.pie].join(' ');
+    expect(texto).not.toContain('12');
+  });
+
+  it('un material sin categoria no deja el renglon en blanco raro', async () => {
+    const { armarEtiquetasMateriales } = await import('./etiquetaQr');
+    const [e] = await armarEtiquetasMateriales(
+      [material({ categoriaNombre: null, unidadNombre: null })],
+      'https://x.com',
+    );
+    expect(e.subtitulo).toBeNull();
+    expect(e.pie).toBeNull();
+  });
+
+  it('el QR apunta a la ficha, no al listado', async () => {
+    // Es lo unico que no se puede corregir despues de pegar la etiqueta.
+    const { armarEtiquetasMateriales, qrComoImagen, urlDeLaFichaMaterial } = await import(
+      './etiquetaQr'
+    );
+    const [e] = await armarEtiquetasMateriales([material()], 'https://x.com');
+    const esperado = await qrComoImagen(urlDeLaFichaMaterial('mat-1', 'https://x.com'));
+    expect(e.qr).toBe(esperado);
+  });
+});

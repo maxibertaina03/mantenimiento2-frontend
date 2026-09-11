@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useActualizarMaterial, useMaterialConHistorial } from '@/api/materiales';
 import { BadgeMovimiento } from '@/componentes/BadgeMovimiento';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
+import { FormularioMaterial } from '@/componentes/FormularioMaterial';
+import { Modal } from '@/componentes/Modal';
 import { formatearFecha, formatearNumero } from '@/lib/formato';
 
 export function MaterialDetallePage() {
@@ -9,6 +12,9 @@ export function MaterialDetallePage() {
   const navigate = useNavigate();
   const { data: material, isLoading, error } = useMaterialConHistorial(id);
   const actualizar = useActualizarMaterial(id);
+  // La ficha es a donde cae quien escanea el QR del estante: desde acá tiene
+  // que poder corregir lo que ve, sin volver al listado a buscarlo.
+  const [editando, setEditando] = useState(false);
 
   if (isLoading) return <Cargando />;
   if (error) return <MensajeError error={error} />;
@@ -32,6 +38,9 @@ export function MaterialDetallePage() {
               + Registrar movimiento
             </button>
           )}
+          <button className="btn" onClick={() => setEditando(true)}>
+            ✎ Editar
+          </button>
           <button
             className="btn"
             disabled={actualizar.isPending}
@@ -123,6 +132,11 @@ export function MaterialDetallePage() {
           </tbody>
         </table>
         </div>
+      )}
+      {editando && (
+        <Modal titulo={`Editar ${material.nombre}`} abierto onCerrar={() => setEditando(false)}>
+          <FormularioMaterial material={material} onListo={() => setEditando(false)} />
+        </Modal>
       )}
     </>
   );

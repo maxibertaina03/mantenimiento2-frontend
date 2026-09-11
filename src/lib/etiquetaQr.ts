@@ -1,5 +1,6 @@
 import QRCode from 'qrcode';
 import type { Equipo } from '@/tipos/equipo';
+import type { Material } from '@/tipos/material';
 
 /**
  * Etiquetas con código QR para pegar en las máquinas.
@@ -38,6 +39,16 @@ export function urlDeLaFicha(equipoId: string, origen = baseDeLasEtiquetas()): s
 }
 
 /**
+ * A dónde apunta el QR de un material.
+ *
+ * La ficha del material es una página propia, no un parámetro sobre el listado
+ * como en los equipos, así que la dirección es más directa.
+ */
+export function urlDeLaFichaMaterial(materialId: string, origen = baseDeLasEtiquetas()): string {
+  return `${origen.replace(/\/+$/, '')}/materiales/${materialId}`;
+}
+
+/**
  * El QR como imagen, listo para meter en el HTML de impresión.
  *
  * Sale en PNG y no en SVG porque la ventana de impresión tiene que poder
@@ -57,20 +68,54 @@ export function qrComoImagen(texto: string, lado = 320): Promise<string> {
   });
 }
 
-/** Lo que se imprime de cada máquina. */
-export interface EtiquetaEquipo {
-  equipo: Equipo;
+/**
+ * Una etiqueta impresa, ya sea de una máquina o de un material.
+ *
+ * Es genérica para que la hoja se arme una sola vez: los dos módulos imprimen
+ * en el mismo formato y con el mismo tamaño, y duplicar el armado garantizaría
+ * que en algún momento se corrija un margen en uno y no en el otro.
+ */
+export interface Etiqueta {
   qr: string;
+  titulo: string;
+  /** La línea de abajo: el sector de la máquina, o la categoría del material. */
+  subtitulo?: string | null;
+  /** El renglón chico del final: el código interno, o la unidad de medida. */
+  pie?: string | null;
 }
 
 export async function armarEtiquetas(
   equipos: Equipo[],
   origen = baseDeLasEtiquetas(),
-): Promise<EtiquetaEquipo[]> {
+): Promise<Etiqueta[]> {
   return Promise.all(
     equipos.map(async (equipo) => ({
-      equipo,
       qr: await qrComoImagen(urlDeLaFicha(equipo.id, origen)),
+      titulo: equipo.nombre,
+      subtitulo: equipo.ubicacionNombre,
+      pie: equipo.codigoInterno,
+    })),
+  );
+}
+
+/**
+ * Las etiquetas de los materiales.
+ *
+ * **No lleva la cantidad impresa, a propósito.** El stock cambia todos los
+ * días: una etiqueta que dice "quedan 12" queda mintiendo mañana, y una
+ * etiqueta que miente es peor que ninguna. La cantidad se ve al escanear, que
+ * siempre muestra lo que hay ahora.
+ */
+export async function armarEtiquetasMateriales(
+  materiales: Material[],
+  origen = baseDeLasEtiquetas(),
+): Promise<Etiqueta[]> {
+  return Promise.all(
+    materiales.map(async (material) => ({
+      qr: await qrComoImagen(urlDeLaFichaMaterial(material.id, origen)),
+      titulo: material.nombre,
+      subtitulo: material.categoriaNombre,
+      pie: material.unidadNombre,
     })),
   );
 }
@@ -94,21 +139,21 @@ function escapar(texto: string): string {
  * Devuelve `false` si el navegador bloqueó la ventana emergente, para que la
  * pantalla pueda avisarlo en vez de quedarse en silencio.
  */
-export function imprimirEtiquetas(etiquetas: EtiquetaEquipo[]): boolean {
+export function imprimirEtiquetas(etiquetas: Etiqueta[]): boolean {
   const ventana = window.open('', '_blank', 'width=900,height=700');
   if (!ventana) return false;
 
   const celdas = etiquetas
-    .map(({ equipo, qr }) => {
-      const sector = equipo.ubicacionNombre ? escapar(equipo.ubicacionNombre) : '';
-      const codigo = equipo.codigoInterno ? escapar(equipo.codigoInterno) : '';
+    .map(({ qr, titulo, subtitulo, pie }) => {
+      const sub = subtitulo ? escapar(subtitulo) : '';
+      const abajo = pie ? escapar(pie) : '';
       return `
       <div class="etiqueta">
-        <img src="${qr}" alt="Código QR de ${escapar(equipo.nombre)}">
+        <img src="${qr}" alt="Código QR de ${escapar(titulo)}">
         <div class="datos">
-          <p class="nombre">${escapar(equipo.nombre)}</p>
-          ${sector ? `<p class="sector">${sector}</p>` : ''}
-          ${codigo ? `<p class="codigo">${codigo}</p>` : ''}
+          <p class="nombre">${escapar(titulo)}</p>
+          ${sub ? `<p class="sector">${sub}</p>` : ''}
+          ${abajo ? `<p class="codigo">${abajo}</p>` : ''}
         </div>
       </div>`;
     })
