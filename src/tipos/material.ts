@@ -14,6 +14,12 @@ export interface Material {
   bajoStock: boolean;
   /** false = jubilado: conserva su historial pero ya no se ofrece al cargar. */
   activo: boolean;
+  /** Dónde está guardado en el depósito. Ambos null si todavía no se ubicó. */
+  estanteriaId: string | null;
+  estanteriaNombre: string | null;
+  fila: number | null;
+  /** Cuándo se imprimió su etiqueta QR. null = todavía no tiene. */
+  qrGeneradoEn: string | null;
   notas: string | null;
   creadoEn: string;
   actualizadoEn: string;
@@ -26,6 +32,9 @@ export interface MaterialConHistorial extends Material {
 
 export interface CrearMaterialInput {
   nombre: string;
+  /** Dónde va guardado. La fila necesita la estantería; sola no ubica nada. */
+  estanteriaId?: string | null;
+  fila?: number | null;
   categoriaId: string;
   /** Id del catálogo de unidades. Obligatorio al crear. */
   unidadId: string;

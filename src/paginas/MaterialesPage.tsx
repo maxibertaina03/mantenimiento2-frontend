@@ -9,6 +9,7 @@ import { FiltrosMateriales, contarFiltros } from '@/componentes/FiltrosMateriale
 import type { FiltrosMateriales as Filtros } from '@/api/materiales';
 import { FormularioMaterial } from '@/componentes/FormularioMaterial';
 import { EtiquetasQrMateriales } from '@/componentes/EtiquetasQrMateriales';
+import { EstanteriasMaterial } from '@/componentes/EstanteriasMaterial';
 import { Modal } from '@/componentes/Modal';
 import { descargarCsv, generarCsv, sufijoFechaArchivo } from '@/lib/csv';
 import { exportarPdf } from '@/lib/pdf';
@@ -45,6 +46,7 @@ export function MaterialesPage() {
   const [editando, setEditando] = useState<Material | null>(null);
   const [modalCategorias, setModalCategorias] = useState(false);
   const [etiquetas, setEtiquetas] = useState(false);
+  const [modalEstanterias, setModalEstanterias] = useState(false);
   const [modalUnidades, setModalUnidades] = useState(false);
   const [exportando, setExportando] = useState(false);
   const [errorExport, setErrorExport] = useState<string | null>(null);
@@ -116,6 +118,9 @@ export function MaterialesPage() {
           </button>
           <button className="btn" onClick={() => setModalUnidades(true)}>
             ⚙ Unidades
+          </button>
+          <button className="btn" onClick={() => setModalEstanterias(true)}>
+            ⚙ Estanterías
           </button>
           <button className="btn btn-primario" onClick={() => setModalAbierto(true)}>
             + Nuevo material
@@ -278,6 +283,11 @@ export function MaterialesPage() {
       </Modal>
 
       {etiquetas && <EtiquetasQrMateriales onCerrar={() => setEtiquetas(false)} />}
+
+      <EstanteriasMaterial
+        abierto={modalEstanterias}
+        onCerrar={() => setModalEstanterias(false)}
+      />
 
       <CategoriasMaterial
         abierto={modalCategorias}

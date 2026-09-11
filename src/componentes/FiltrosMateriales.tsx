@@ -1,5 +1,6 @@
 import { useCategorias } from '@/api/categorias';
 import { useUnidadesMedida } from '@/api/unidadesMedida';
+import { useEstanterias } from '@/api/estanterias';
 import { CampoNumero } from './CampoNumero';
 import type { FiltrosMateriales as Filtros } from '@/api/materiales';
 
@@ -14,6 +15,8 @@ export function contarFiltros(f: Filtros): number {
     f.sinUnidad || undefined,
     // 'activos' es lo normal, no cuenta como filtro puesto.
     f.mostrar && f.mostrar !== 'activos' ? f.mostrar : undefined,
+    f.estanteriaId,
+    f.sinUbicacion || undefined,
   ].filter((v) => v !== undefined && v !== '').length;
 }
 
@@ -33,6 +36,7 @@ export function FiltrosMateriales({
 }) {
   const { data: categorias } = useCategorias();
   const { data: unidades } = useUnidadesMedida();
+  const { data: estanterias } = useEstanterias();
 
   const cambiar = (parcial: Partial<Filtros>) => onCambio({ ...filtros, ...parcial });
   const puestos = contarFiltros(filtros);
@@ -103,6 +107,21 @@ export function FiltrosMateriales({
         </label>
 
         <label>
+          Estantería
+          <select
+            value={filtros.estanteriaId ?? ''}
+            onChange={(e) => cambiar({ estanteriaId: e.target.value || undefined })}
+          >
+            <option value="">Todas</option>
+            {(estanterias ?? []).map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.nombre}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
           Mostrar
           <select
             value={filtros.mostrar ?? 'activos'}
@@ -147,6 +166,15 @@ export function FiltrosMateriales({
             onChange={(e) => cambiar({ bajoStock: e.target.checked })}
           />
           Solo los que están bajo su stock mínimo
+        </label>
+
+        <label className="filtro-check">
+          <input
+            type="checkbox"
+            checked={filtros.sinUbicacion ?? false}
+            onChange={(e) => cambiar({ sinUbicacion: e.target.checked })}
+          />
+          Solo los que todavía no tienen ubicación
         </label>
 
         {puestos > 0 && (

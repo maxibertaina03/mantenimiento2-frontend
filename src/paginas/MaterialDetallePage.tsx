@@ -86,6 +86,16 @@ export function MaterialDetallePage() {
           </div>
           <div>
             <p className="texto-suave" style={{ margin: 0 }}>
+              Dónde está
+            </p>
+            <p style={{ marginTop: '0.2rem' }}>
+              {material.estanteriaNombre
+                ? `${material.estanteriaNombre}${material.fila ? ` · fila ${material.fila}` : ''}`
+                : 'Sin ubicar'}
+            </p>
+          </div>
+          <div>
+            <p className="texto-suave" style={{ margin: 0 }}>
               Stock mínimo
             </p>
             <p style={{ marginTop: '0.2rem' }}>{formatearNumero(material.stockMinimo)}</p>

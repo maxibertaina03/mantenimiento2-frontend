@@ -63,6 +63,14 @@ describe('contarFiltros', () => {
     expect(contarFiltros({ mostrar: 'todos' })).toBe(1);
   });
 
+  it('la estanteria cuenta como filtro puesto', () => {
+    expect(contarFiltros({ estanteriaId: 'est-1' })).toBe(1);
+  });
+
+  it('pedir los que faltan ubicar tambien cuenta', () => {
+    expect(contarFiltros({ sinUbicacion: true })).toBe(1);
+  });
+
   it('REGRESION: la busqueda por nombre NO cuenta como filtro', () => {
     // Tiene su propio campo visible; contarla haria aparecer un "(1)" en el
     // boton de filtros cada vez que alguien escribe en el buscador.
@@ -130,10 +138,20 @@ describe('FiltrosMateriales', () => {
   });
 
   it('marca los que estan bajo su stock minimo', async () => {
+    // Se lo busca por su etiqueta y no por el rol a secas: hay mas de una
+    // casilla en el panel y tomar "la casilla" ya no identifica a ninguna.
     const usuario = userEvent.setup();
     abrir();
-    await usuario.click(screen.getByRole('checkbox'));
+    await usuario.click(screen.getByLabelText(/bajo su stock m[ií]nimo/i));
     expect(alCambiar).toHaveBeenCalledWith(expect.objectContaining({ bajoStock: true }));
+  });
+
+  it('marca los que todavia no tienen ubicacion', async () => {
+    // Es la lista para recorrer el deposito con el celular en la mano.
+    const usuario = userEvent.setup();
+    abrir();
+    await usuario.click(screen.getByLabelText(/no tienen ubicaci[oó]n/i));
+    expect(alCambiar).toHaveBeenCalledWith(expect.objectContaining({ sinUbicacion: true }));
   });
 
   it('el boton de limpiar solo aparece con filtros puestos', () => {

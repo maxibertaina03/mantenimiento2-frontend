@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCategorias, useCrearCategoria } from '@/api/categorias';
 import { useActualizarMaterial, useCrearMaterial } from '@/api/materiales';
 import { useUnidadesMedida } from '@/api/unidadesMedida';
+import { useEstanterias } from '@/api/estanterias';
 import { CampoNumero } from './CampoNumero';
 import { MensajeError } from './Estados';
 import type { CrearMaterialInput, Material } from '@/tipos/material';
@@ -26,6 +27,8 @@ export function FormularioMaterial({
   const { data: categorias } = useCategorias();
   // soloActivas: las unidades dadas de baja no se ofrecen para cargar nuevas.
   const { data: unidades } = useUnidadesMedida(true);
+  // soloActivas: las estanterías dadas de baja no se ofrecen para ubicar nuevas.
+  const { data: estanterias } = useEstanterias(true);
   const crear = useCrearMaterial();
   const actualizar = useActualizarMaterial(material?.id ?? '');
   const crearCategoria = useCrearCategoria();
@@ -36,6 +39,8 @@ export function FormularioMaterial({
     categoriaId: material?.categoriaId ?? '',
     unidadId: material?.unidadId ?? '',
     stockMinimo: material?.stockMinimo ?? 0,
+    estanteriaId: material?.estanteriaId ?? null,
+    fila: material?.fila ?? null,
     notas: material?.notas ?? undefined,
   });
   // Alta rápida de categoría desde el mismo formulario.
@@ -170,6 +175,51 @@ export function FormularioMaterial({
           valor={form.stockMinimo}
           onCambio={(v) => setForm({ ...form, stockMinimo: v })}
         />
+      </div>
+
+      <h3 className="subtitulo-form">Dónde está guardado</h3>
+      <p className="texto-suave texto-chico">
+        Opcional. Sirve para encontrarlo en el depósito sin dar vueltas.
+      </p>
+
+      <div className="grilla-2">
+        <div className="campo">
+          <label>Estantería</label>
+          <select
+            value={form.estanteriaId ?? ''}
+            onChange={(e) =>
+              // Sin estantería no hay fila: una fila sola no ubica nada, y el
+              // servidor lo rechaza igual.
+              setForm({
+                ...form,
+                estanteriaId: e.target.value || null,
+                fila: e.target.value ? form.fila : null,
+              })
+            }
+          >
+            <option value="">Sin ubicar</option>
+            {(estanterias ?? [])
+              .filter((es) => es.activo || es.id === form.estanteriaId)
+              .map((es) => (
+                <option key={es.id} value={es.id}>
+                  {es.nombre}
+                </option>
+              ))}
+          </select>
+        </div>
+        <div className="campo">
+          <label>Fila</label>
+          <CampoNumero
+            min={1}
+            step="1"
+            valor={form.fila ?? undefined}
+            disabled={!form.estanteriaId}
+            onCambio={(v) => setForm({ ...form, fila: v ?? null })}
+          />
+          {!form.estanteriaId && (
+            <span className="texto-suave texto-chico">Elegí primero la estantería.</span>
+          )}
+        </div>
       </div>
 
       <p className="texto-suave" style={{ fontSize: '0.8rem' }}>

@@ -26,6 +26,10 @@ export interface FiltrosMateriales {
   mostrar?: VistaMaterial;
   /** Solo los que todavía no tienen etiqueta QR impresa. */
   sinQr?: boolean;
+  /** Filtra por estantería del depósito. */
+  estanteriaId?: string;
+  /** Solo los que todavía no tienen ubicación cargada. */
+  sinUbicacion?: boolean;
   ordenarPor?: 'nombre' | 'stock' | 'categoria' | 'unidad';
   direccion?: 'asc' | 'desc';
 }
@@ -61,6 +65,8 @@ export function useMateriales(pagina = 1, limite = 20, filtros: FiltrosMateriale
           sinUnidad: f.sinUnidad ? 'true' : undefined,
           mostrar: f.mostrar || undefined,
           sinQr: f.sinQr ? 'true' : undefined,
+          estanteriaId: f.estanteriaId || undefined,
+          sinUbicacion: f.sinUbicacion ? 'true' : undefined,
           ordenarPor: f.ordenarPor || undefined,
           direccion: f.direccion || undefined,
         },
