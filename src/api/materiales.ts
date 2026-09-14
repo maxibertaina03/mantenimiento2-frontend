@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/apiClient';
 import type { RespuestaPaginada } from '@/tipos/comunes';
+import { traerTodasLasPaginas } from './paginado';
 import type {
   ActualizarMaterialInput,
   CrearMaterialInput,
@@ -74,29 +75,16 @@ export function useMateriales(pagina = 1, limite = 20, filtros: FiltrosMateriale
   });
 }
 
-/** Trae TODOS los materiales (recorriendo páginas) para exportar. */
-export async function obtenerTodosLosMateriales(
+/** Trae TODOS los materiales: etiquetas QR, exportar, asignar unidad en masa. */
+export function obtenerTodosLosMateriales(
   mostrar: VistaMaterial = 'activos',
   extra: { sinQr?: boolean; categoriaId?: string } = {},
 ): Promise<Material[]> {
-  const limite = 100;
-  const acumulado: Material[] = [];
-  let pagina = 1;
-  for (;;) {
-    const resp = await apiRequest<RespuestaPaginada<Material>>('/materiales', {
-      query: {
-        pagina,
-        limite,
-        mostrar,
-        sinQr: extra.sinQr ? 'true' : undefined,
-        categoriaId: extra.categoriaId || undefined,
-      },
-    });
-    acumulado.push(...resp.datos);
-    if (acumulado.length >= resp.total || resp.datos.length === 0) break;
-    pagina += 1;
-  }
-  return acumulado;
+  return traerTodasLasPaginas<Material>('/materiales', {
+    mostrar,
+    sinQr: extra.sinQr ? 'true' : undefined,
+    categoriaId: extra.categoriaId || undefined,
+  });
 }
 
 /** A cuántos materiales puede avisar la alerta de bajo stock, y a cuántos no. */

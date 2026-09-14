@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/apiClient';
 import type { RespuestaPaginada } from '@/tipos/comunes';
+import { traerTodasLasPaginas } from './paginado';
 import type {
   ActualizarEquipoInput,
   CrearEquipoInput,
@@ -46,37 +47,21 @@ export function useEquipos(pagina = 1, limite = 20, filtros: FiltrosEquipos = {}
 }
 
 /**
- * Trae TODOS los equipos, recorriendo las páginas.
- *
- * El servidor no acepta más de 100 por página, así que pedir "traeme los 326"
- * de una devuelve un error de validación. Las pantallas que necesitan el padrón
- * completo —cargar fotos, imprimir etiquetas— usan esto.
+ * Trae TODOS los equipos. Las pantallas que necesitan el padrón completo
+ * —cargar fotos, imprimir etiquetas— usan esto.
  */
-export async function obtenerTodosLosEquipos(filtros: FiltrosEquipos = {}): Promise<Equipo[]> {
-  const limite = 100;
-  const acumulado: Equipo[] = [];
-  let pagina = 1;
-  for (;;) {
-    const resp = await apiRequest<RespuestaPaginada<Equipo>>('/equipos', {
-      query: {
-        pagina,
-        limite,
-        buscar: filtros.buscar || undefined,
-        ubicacionId: filtros.ubicacionId || undefined,
-        tipoId: filtros.tipoId || undefined,
-        marcaId: filtros.marcaId || undefined,
-        modeloId: filtros.modeloId || undefined,
-        estado: filtros.estado || undefined,
-        sinQr: filtros.sinQr ? 'true' : undefined,
-        ordenarPor: filtros.ordenarPor || undefined,
-        direccion: filtros.direccion || undefined,
-      },
-    });
-    acumulado.push(...resp.datos);
-    if (acumulado.length >= resp.total || resp.datos.length === 0) break;
-    pagina += 1;
-  }
-  return acumulado;
+export function obtenerTodosLosEquipos(filtros: FiltrosEquipos = {}): Promise<Equipo[]> {
+  return traerTodasLasPaginas<Equipo>('/equipos', {
+    buscar: filtros.buscar || undefined,
+    ubicacionId: filtros.ubicacionId || undefined,
+    tipoId: filtros.tipoId || undefined,
+    marcaId: filtros.marcaId || undefined,
+    modeloId: filtros.modeloId || undefined,
+    estado: filtros.estado || undefined,
+    sinQr: filtros.sinQr ? 'true' : undefined,
+    ordenarPor: filtros.ordenarPor || undefined,
+    direccion: filtros.direccion || undefined,
+  });
 }
 
 /** Los equipos completos como consulta, para las pantallas que los necesitan. */
