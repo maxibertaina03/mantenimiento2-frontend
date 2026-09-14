@@ -59,13 +59,48 @@ export function urlDeLaFichaMaterial(materialId: string, origen = baseDeLasEtiqu
  * ensucia con grasa y se raya. Con `H` el código sigue leyéndose con hasta un
  * 30% de la superficie tapada.
  */
-export function qrComoImagen(texto: string, lado = 320): Promise<string> {
+export function qrComoImagen(
+  texto: string,
+  lado = 320,
+  correccion: 'H' | 'M' = 'H',
+): Promise<string> {
   return QRCode.toDataURL(texto, {
-    errorCorrectionLevel: 'H',
+    errorCorrectionLevel: correccion,
     margin: 1,
     width: lado,
     color: { dark: '#000000', light: '#ffffff' },
   });
+}
+
+/**
+ * Los dos formatos de etiqueta, con sus medidas en milímetros.
+ *
+ * `equipo` va pegada en una máquina y tiene lugar de sobra. `material` va en la
+ * cara de una caja de 30 × 85 mm, así que la etiqueta mide un poco menos para
+ * poder pegarla derecha sin que sobresalga.
+ */
+export interface FormatoEtiqueta {
+  ancho: number;
+  alto: number;
+  qr: number;
+  columnas: number;
+  /** Cuerpo del nombre, de la línea del medio y del pie, en puntos. */
+  cuerpoNombre: number;
+  cuerpoSub: number;
+}
+
+export const FORMATOS: Record<'equipo' | 'material', FormatoEtiqueta> = {
+  equipo: { ancho: 60, alto: 34, qr: 26, columnas: 3, cuerpoNombre: 10, cuerpoSub: 8 },
+  // 80 × 27 entra en una caja de 85 × 30 con unos dos milímetros y medio de
+  // aire por lado, que es lo que hace falta para pegarla sin pelearse.
+  material: { ancho: 80, alto: 27, qr: 22, columnas: 2, cuerpoNombre: 11, cuerpoSub: 9 },
+};
+
+/** Cuántas etiquetas de este formato entran en una hoja A4 con margen de 10 mm. */
+export function etiquetasPorHoja(formato: FormatoEtiqueta): number {
+  const SEPARACION = 4;
+  const filas = Math.floor((297 - 20 + SEPARACION) / (formato.alto + SEPARACION));
+  return filas * formato.columnas;
 }
 
 /**
@@ -90,12 +125,26 @@ export async function armarEtiquetas(
 ): Promise<Etiqueta[]> {
   return Promise.all(
     equipos.map(async (equipo) => ({
-      qr: await qrComoImagen(urlDeLaFicha(equipo.id, origen)),
+      // Corrección alta: la etiqueta de una máquina se ensucia con grasa y se
+      // raya, y con `H` sigue leyéndose con hasta un 30% de la superficie tapada.
+      qr: await qrComoImagen(urlDeLaFicha(equipo.id, origen), 320, 'H'),
       titulo: equipo.nombre,
       subtitulo: equipo.ubicacionNombre,
       pie: equipo.codigoInterno,
     })),
   );
+}
+
+/**
+ * La unidad solo se imprime cuando dice algo.
+ *
+ * De 373 materiales, 368 tienen unidad "Unidad". Imprimirlo en todos gasta un
+ * renglón de la etiqueta para repetir lo que ya se da por sentado, y en una
+ * etiqueta de 27 mm ese renglón es el que le falta al nombre.
+ */
+function unidadQueAporta(unidad: string | null | undefined): string | null {
+  if (!unidad) return null;
+  return unidad.trim().toLowerCase() === 'unidad' ? null : unidad;
 }
 
 /**
@@ -105,6 +154,12 @@ export async function armarEtiquetas(
  * días: una etiqueta que dice "quedan 12" queda mintiendo mañana, y una
  * etiqueta que miente es peor que ninguna. La cantidad se ve al escanear, que
  * siempre muestra lo que hay ahora.
+ *
+ * Corrección media y no alta, al revés que en las máquinas. Es una decisión de
+ * tamaño: con `H`, un QR de 22 mm deja cada módulo en 0,38 mm y un celular
+ * empieza a pelearla; con `M` quedan 0,49 mm, que se lee cómodo. Estas van
+ * pegadas en cajas de cartón adentro del depósito, no en una bomba llena de
+ * grasa, así que la tolerancia extra de `H` no hace falta.
  */
 export async function armarEtiquetasMateriales(
   materiales: Material[],
@@ -112,10 +167,10 @@ export async function armarEtiquetasMateriales(
 ): Promise<Etiqueta[]> {
   return Promise.all(
     materiales.map(async (material) => ({
-      qr: await qrComoImagen(urlDeLaFichaMaterial(material.id, origen)),
+      qr: await qrComoImagen(urlDeLaFichaMaterial(material.id, origen), 320, 'M'),
       titulo: material.nombre,
       subtitulo: material.categoriaNombre,
-      pie: material.unidadNombre,
+      pie: unidadQueAporta(material.unidadNombre),
     })),
   );
 }
@@ -139,7 +194,10 @@ function escapar(texto: string): string {
  * Devuelve `false` si el navegador bloqueó la ventana emergente, para que la
  * pantalla pueda avisarlo en vez de quedarse en silencio.
  */
-export function imprimirEtiquetas(etiquetas: Etiqueta[]): boolean {
+export function imprimirEtiquetas(
+  etiquetas: Etiqueta[],
+  formato: FormatoEtiqueta = FORMATOS.equipo,
+): boolean {
   const ventana = window.open('', '_blank', 'width=900,height=700');
   if (!ventana) return false;
 
@@ -175,36 +233,44 @@ export function imprimirEtiquetas(etiquetas: Etiqueta[]): boolean {
   }
   .hoja {
     display: grid;
-    /* Tres columnas de 60 mm entran cómodas en un A4 con margen de 10 mm. */
-    grid-template-columns: repeat(3, 60mm);
+    grid-template-columns: repeat(${formato.columnas}, ${formato.ancho}mm);
     gap: 4mm;
     justify-content: center;
   }
   .etiqueta {
     border: 1px solid #000;
     border-radius: 2mm;
-    padding: 3mm;
-    height: 34mm;
+    padding: 2.5mm;
+    height: ${formato.alto}mm;
     display: flex;
     align-items: center;
-    gap: 3mm;
+    gap: 2.5mm;
     /* Que una etiqueta no quede partida entre dos hojas. */
     break-inside: avoid;
     page-break-inside: avoid;
     overflow: hidden;
   }
-  .etiqueta img { width: 26mm; height: 26mm; flex: none; }
+  .etiqueta img { width: ${formato.qr}mm; height: ${formato.qr}mm; flex: none; }
   .datos { min-width: 0; }
   .datos p { margin: 0; }
   .nombre {
-    font-size: 10pt;
+    font-size: ${formato.cuerpoNombre}pt;
     font-weight: 700;
     line-height: 1.15;
-    /* El nombre más largo del padrón entra en tres renglones a este cuerpo. */
     overflow-wrap: anywhere;
+    /* Tope de tres renglones: el nombre más largo del padrón entra, y si
+       apareciera uno peor no empuja la categoría fuera de la etiqueta. */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
-  .sector { font-size: 8pt; margin-top: 1mm !important; }
-  .codigo { font-size: 8pt; font-family: ui-monospace, Menlo, monospace; margin-top: 1mm !important; }
+  .sector { font-size: ${formato.cuerpoSub}pt; margin-top: 1mm !important; }
+  .codigo {
+    font-size: ${formato.cuerpoSub}pt;
+    font-family: ui-monospace, Menlo, monospace;
+    margin-top: 1mm !important;
+  }
   .aviso { margin: 0 0 4mm; font-size: 9pt; }
   @media print { .aviso { display: none; } }
 </style>

@@ -5,10 +5,15 @@ import {
   armarEtiquetas,
   baseDeLasEtiquetas,
   esDireccionLocal,
+  etiquetasPorHoja,
+  FORMATOS,
   imprimirEtiquetas,
 } from '@/lib/etiquetaQr';
 import { Cargando, EstadoVacio, MensajeError } from './Estados';
 import { Modal } from './Modal';
+
+/** Entran 21 por hoja, no 24: antes el numero estaba escrito a mano y mentia. */
+const POR_HOJA = etiquetasPorHoja(FORMATOS.equipo);
 
 /**
  * Cuántas etiquetas entran en una tanda: doce hojas A4.
@@ -135,7 +140,7 @@ export function EtiquetasQr({ onCerrar }: { onCerrar: () => void }) {
                 <b>{equipos.length}</b> etiqueta(s) a imprimir
               </span>
               <span className="texto-suave">
-                {Math.ceil(equipos.length / 24)} hoja(s) A4, 24 por hoja
+                {Math.ceil(equipos.length / POR_HOJA)} hoja(s) A4, {POR_HOJA} por hoja
               </span>
             </div>
 

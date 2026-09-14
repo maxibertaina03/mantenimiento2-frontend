@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { esDireccionLocal, qrComoImagen, urlDeLaFicha } from './etiquetaQr';
+import {
+  FORMATOS,
+  esDireccionLocal,
+  etiquetasPorHoja,
+  qrComoImagen,
+  urlDeLaFicha,
+} from './etiquetaQr';
 
 /**
  * Las etiquetas que se pegan en las maquinas.
@@ -116,6 +122,23 @@ describe('armarEtiquetasMateriales', () => {
     expect(texto).not.toContain('12');
   });
 
+  it('REGRESION: no imprime la unidad cuando dice "Unidad"', async () => {
+    // 368 de los 373 materiales dicen eso. Imprimirlo gasta el renglon que le
+    // falta al nombre para repetir lo que ya se da por sentado.
+    const { armarEtiquetasMateriales } = await import('./etiquetaQr');
+    const [e] = await armarEtiquetasMateriales(
+      [material({ unidadNombre: 'Unidad' })],
+      'https://x.com',
+    );
+    expect(e.pie).toBeNull();
+  });
+
+  it('pero si la imprime cuando aporta algo', async () => {
+    const { armarEtiquetasMateriales } = await import('./etiquetaQr');
+    const [e] = await armarEtiquetasMateriales([material({ unidadNombre: 'Metro' })], 'https://x.com');
+    expect(e.pie).toBe('Metro');
+  });
+
   it('un material sin categoria no deja el renglon en blanco raro', async () => {
     const { armarEtiquetasMateriales } = await import('./etiquetaQr');
     const [e] = await armarEtiquetasMateriales(
@@ -132,7 +155,66 @@ describe('armarEtiquetasMateriales', () => {
       './etiquetaQr'
     );
     const [e] = await armarEtiquetasMateriales([material()], 'https://x.com');
-    const esperado = await qrComoImagen(urlDeLaFichaMaterial('mat-1', 'https://x.com'));
+    const esperado = await qrComoImagen(urlDeLaFichaMaterial('mat-1', 'https://x.com'), 320, 'M');
     expect(e.qr).toBe(esperado);
+  });
+});
+
+/**
+ * Las medidas de la etiqueta.
+ *
+ * Importan de verdad: se imprimen de a doscientas y se pegan en cajas de
+ * 85 x 30 mm. Un milimetro de mas y sobresalen; un QR chico de mas y el celular
+ * no lo lee, cosa que se descubre con las etiquetas ya pegadas.
+ */
+describe('FORMATOS', () => {
+  it('la etiqueta de material entra en una caja de 85 x 30 mm', () => {
+    const f = FORMATOS.material;
+    // Con menos de dos milimetros de aire por lado no se pega derecha.
+    expect(85 - f.ancho).toBeGreaterThanOrEqual(4);
+    expect(30 - f.alto).toBeGreaterThanOrEqual(2);
+  });
+
+  it('el QR entra en el alto de la etiqueta con su margen', () => {
+    const f = FORMATOS.material;
+    expect(f.qr).toBeLessThanOrEqual(f.alto - 5);
+  });
+
+  it('REGRESION: el QR no baja del tamano en que deja de leerse', () => {
+    // Con correccion M, la URL de una ficha da 41 modulos de lado. Un celular
+    // lee comodo a partir de 0,5 mm por modulo y la pelea por debajo de 0,4.
+    const mmPorModulo = (FORMATOS.material.qr - 2) / 41;
+    expect(mmPorModulo).toBeGreaterThan(0.45);
+  });
+
+  it('las dos columnas entran en un A4 con margen de 10 mm', () => {
+    for (const f of Object.values(FORMATOS)) {
+      expect(f.columnas * f.ancho + (f.columnas - 1) * 4).toBeLessThanOrEqual(190);
+    }
+  });
+
+  it('el texto del material quedo mas grande que el de las maquinas', () => {
+    expect(FORMATOS.material.cuerpoNombre).toBeGreaterThan(FORMATOS.equipo.cuerpoNombre);
+    expect(FORMATOS.material.cuerpoSub).toBeGreaterThan(FORMATOS.equipo.cuerpoSub);
+  });
+
+  it('la etiqueta de las maquinas no cambio', () => {
+    // Solo se pidio achicar la de materiales.
+    expect(FORMATOS.equipo).toMatchObject({ ancho: 60, alto: 34, qr: 26, columnas: 3 });
+  });
+});
+
+describe('etiquetasPorHoja', () => {
+  it('REGRESION: se calcula, no se escribe a mano', () => {
+    // La pantalla decia "24 por hoja" y entraban 21.
+    expect(etiquetasPorHoja(FORMATOS.equipo)).toBe(21);
+    expect(etiquetasPorHoja(FORMATOS.material)).toBe(18);
+  });
+
+  it('ninguna fila se pasa del alto util de la hoja', () => {
+    for (const f of Object.values(FORMATOS)) {
+      const filas = etiquetasPorHoja(f) / f.columnas;
+      expect(filas * (f.alto + 4) - 4).toBeLessThanOrEqual(297 - 20);
+    }
   });
 });

@@ -15,7 +15,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
-    "guia:equipos": "node scripts/guia-equipos.mjs \"Equipos - Guia rapida.pdf\""
+    "guia:equipos": "node scripts/guia-equipos.mjs \"Equipos - Guia rapida.pdf\"",
+    "muestra:etiquetas": "node scripts/muestra-etiquetas.mjs"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.13.0",

@@ -2,16 +2,22 @@ import { useState } from 'react';
 import { useMarcarQrMaterial, useTodosLosMateriales } from '@/api/materiales';
 import { useCategorias } from '@/api/categorias';
 import {
+  FORMATOS,
   armarEtiquetasMateriales,
   baseDeLasEtiquetas,
   esDireccionLocal,
+  etiquetasPorHoja,
   imprimirEtiquetas,
 } from '@/lib/etiquetaQr';
 import { Cargando, EstadoVacio, MensajeError } from './Estados';
 import { Modal } from './Modal';
 
-/** Cuántas etiquetas entran en una tanda: doce hojas A4. */
-const MAXIMO_POR_TANDA = 300;
+/** El formato chico, para pegar en la cara de una caja de 30 × 85 mm. */
+const FORMATO = FORMATOS.material;
+const POR_HOJA = etiquetasPorHoja(FORMATO);
+
+/** Cuántas etiquetas entran en una tanda. */
+const MAXIMO_POR_TANDA = 200;
 
 /**
  * Etiquetas con código QR para pegar en el estante de cada material.
@@ -47,7 +53,7 @@ export function EtiquetasQrMateriales({ onCerrar }: { onCerrar: () => void }) {
     setPreparando(true);
     try {
       const listas = await armarEtiquetasMateriales(materiales);
-      if (!imprimirEtiquetas(listas)) {
+      if (!imprimirEtiquetas(listas, FORMATOS.material)) {
         setAviso(
           'El navegador bloqueó la ventana de impresión. Permitila para este sitio y probá de nuevo.',
         );
@@ -67,6 +73,11 @@ export function EtiquetasQrMateriales({ onCerrar }: { onCerrar: () => void }) {
         <p className="texto-suave texto-chico">
           Cada etiqueta lleva el nombre del material, su categoría y un código QR. Al escanearlo se
           abre la ficha: cuánto hay, el historial, y desde ahí se puede cargar un movimiento.
+        </p>
+
+        <p className="texto-suave texto-chico">
+          Miden <strong>{FORMATO.ancho} × {FORMATO.alto} mm</strong>, para pegar en la cara de una
+          caja de 85 × 30 mm sin que sobresalgan.
         </p>
 
         {/* La cantidad NO va impresa y conviene decirlo, porque es lo primero
@@ -130,7 +141,7 @@ export function EtiquetasQrMateriales({ onCerrar }: { onCerrar: () => void }) {
                 <b>{materiales.length}</b> etiqueta(s) a imprimir
               </span>
               <span className="texto-suave">
-                {Math.ceil(materiales.length / 24)} hoja(s) A4, 24 por hoja
+                {Math.ceil(materiales.length / POR_HOJA)} hoja(s) A4, {POR_HOJA} por hoja
               </span>
             </div>
 
