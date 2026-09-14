@@ -145,9 +145,10 @@ export function ImportarEquipos({ abierto, onCerrar }: { abierto: boolean; onCer
                 )}
 
                 <p className="texto-suave texto-chico">
-                  Las personas asignadas que todavía no estén en el sistema se van a dar de alta
-                  como usuarios <strong>sin acceso</strong>: aparecen para asignarles equipos,
-                  pero no pueden iniciar sesión.
+                  Quienes figuren como asignados y todavía no estén cargados se van a dar de alta
+                  como <strong>responsables</strong>. No son usuarios del sistema: no tienen clave
+                  ni entran a ningún lado, solo dicen quién tiene cada equipo. La marca y la
+                  ubicación que traiga la planilla se cargan en sus catálogos.
                 </p>
               </>
             )}
@@ -203,7 +204,7 @@ function Resumen({
 
       {resultado.usuariosCreados.length > 0 && (
         <>
-          <h3 className="subtitulo-form">Personas dadas de alta</h3>
+          <h3 className="subtitulo-form">Responsables dados de alta</h3>
           <p className="texto-suave texto-chico">
             {resultado.usuariosCreados.join(' · ')}
           </p>
