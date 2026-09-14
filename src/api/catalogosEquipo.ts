@@ -18,10 +18,20 @@ export interface ItemCatalogoEquipo {
  */
 type Catalogo = 'ubicaciones-equipo' | 'tipos-equipo-planta' | 'marcas-equipo';
 
-function useCatalogo(catalogo: Catalogo) {
+/**
+ * De qué módulo se están pidiendo las ubicaciones o las marcas.
+ *
+ * La tabla es una sola porque hay lugares que valen para los dos: "Laboratorio",
+ * "Envase", "Saladero" y "Tinas" tienen equipos de planta y de informática.
+ * Pero los desplegables no se mezclan: en el de planta no tiene sentido ofrecer
+ * "Abajo de las escaleras oficina".
+ */
+export type AmbitoCatalogo = 'PLANTA' | 'IT';
+
+function useCatalogo(catalogo: Catalogo, ambito?: AmbitoCatalogo) {
   return useQuery({
-    queryKey: [catalogo],
-    queryFn: () => apiRequest<ItemCatalogoEquipo[]>(`/${catalogo}`),
+    queryKey: [catalogo, ambito ?? 'PLANTA'] as const,
+    queryFn: () => apiRequest<ItemCatalogoEquipo[]>(`/${catalogo}`, { query: { ambito } }),
     staleTime: 60_000,
   });
 }
@@ -31,6 +41,14 @@ export function useCatalogoEquipos() {
     ubicaciones: useCatalogo('ubicaciones-equipo'),
     tipos: useCatalogo('tipos-equipo-planta'),
     marcas: useCatalogo('marcas-equipo'),
+  };
+}
+
+/** Los catálogos del módulo de informática. */
+export function useCatalogoIt() {
+  return {
+    ubicaciones: useCatalogo('ubicaciones-equipo', 'IT'),
+    marcas: useCatalogo('marcas-equipo', 'IT'),
   };
 }
 
@@ -98,11 +116,17 @@ export function useEliminarModelo() {
   });
 }
 
-export function useCrearItemCatalogo(catalogo: Catalogo) {
+export function useCrearItemCatalogo(catalogo: Catalogo, ambito?: AmbitoCatalogo) {
   const qc = useQueryClient();
   return useMutation({
+    // El item nace en el ámbito de la pantalla desde la que se creó: quien
+    // carga una ubicación desde informática no quiere verla en planta.
     mutationFn: (datos: { nombre: string; orden?: number }) =>
-      apiRequest<ItemCatalogoEquipo>(`/${catalogo}`, { method: 'POST', body: datos }),
+      apiRequest<ItemCatalogoEquipo>(`/${catalogo}`, {
+        method: 'POST',
+        body: datos,
+        query: { ambito },
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: [catalogo] }),
   });
 }

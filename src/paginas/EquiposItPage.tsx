@@ -8,10 +8,17 @@ import {
   useEquipos,
   useResumenEquipos,
   useTiposEquipo,
-  useUbicaciones,
 } from '@/api/equiposIt';
-import { useUsuarios } from '@/api/usuarios';
+import {
+  useCatalogoIt,
+  useCrearItemCatalogo,
+  useCrearModelo,
+  useModelosDeMarca,
+} from '@/api/catalogosEquipo';
+import { useCrearResponsable, useResponsables } from '@/api/responsables';
 import { AccionesFila } from '@/componentes/AccionesFila';
+import { ResponsablesEquipo } from '@/componentes/ResponsablesEquipo';
+import { SelectorCatalogo } from '@/componentes/SelectorCatalogo';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { CampoNumero } from '@/componentes/CampoNumero';
 import { ImportarEquipos } from '@/componentes/ImportarEquipos';
@@ -36,9 +43,19 @@ const CLASE_ESTADO: Record<EstadoEquipoIt, string> = {
 /** El tipo se completa con el primero del catálogo al abrir el formulario. */
 const FORMULARIO_VACIO: CrearEquipoInput = {
   tipoId: '',
-  marca: '',
-  modelo: '',
 };
+
+/**
+ * Cómo se nombra un equipo en pantalla.
+ *
+ * Marca y modelo salen del catálogo y pueden faltar: en el inventario real, 28
+ * de 65 equipos no tienen marca porque decía "Sin especificar". Cuando faltan,
+ * el que identifica es el código interno, que es la etiqueta pegada al equipo.
+ */
+function nombreDelEquipo(e: EquipoIt): string {
+  const marcaYModelo = [e.marcaNombre, e.modeloNombre].filter(Boolean).join(' ');
+  return marcaYModelo || e.codigoInterno || e.tipoNombre || 'Equipo sin identificar';
+}
 
 export function EquiposItPage() {
   const [pagina, setPagina] = useState(1);
@@ -46,10 +63,14 @@ export function EquiposItPage() {
   const [busquedaDebounced, setBusquedaDebounced] = useState('');
   const [tipoId, setTipoId] = useState('');
   const [estado, setEstado] = useState<EstadoEquipoIt | ''>('');
+  const [marcaId, setMarcaId] = useState('');
+  const [ubicacionId, setUbicacionId] = useState('');
+  const [responsableId, setResponsableId] = useState('');
 
   const [modalAlta, setModalAlta] = useState(false);
   const [modalImportar, setModalImportar] = useState(false);
   const [modalTipos, setModalTipos] = useState(false);
+  const [modalResponsables, setModalResponsables] = useState(false);
   const [equipoDetalle, setEquipoDetalle] = useState<EquipoIt | null>(null);
   const [equipoAsignar, setEquipoAsignar] = useState<EquipoIt | null>(null);
   const [equipoEditar, setEquipoEditar] = useState<EquipoIt | null>(null);
@@ -67,9 +88,18 @@ export function EquiposItPage() {
     buscar: busquedaDebounced,
     tipoId,
     estado,
+    marcaId,
+    ubicacionId,
+    // "sin" es un valor especial del mismo desplegable: filtrar por responsable
+    // y "sin responsable" a la vez es contradictorio, y un desplegable no deja
+    // elegir las dos cosas.
+    responsableId: responsableId === 'sin' ? undefined : responsableId,
+    sinResponsable: responsableId === 'sin',
   });
   const { data: tiposCatalogo } = useTiposEquipo();
   const { data: resumen } = useResumenEquipos();
+  const { marcas: marcasCatalogo, ubicaciones: ubicacionesCatalogo } = useCatalogoIt();
+  const { data: responsablesCatalogo } = useResponsables(true);
 
   const totalPaginas = data ? Math.max(1, Math.ceil(data.total / LIMITE)) : 1;
 
@@ -85,6 +115,9 @@ export function EquiposItPage() {
         <div className="fila-acciones">
           <button className="btn" onClick={() => setModalTipos(true)}>
             ⚙ Tipos
+          </button>
+          <button className="btn" onClick={() => setModalResponsables(true)}>
+            👤 Responsables
           </button>
           <button className="btn" onClick={() => setModalImportar(true)}>
             ↑ Importar CSV
@@ -147,6 +180,52 @@ export function EquiposItPage() {
             </option>
           ))}
         </select>
+        <select
+          value={marcaId}
+          onChange={(e) => {
+            setMarcaId(e.target.value);
+            setPagina(1);
+          }}
+          aria-label="Filtrar por marca"
+        >
+          <option value="">Todas las marcas</option>
+          {(marcasCatalogo.data ?? []).map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.nombre}
+            </option>
+          ))}
+        </select>
+        <select
+          value={ubicacionId}
+          onChange={(e) => {
+            setUbicacionId(e.target.value);
+            setPagina(1);
+          }}
+          aria-label="Filtrar por ubicación"
+        >
+          <option value="">Todas las ubicaciones</option>
+          {(ubicacionesCatalogo.data ?? []).map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.nombre}
+            </option>
+          ))}
+        </select>
+        <select
+          value={responsableId}
+          onChange={(e) => {
+            setResponsableId(e.target.value);
+            setPagina(1);
+          }}
+          aria-label="Filtrar por responsable"
+        >
+          <option value="">Todos los responsables</option>
+          <option value="sin">— Sin responsable (en depósito) —</option>
+          {(responsablesCatalogo ?? []).map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.nombre}
+            </option>
+          ))}
+        </select>
       </div>
 
       {error && <MensajeError error={error} />}
@@ -168,7 +247,7 @@ export function EquiposItPage() {
                 <th>Código</th>
                 <th>Tipo</th>
                 <th>Equipo</th>
-                <th>Asignado a</th>
+                <th>Responsable</th>
                 <th>Ubicación</th>
                 <th>Estado</th>
                 <th />
@@ -180,15 +259,15 @@ export function EquiposItPage() {
                   <td data-etiqueta="Código">{equipo.codigoInterno ?? '—'}</td>
                   <td data-etiqueta="Tipo">{equipo.tipoNombre ?? '—'}</td>
                   <td data-etiqueta="Equipo">
-                    <strong>{equipo.marca}</strong> {equipo.modelo}
+                    <strong>{equipo.marcaNombre ?? 'Sin marca'}</strong> {equipo.modeloNombre ?? ''}
                     {equipo.direccionIp && (
                       <div className="texto-suave texto-chico">{equipo.direccionIp}</div>
                     )}
                   </td>
-                  <td data-etiqueta="Asignado a">
-                    {equipo.asignadoANombre ?? <span className="texto-suave">Depósito</span>}
+                  <td data-etiqueta="Responsable">
+                    {equipo.responsableNombre ?? <span className="texto-suave">Depósito</span>}
                   </td>
-                  <td data-etiqueta="Ubicación">{equipo.ubicacion ?? '—'}</td>
+                  <td data-etiqueta="Ubicación">{equipo.ubicacionNombre ?? '—'}</td>
                   <td data-etiqueta="Estado">
                     <span className={CLASE_ESTADO[equipo.estado]}>
                       {ETIQUETA_ESTADO[equipo.estado]}
@@ -200,7 +279,7 @@ export function EquiposItPage() {
                   <td className="celda-acciones">
                     <div className="fila-acciones">
                       <AccionesFila
-                        descripcion={`${equipo.marca} ${equipo.modelo}`}
+                        descripcion={nombreDelEquipo(equipo)}
                         onVer={() => setEquipoDetalle(equipo)}
                         onEditar={() => setEquipoEditar(equipo)}
                       />
@@ -244,6 +323,7 @@ export function EquiposItPage() {
 
       <ImportarEquipos abierto={modalImportar} onCerrar={() => setModalImportar(false)} />
       <TiposEquipo abierto={modalTipos} onCerrar={() => setModalTipos(false)} />
+      {modalResponsables && <ResponsablesEquipo onCerrar={() => setModalResponsables(false)} />}
       {modalAlta && <ModalAltaEquipo alCerrar={() => setModalAlta(false)} />}
       {equipoEditar && (
         <ModalAltaEquipo equipo={equipoEditar} alCerrar={() => setEquipoEditar(null)} />
@@ -274,8 +354,8 @@ function aFormulario(equipo: EquipoIt): CrearEquipoInput {
     codigoInterno: equipo.codigoInterno ?? undefined,
     tipoId: equipo.tipoId,
     estado: equipo.estado,
-    marca: equipo.marca,
-    modelo: equipo.modelo,
+    marcaId: equipo.marcaId ?? undefined,
+    modeloId: equipo.modeloId ?? undefined,
     numeroSerie: equipo.numeroSerie ?? undefined,
     procesador: equipo.procesador ?? undefined,
     memoriaRamGb: equipo.memoriaRamGb ?? undefined,
@@ -287,7 +367,7 @@ function aFormulario(equipo: EquipoIt): CrearEquipoInput {
     nombreEnRed: equipo.nombreEnRed ?? undefined,
     accesoRemoto: equipo.accesoRemoto,
     accesoRemotoId: equipo.accesoRemotoId ?? undefined,
-    ubicacion: equipo.ubicacion ?? undefined,
+    ubicacionId: equipo.ubicacionId ?? undefined,
     proveedorId: equipo.proveedorId ?? undefined,
     fechaCompra: equipo.fechaCompra ?? undefined,
     garantiaHasta: equipo.garantiaHasta ?? undefined,
@@ -313,8 +393,14 @@ function ModalAltaEquipo({
   );
   const crear = useCrearEquipo();
   const actualizar = useActualizarEquipo(equipo?.id ?? '');
-  const { data: ubicaciones } = useUbicaciones();
   const { data: tiposActivos } = useTiposEquipo(true);
+
+  // Los catálogos del ámbito de informática: no se mezclan con los de planta.
+  const { marcas, ubicaciones } = useCatalogoIt();
+  const modelos = useModelosDeMarca(form.marcaId);
+  const crearMarca = useCrearItemCatalogo('marcas-equipo', 'IT');
+  const crearUbicacion = useCrearItemCatalogo('ubicaciones-equipo', 'IT');
+  const crearModelo = useCrearModelo();
 
   // Al abrir el alta, se preselecciona el primer tipo del catálogo.
   useEffect(() => {
@@ -355,7 +441,7 @@ function ModalAltaEquipo({
 
   return (
     <Modal
-      titulo={esEdicion ? `Editar ${equipo.marca} ${equipo.modelo}` : 'Nuevo equipo'}
+      titulo={esEdicion ? `Editar ${nombreDelEquipo(equipo)}` : 'Nuevo equipo'}
       abierto
       tamano="ancho"
       onCerrar={alCerrar}
@@ -397,25 +483,32 @@ function ModalAltaEquipo({
               placeholder="IT-0042"
             />
           </label>
-          <label>
-            Marca *
-            <input
-              value={form.marca}
-              onChange={(e) => cambiar('marca', e.target.value)}
-              required
-              minLength={2}
-              placeholder="Dell"
-            />
-          </label>
-          <label>
-            Modelo *
-            <input
-              value={form.modelo}
-              onChange={(e) => cambiar('modelo', e.target.value)}
-              required
-              placeholder="Latitude 5420"
-            />
-          </label>
+          <SelectorCatalogo
+            id="equipo-marca"
+            etiqueta="Marca"
+            valor={form.marcaId ?? ''}
+            opciones={marcas.data ?? []}
+            creando={crearMarca.isPending}
+            onCambiar={(id) => {
+              // Cambiar de marca invalida el modelo: un modelo pertenece a una
+              // marca, y dejarlo colgado guardaria un par que no existe.
+              setForm((f) => ({ ...f, marcaId: id || undefined, modeloId: undefined }));
+            }}
+            onCrear={async (nombre) => (await crearMarca.mutateAsync({ nombre })).id}
+          />
+          <SelectorCatalogo
+            id="equipo-modelo"
+            etiqueta="Modelo"
+            valor={form.modeloId ?? ''}
+            opciones={modelos.data ?? []}
+            deshabilitado={!form.marcaId}
+            creando={crearModelo.isPending}
+            ayuda={form.marcaId ? undefined : 'Elegí la marca primero: el modelo cuelga de ella.'}
+            onCambiar={(id) => cambiar('modeloId', id || undefined)}
+            onCrear={async (nombre) =>
+              (await crearModelo.mutateAsync({ marcaId: form.marcaId as string, nombre })).id
+            }
+          />
           <label>
             Nº de serie
             <input
@@ -423,22 +516,16 @@ function ModalAltaEquipo({
               onChange={(e) => cambiar('numeroSerie', e.target.value)}
             />
           </label>
-          <label>
-            Ubicación
-            {/* datalist: sugiere las ubicaciones ya usadas pero deja escribir
-                una nueva. No es un catálogo cerrado. */}
-            <input
-              value={form.ubicacion ?? ''}
-              onChange={(e) => cambiar('ubicacion', e.target.value)}
-              placeholder="Oficina administración"
-              list="ubicaciones-equipos"
-            />
-            <datalist id="ubicaciones-equipos">
-              {(ubicaciones ?? []).map((u) => (
-                <option key={u} value={u} />
-              ))}
-            </datalist>
-          </label>
+          <SelectorCatalogo
+            id="equipo-ubicacion"
+            etiqueta="Ubicación"
+            valor={form.ubicacionId ?? ''}
+            opciones={ubicaciones.data ?? []}
+            creando={crearUbicacion.isPending}
+            onCambiar={(id) => cambiar('ubicacionId', id || undefined)}
+            onCrear={async (nombre) => (await crearUbicacion.mutateAsync({ nombre })).id}
+          />
+
         </div>
 
         {conEspecificaciones && (
@@ -625,15 +712,17 @@ function ModalDetalleEquipo({
   const eliminar = useEliminarEquipo();
 
   return (
-    <Modal titulo={`${equipo.marca} ${equipo.modelo}`} abierto tamano="ancho" onCerrar={alCerrar}>
+    <Modal titulo={nombreDelEquipo(equipo)} abierto tamano="ancho" onCerrar={alCerrar}>
       <div className="formulario-modal">
         <div className="grilla-datos">
           <Dato etiqueta="Código interno" valor={equipo.codigoInterno} />
           <Dato etiqueta="Tipo" valor={equipo.tipoNombre} />
           <Dato etiqueta="Estado" valor={ETIQUETA_ESTADO[equipo.estado]} />
           <Dato etiqueta="Nº de serie" valor={equipo.numeroSerie} />
-          <Dato etiqueta="Ubicación" valor={equipo.ubicacion} />
-          <Dato etiqueta="Asignado a" valor={equipo.asignadoANombre ?? 'Depósito'} />
+          <Dato etiqueta="Marca" valor={equipo.marcaNombre} />
+          <Dato etiqueta="Modelo" valor={equipo.modeloNombre} />
+          <Dato etiqueta="Ubicación" valor={equipo.ubicacionNombre} />
+          <Dato etiqueta="Responsable" valor={equipo.responsableNombre ?? 'Depósito'} />
         </div>
 
         {(equipo.procesador || equipo.memoriaRamGb || equipo.discoCapacidadGb) && (
@@ -699,13 +788,13 @@ function ModalDetalleEquipo({
           </>
         )}
 
-        <h3 className="subtitulo-form">Historial de asignaciones</h3>
+        <h3 className="subtitulo-form">Quién tuvo este equipo</h3>
         {!historial?.length && <p className="texto-suave">Sin movimientos registrados.</p>}
         {!!historial?.length && (
           <ul className="linea-tiempo">
             {historial.map((a) => (
               <li key={a.id}>
-                <strong>{a.usuarioNombre ?? 'Depósito'}</strong>
+                <strong>{a.responsableNombre ?? 'Depósito'}</strong>
                 {a.vigente && <span className="badge badge-ok">Actual</span>}
                 <div className="texto-suave texto-chico">
                   Desde {formatearFecha(a.desde)}
@@ -728,7 +817,7 @@ function ModalDetalleEquipo({
             className="btn btn-peligro"
             disabled={eliminar.isPending}
             onClick={async () => {
-              if (!confirm(`¿Eliminar ${equipo.marca} ${equipo.modelo}? Esta acción no se deshace.`))
+              if (!confirm(`¿Eliminar ${nombreDelEquipo(equipo)}? Esta acción no se deshace.`))
                 return;
               await eliminar.mutateAsync(equipo.id);
               alCerrar();
@@ -748,41 +837,44 @@ function ModalDetalleEquipo({
 // ─────────────────────────── Asignación ───────────────────────────
 
 function ModalAsignar({ equipo, alCerrar }: { equipo: EquipoIt; alCerrar: () => void }) {
-  const { data: usuarios } = useUsuarios(1, 100);
+  // Responsables, NO usuarios del sistema: quien tiene el equipo casi nunca
+  // entra al sistema, y a veces ni siquiera es una persona.
+  const { data: responsables } = useResponsables(true);
+  const crearResponsable = useCrearResponsable();
   const asignar = useAsignarEquipo(equipo.id);
-  const [usuarioId, setUsuarioId] = useState<string>('');
+  const [responsableId, setResponsableId] = useState<string>('');
   const [motivo, setMotivo] = useState('');
 
-  // Devolver a depósito es elegir "sin asignar".
-  const opciones = useMemo(() => usuarios?.datos ?? [], [usuarios]);
+  const opciones = useMemo(() => responsables ?? [], [responsables]);
 
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
     await asignar.mutateAsync({
-      usuarioId: usuarioId || null,
+      responsableId: responsableId || null,
       motivo: motivo || undefined,
     });
     alCerrar();
   };
 
   return (
-    <Modal titulo={`Asignar ${equipo.marca} ${equipo.modelo}`} abierto onCerrar={alCerrar}>
+    <Modal titulo={`¿Quién tiene ${nombreDelEquipo(equipo)}?`} abierto onCerrar={alCerrar}>
       <form onSubmit={enviar} className="formulario-modal">
         <p className="texto-suave">
-          Actualmente: <strong>{equipo.asignadoANombre ?? 'en depósito'}</strong>
+          Actualmente: <strong>{equipo.responsableNombre ?? 'en depósito'}</strong>
         </p>
 
-        <label>
-          Asignar a
-          <select value={usuarioId} onChange={(e) => setUsuarioId(e.target.value)}>
-            <option value="">— Devolver a depósito —</option>
-            {opciones.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.nombre}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectorCatalogo
+          id="asignar-responsable"
+          etiqueta="Queda a cargo de"
+          valor={responsableId}
+          opciones={opciones}
+          creando={crearResponsable.isPending}
+          placeholder="— Devolver a depósito —"
+          placeholderNuevo="Nombre de la persona o del sector"
+          ayuda="Puede ser una persona o un sector. No es un usuario del sistema."
+          onCambiar={setResponsableId}
+          onCrear={async (nombre) => (await crearResponsable.mutateAsync({ nombre })).id}
+        />
 
         <label>
           Motivo

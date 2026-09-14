@@ -59,8 +59,10 @@ export interface EquipoIt {
   /** Si corresponde pedir procesador, RAM y disco (viene del catálogo). */
   llevaEspecificaciones: boolean;
   estado: EstadoEquipoIt;
-  marca: string;
-  modelo: string;
+  marcaId: string | null;
+  marcaNombre: string | null;
+  modeloId: string | null;
+  modeloNombre: string | null;
   numeroSerie: string | null;
   procesador: string | null;
   memoriaRamGb: number | null;
@@ -72,22 +74,24 @@ export interface EquipoIt {
   nombreEnRed: string | null;
   accesoRemoto: TipoAccesoRemoto;
   accesoRemotoId: string | null;
-  ubicacion: string | null;
+  ubicacionId: string | null;
+  ubicacionNombre: string | null;
   proveedorId: string | null;
   proveedorNombre: string | null;
   fechaCompra: string | null;
   garantiaHasta: string | null;
   garantiaVencida: boolean;
   notas: string | null;
-  asignadoAId: string | null;
-  asignadoANombre: string | null;
+  /** Quién tiene el equipo. Es un responsable, NO un usuario del sistema. */
+  responsableId: string | null;
+  responsableNombre: string | null;
   creadoEn: string;
 }
 
 export interface AsignacionEquipo {
   id: string;
-  usuarioId: string | null;
-  usuarioNombre: string | null;
+  responsableId: string | null;
+  responsableNombre: string | null;
   registradoPorNombre: string | null;
   desde: string;
   hasta: string | null;
@@ -106,8 +110,8 @@ export interface CrearEquipoInput {
   codigoInterno?: string;
   tipoId: string;
   estado?: EstadoEquipoIt;
-  marca: string;
-  modelo: string;
+  marcaId?: string;
+  modeloId?: string;
   numeroSerie?: string;
   procesador?: string;
   memoriaRamGb?: number;
@@ -119,18 +123,19 @@ export interface CrearEquipoInput {
   nombreEnRed?: string;
   accesoRemoto?: TipoAccesoRemoto;
   accesoRemotoId?: string;
-  ubicacion?: string;
+  ubicacionId?: string;
   proveedorId?: string;
   fechaCompra?: string;
   garantiaHasta?: string;
   notas?: string;
-  asignadoAId?: string;
+  responsableId?: string;
 }
 
 export type ActualizarEquipoInput = Partial<CrearEquipoInput>;
 
 export interface AsignarEquipoInput {
-  usuarioId: string | null;
+  /** null = devolver a depósito. */
+  responsableId: string | null;
   motivo?: string;
   notas?: string;
 }
@@ -150,7 +155,7 @@ export interface ResultadoImportacion {
   creados: number;
   actualizados: number;
   conError: number;
-  /** Personas dadas de alta como usuarios sin acceso. */
+  /** Responsables dados de alta por la importación. */
   usuariosCreados: string[];
   /** Equipos cuya marca no se pudo reconocer y conviene revisar. */
   revisarMarca: string[];

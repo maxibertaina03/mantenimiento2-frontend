@@ -29,6 +29,11 @@ interface FiltrosEquipos {
   buscar?: string;
   tipoId?: string;
   estado?: EstadoEquipoIt | '';
+  marcaId?: string;
+  ubicacionId?: string;
+  responsableId?: string;
+  /** Solo los que no tienen responsable. Gana sobre `responsableId`. */
+  sinResponsable?: boolean;
 }
 
 export function useEquipos(pagina = 1, limite = 20, filtros: FiltrosEquipos = {}) {
@@ -36,6 +41,10 @@ export function useEquipos(pagina = 1, limite = 20, filtros: FiltrosEquipos = {}
     buscar: filtros.buscar ?? '',
     tipoId: filtros.tipoId ?? '',
     estado: filtros.estado ?? '',
+    marcaId: filtros.marcaId ?? '',
+    ubicacionId: filtros.ubicacionId ?? '',
+    responsableId: filtros.responsableId ?? '',
+    sinResponsable: filtros.sinResponsable ? 'true' : '',
   };
   return useQuery({
     queryKey: clavesEquipos.lista(pagina, limite, normalizados),
@@ -47,6 +56,10 @@ export function useEquipos(pagina = 1, limite = 20, filtros: FiltrosEquipos = {}
           buscar: normalizados.buscar || undefined,
           tipoId: normalizados.tipoId || undefined,
           estado: normalizados.estado || undefined,
+          marcaId: normalizados.marcaId || undefined,
+          ubicacionId: normalizados.ubicacionId || undefined,
+          responsableId: normalizados.responsableId || undefined,
+          sinResponsable: normalizados.sinResponsable || undefined,
         },
       }),
   });
@@ -68,14 +81,6 @@ export function useAsignacionesEquipo(id: string) {
   });
 }
 
-/** Ubicaciones ya usadas, para sugerirlas en el formulario. */
-export function useUbicaciones() {
-  return useQuery({
-    queryKey: ['equipos-it', 'ubicaciones'],
-    queryFn: () => apiRequest<string[]>('/equipos-it/ubicaciones'),
-    staleTime: 60_000,
-  });
-}
 
 export function useResumenEquipos() {
   return useQuery({
