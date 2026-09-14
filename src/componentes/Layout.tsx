@@ -76,6 +76,9 @@ export function Layout() {
               <NavLink to="/equipos-it" className={claseNav}>
                 Equipos IT
               </NavLink>
+              <NavLink to="/credenciales" className={claseNav}>
+                🔐 Contraseñas
+              </NavLink>
               <NavLink to="/usuarios" className={claseNav}>
                 Usuarios
               </NavLink>

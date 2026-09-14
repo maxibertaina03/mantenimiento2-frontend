@@ -4,6 +4,7 @@ import { InicioPage } from '@/paginas/InicioPage';
 import { ServiciosPage } from '@/paginas/ServiciosPage';
 import { Layout } from './componentes/Layout';
 import { RutaSoloAdmin } from './componentes/RutaSoloAdmin';
+import { CredencialesPage } from './paginas/CredencialesPage';
 import { EquiposItPage } from './paginas/EquiposItPage';
 import { MaterialesPage } from './paginas/MaterialesPage';
 import { MaterialDetallePage } from './paginas/MaterialDetallePage';
@@ -32,6 +33,14 @@ export function App() {
           element={
             <RutaSoloAdmin>
               <EquiposItPage />
+            </RutaSoloAdmin>
+          }
+        />
+        <Route
+          path="/credenciales"
+          element={
+            <RutaSoloAdmin>
+              <CredencialesPage />
             </RutaSoloAdmin>
           }
         />
