@@ -200,3 +200,41 @@ describe('PDF de la orden de compra', () => {
     expect(guardados).toHaveLength(1);
   });
 });
+
+
+/**
+ * El comprobante con el que llego la mercaderia.
+ *
+ * El dato se guarda desde que remito o factura pasaron a ser obligatorios para
+ * cerrar una orden, pero no se mostraba en ningun lado: quedaba en la base y no
+ * habia forma de compararlo contra el papel fisico sin entrar a consultarla.
+ */
+describe('comprobante de recepcion', () => {
+  it('REGRESION: el remito aparece en el PDF', async () => {
+    await descargarPdfOrdenCompra({ ...orden, remito: 'R-0001-00045678' });
+    expect(contenido()).toContain('Remito: R-0001-00045678');
+  });
+
+  it('REGRESION: la factura tambien', async () => {
+    await descargarPdfOrdenCompra({ ...orden, factura: 'A-0003-00001234' });
+    expect(contenido()).toContain('Factura: A-0003-00001234');
+  });
+
+  it('si llego con los dos, salen los dos', async () => {
+    await descargarPdfOrdenCompra({
+      ...orden,
+      remito: 'R-0001-00045678',
+      factura: 'A-0003-00001234',
+    });
+    expect(contenido()).toContain('R-0001-00045678');
+    expect(contenido()).toContain('A-0003-00001234');
+  });
+
+  it('una orden que todavia no llego no inventa un comprobante vacio', async () => {
+    // Antes de recibir no hay comprobante porque no tiene que haberlo: imprimir
+    // "Remito:" sin nada al lado hace dudar de si se perdio el dato.
+    await descargarPdfOrdenCompra({ ...orden, remito: null, factura: null });
+    expect(contenido()).not.toContain('Remito:');
+    expect(contenido()).not.toContain('Factura:');
+  });
+});

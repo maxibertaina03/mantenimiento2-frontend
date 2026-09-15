@@ -146,6 +146,9 @@ async function construirPdf(orden: OrdenCompra) {
   const derecha: string[] = [
     `Fecha de emisión: ${formatearFechaSola(orden.fecha)}`,
     orden.creadoPorNombre ? `Solicitó: ${orden.creadoPorNombre}` : '',
+    // El comprobante con el que llegó: es lo que se compara contra el papel.
+    orden.remito ? `Remito: ${orden.remito}` : '',
+    orden.factura ? `Factura: ${orden.factura}` : '',
     orden.recibidaEn ? `Recibida: ${formatearFechaSola(orden.recibidaEn)}` : '',
   ].filter(Boolean);
 

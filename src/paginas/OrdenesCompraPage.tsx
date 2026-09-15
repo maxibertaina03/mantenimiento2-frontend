@@ -41,6 +41,21 @@ function moneda(valor: number | null): string {
   return `$ ${valor.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+/**
+ * Con qué papel llegó la mercadería.
+ *
+ * Una orden se cierra con remito o con factura, así que puede tener uno, el
+ * otro, o los dos. Se muestran los que haya y no se inventa un guion cuando la
+ * orden todavía no llegó: ahí no hay comprobante porque no tiene que haberlo.
+ */
+function comprobanteDe(orden: OrdenCompra): string {
+  const partes = [
+    orden.remito ? `Remito ${orden.remito}` : '',
+    orden.factura ? `Factura ${orden.factura}` : '',
+  ].filter(Boolean);
+  return partes.join(' · ') || '—';
+}
+
 export function OrdenesCompraPage() {
   const [pagina, setPagina] = useState(1);
   const [buscar, setBuscar] = useState('');
@@ -94,7 +109,7 @@ export function OrdenesCompraPage() {
       <div className="grilla-filtros">
         <input
           type="search"
-          placeholder="🔍 Buscar por número de orden o proveedor…"
+          placeholder="🔍 Buscar por orden, proveedor, remito o factura…"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
         />
@@ -137,6 +152,7 @@ export function OrdenesCompraPage() {
                 <th>Ítems</th>
                 <th>Total</th>
                 <th>Estado</th>
+                <th>Comprobante</th>
                 <th />
               </tr>
             </thead>
@@ -155,6 +171,7 @@ export function OrdenesCompraPage() {
                       {ETIQUETA_ESTADO_ORDEN[orden.estado]}
                     </span>
                   </td>
+                  <td data-etiqueta="Comprobante">{comprobanteDe(orden)}</td>
                   <td className="celda-acciones">
                     <div className="fila-acciones">
                       <button className="btn btn-sm" onClick={() => setOrdenAbierta(orden)}>
@@ -543,6 +560,25 @@ function ModalDetalleOrden({
               <span>
                 {formatearFecha(orden.recibidaEn)}
                 {orden.recibidaPorNombre ? ` · ${orden.recibidaPorNombre}` : ''}
+              </span>
+            </div>
+          )}
+          {/* El comprobante con el que llegó la mercadería. Es el dato que se
+              compara contra el papel, así que va en la ficha y no escondido en
+              el formulario de recibir, que después de recibir ya no se abre. */}
+          {orden.remito && (
+            <div className="dato">
+              <span className="texto-suave texto-chico">Remito</span>
+              <span>
+                <strong>{orden.remito}</strong>
+              </span>
+            </div>
+          )}
+          {orden.factura && (
+            <div className="dato">
+              <span className="texto-suave texto-chico">Factura</span>
+              <span>
+                <strong>{orden.factura}</strong>
               </span>
             </div>
           )}
