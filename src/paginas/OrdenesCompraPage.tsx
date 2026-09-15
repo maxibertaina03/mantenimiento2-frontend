@@ -16,6 +16,7 @@ import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
 import { formatearFecha, formatearNumero } from '@/lib/formato';
 import { descargarPdfOrdenCompra } from '@/lib/pdfOrdenCompra';
+import { ComprobantesOrden } from '@/componentes/ComprobantesOrden';
 import { EnviarOrden } from '@/componentes/EnviarOrden';
 import { ETIQUETA_ESTADO_ORDEN } from '@/tipos/ordenCompra';
 import type {
@@ -634,6 +635,11 @@ function ModalDetalleOrden({
             movimiento de ENTRADA, que podés ver en el Historial.
           </div>
         )}
+
+        {/* El papel del remito o la factura. Se muestra desde que la orden se
+            emitió: a veces el comprobante llega con la mercadería y se carga
+            antes de terminar de contar todo. */}
+        {orden.estado !== 'BORRADOR' && <ComprobantesOrden ordenId={orden.id} />}
 
         {mostrarRecepcion && (
           <div className="panel">

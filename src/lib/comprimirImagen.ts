@@ -4,6 +4,16 @@ const LADO_MAXIMO = 1600;
 /** Calidad del JPEG. 0.8 es donde deja de notarse la diferencia a simple vista. */
 const CALIDAD = 0.8;
 
+/**
+ * Los comprobantes piden más resolución que las fotos de equipos, así que las
+ * dos medidas se pueden pasar. Una foto de una bomba se mira; una foto de un
+ * remito se lee, y hay que distinguir un 3 de un 8.
+ */
+export interface OpcionesCompresion {
+  lado?: number;
+  calidad?: number;
+}
+
 export interface ImagenComprimida {
   base64: string;
   nombreArchivo: string;
@@ -25,10 +35,15 @@ export interface ImagenComprimida {
  * la red, y el servidor —que en el plan gratuito de Render tiene poca memoria—
  * no tiene que procesar imágenes.
  */
-export async function comprimirImagen(archivo: File): Promise<ImagenComprimida> {
+export async function comprimirImagen(
+  archivo: File,
+  opciones: OpcionesCompresion = {},
+): Promise<ImagenComprimida> {
+  const lado = opciones.lado ?? LADO_MAXIMO;
+  const calidad = opciones.calidad ?? CALIDAD;
   const bitmap = await crearBitmap(archivo);
 
-  const escala = Math.min(1, LADO_MAXIMO / Math.max(bitmap.width, bitmap.height));
+  const escala = Math.min(1, lado / Math.max(bitmap.width, bitmap.height));
   const ancho = Math.round(bitmap.width * escala);
   const alto = Math.round(bitmap.height * escala);
 
@@ -40,7 +55,7 @@ export async function comprimirImagen(archivo: File): Promise<ImagenComprimida> 
   if (!contexto) throw new Error('El navegador no pudo procesar la imagen.');
   contexto.drawImage(bitmap, 0, 0, ancho, alto);
 
-  const dataUri = lienzo.toDataURL('image/jpeg', CALIDAD);
+  const dataUri = lienzo.toDataURL('image/jpeg', calidad);
   const base64 = dataUri.slice(dataUri.indexOf(',') + 1);
 
   return {
