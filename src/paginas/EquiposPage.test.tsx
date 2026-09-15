@@ -41,9 +41,12 @@ const compresor = {
   garantiaVencida: false,
 };
 
-function servidor({ existe = true } = {}) {
+function servidor({ existe = true, resumen }: { existe?: boolean; resumen?: unknown } = {}) {
   apiRequestMock.mockImplementation((rutaCruda: string) => {
     const ruta = String(rutaCruda ?? '');
+    if (ruta === '/equipos/resumen') {
+      return Promise.resolve(resumen ?? { total: 1, porEstado: { OPERATIVO: 1 }, sinPlan: 0 });
+    }
     if (ruta === '/equipos/eq-1') {
       return existe ? Promise.resolve(compresor) : Promise.reject(new Error('404'));
     }
@@ -96,5 +99,47 @@ describe('EquiposPage abierta desde un QR', () => {
     mostrar('/equipos?equipo=eq-1');
 
     expect(await screen.findByText(/ya no está en el sistema/i)).toBeInTheDocument();
+  });
+});
+
+/**
+ * La cabecera, alineada con la de Equipos IT.
+ *
+ * Las tarjetas dicen lo que en ESTE modulo se puede accionar. Copiar las de
+ * informatica tal cual daria "326 equipos, 326 Operativo": dos tarjetas que
+ * ocupan lugar para decir lo mismo.
+ */
+describe('EquiposPage — resumen y filtros', () => {
+  it('muestra el total y lo que falta hacer', async () => {
+    servidor({
+      resumen: { total: 326, porEstado: { OPERATIVO: 326 }, sinPlan: 326 },
+    });
+    mostrar('/equipos');
+
+    // El numero y su etiqueta van en elementos separados, como en informatica.
+    // El 326 aparece dos veces, en el total y en los que no tienen plan.
+    expect(await screen.findByText('equipos')).toBeInTheDocument();
+    expect(screen.getByText('sin plan de mantenimiento')).toBeInTheDocument();
+    expect(screen.getAllByText('326')).toHaveLength(3); // total, operativos y sin plan
+    // "Operativo" aparece tambien en el desplegable de estados y en la fila.
+    expect(screen.getAllByText('Operativo').length).toBeGreaterThan(0);
+  });
+
+  it('REGRESION: un resumen incompleto no rompe la pantalla', async () => {
+    // Sin la guarda, `Object.entries(undefined)` tiraba abajo la pagina entera
+    // y no se veia ni la tabla.
+    servidor({ resumen: { total: 5 } });
+    mostrar('/equipos');
+
+    expect(await screen.findByRole('heading', { name: 'Equipos' })).toBeInTheDocument();
+  });
+
+  it('los filtros que se usan todos los dias estan a la vista', async () => {
+    servidor({});
+    mostrar('/equipos');
+
+    expect(await screen.findByLabelText('Filtrar por tipo')).toBeInTheDocument();
+    expect(screen.getByLabelText('Filtrar por estado')).toBeInTheDocument();
+    expect(screen.getByLabelText('Filtrar por ubicación')).toBeInTheDocument();
   });
 });

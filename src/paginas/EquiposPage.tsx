@@ -9,6 +9,7 @@ import {
   useEquipos,
 } from '@/api/equipos';
 import { useCatalogoEquipos } from '@/api/catalogosEquipo';
+import { useResumenEquipos } from '@/api/equipos';
 import { AccionesFila } from '@/componentes/AccionesFila';
 import { CampoNumero } from '@/componentes/CampoNumero';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
@@ -81,6 +82,7 @@ export function EquiposPage() {
     buscar: busquedaDebounced,
   });
   const { ubicaciones, tipos } = useCatalogoEquipos();
+  const { data: resumen } = useResumenEquipos();
   const eliminar = useEliminarEquipo();
 
   const totalPaginas = data ? Math.max(1, Math.ceil(data.total / LIMITE)) : 1;
@@ -104,7 +106,13 @@ export function EquiposPage() {
   return (
     <>
       <div className="cabecera-pagina">
-        <h1>Equipos</h1>
+        <div>
+          <h1>Equipos</h1>
+          <p className="texto-suave">
+            Las máquinas e instalaciones de la planta: sus fichas, sus fotos y sus planes de
+            mantenimiento.
+          </p>
+        </div>
         <div className="fila-acciones">
           <button className="btn" onClick={() => setFotos(true)}>
             🖼 Cargar fotos
@@ -124,6 +132,37 @@ export function EquiposPage() {
         </div>
       </div>
 
+      {/* Las tarjetas dicen lo que en este modulo se puede accionar. Copiar las
+          de informatica tal cual daria "326 equipos, 326 Operativo", que ocupa
+          lugar sin decir nada: aca los 326 estan en el mismo estado. Lo que si
+          hay para hacer es cargar los planes de mantenimiento. */}
+      {resumen && (resumen.total ?? 0) > 0 && (
+        <div className="tarjetas-resumen">
+          <div className="tarjeta-resumen">
+            <span className="tarjeta-numero">{resumen.total}</span>
+            <span className="texto-suave">equipos</span>
+          </div>
+          {/* `?? {}`: una pantalla no puede romperse porque una parte del
+              resumen no vino. Antes reventaba entera y no se veia ni la tabla. */}
+          {Object.entries(resumen.porEstado ?? {})
+            .filter(([, cantidad]) => cantidad > 0)
+            .map(([estado, cantidad]) => (
+              <div className="tarjeta-resumen" key={estado}>
+                <span className="tarjeta-numero">{cantidad}</span>
+                <span className="texto-suave">
+                  {ETIQUETA_ESTADO_EQUIPO[estado as EstadoEquipo] ?? estado}
+                </span>
+              </div>
+            ))}
+          {(resumen.sinPlan ?? 0) > 0 && (
+            <div className="tarjeta-resumen">
+              <span className="tarjeta-numero">{resumen.sinPlan}</span>
+              <span className="texto-suave">sin plan de mantenimiento</span>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="buscador">
         <input
           type="search"
@@ -141,57 +180,51 @@ export function EquiposPage() {
         {isFetching && <span className="texto-suave">buscando…</span>}
       </div>
 
+      {/* Los tres que se usan todos los dias van a la vista, como en
+          informatica. Los otros siguen detras del boton: tenerlos siempre
+          desplegados hace que no se vea la tabla en una pantalla de notebook. */}
+      <div className="grilla-filtros">
+        <select
+          value={filtros.tipoId ?? ''}
+          onChange={(e) => cambiarFiltro({ tipoId: e.target.value || undefined })}
+          aria-label="Filtrar por tipo"
+        >
+          <option value="">Todos los tipos</option>
+          {(tipos.data ?? []).map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.nombre}
+            </option>
+          ))}
+        </select>
+        <select
+          value={filtros.estado ?? ''}
+          onChange={(e) => cambiarFiltro({ estado: (e.target.value || undefined) as EstadoEquipo })}
+          aria-label="Filtrar por estado"
+        >
+          <option value="">Todos los estados</option>
+          {ESTADOS_EQUIPO.map((e) => (
+            <option key={e} value={e}>
+              {ETIQUETA_ESTADO_EQUIPO[e]}
+            </option>
+          ))}
+        </select>
+        <select
+          value={filtros.ubicacionId ?? ''}
+          onChange={(e) => cambiarFiltro({ ubicacionId: e.target.value || undefined })}
+          aria-label="Filtrar por ubicación"
+        >
+          <option value="">Todas las ubicaciones</option>
+          {(ubicaciones.data ?? []).map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.nombre}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {panelFiltros && (
         <div className="panel filtros-materiales">
           <div className="filtros-grilla">
-            <label>
-              Ubicación
-              <select
-                value={filtros.ubicacionId ?? ''}
-                onChange={(e) => cambiarFiltro({ ubicacionId: e.target.value || undefined })}
-              >
-                <option value="">Todas</option>
-                {(ubicaciones.data ?? []).map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.nombre}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Tipo
-              <select
-                value={filtros.tipoId ?? ''}
-                onChange={(e) => cambiarFiltro({ tipoId: e.target.value || undefined })}
-              >
-                <option value="">Todos</option>
-                {(tipos.data ?? []).map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.nombre}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Estado
-              <select
-                value={filtros.estado ?? ''}
-                onChange={(e) =>
-                  cambiarFiltro({ estado: (e.target.value || undefined) as EstadoEquipo })
-                }
-              >
-                <option value="">Todos</option>
-                {ESTADOS_EQUIPO.map((e) => (
-                  <option key={e} value={e}>
-                    {ETIQUETA_ESTADO_EQUIPO[e]}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-
             <label>
               Ordenar por
               <select
@@ -254,8 +287,9 @@ export function EquiposPage() {
             <thead>
               <tr>
                 <th>Equipo</th>
-                <th>Ubicación</th>
                 <th>Tipo</th>
+                <th>Marca y modelo</th>
+                <th>Ubicación</th>
                 <th>Estado</th>
                 <th />
               </tr>
@@ -267,8 +301,17 @@ export function EquiposPage() {
                     <strong>{e.nombre}</strong>
                     {e.codigoInterno && <div className="texto-suave texto-chico">{e.codigoInterno}</div>}
                   </td>
-                  <td data-etiqueta="Ubicación">{e.ubicacionNombre ?? '—'}</td>
                   <td data-etiqueta="Tipo">{e.tipoNombre ?? '—'}</td>
+                  <td data-etiqueta="Marca y modelo">
+                    {e.marcaNombre ? (
+                      <>
+                        <strong>{e.marcaNombre}</strong> {e.modeloNombre ?? ''}
+                      </>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td data-etiqueta="Ubicación">{e.ubicacionNombre ?? '—'}</td>
                   <td data-etiqueta="Estado">
                     <span className={`etiqueta estado-${e.estado.toLowerCase()}`}>
                       {ETIQUETA_ESTADO_EQUIPO[e.estado]}
