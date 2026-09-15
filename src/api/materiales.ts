@@ -146,6 +146,23 @@ export function useMaterial(id: string) {
   });
 }
 
+/**
+ * Trae un material por id, una sola vez y en el momento en que hace falta.
+ *
+ * `useMaterial` no sirve para esto: es una consulta que se queda mirando un id
+ * fijo, y acá el id aparece recién cuando alguien escanea. Pasa por la caché,
+ * así que escanear dos veces el mismo material no vuelve a pegarle a la API.
+ */
+export function useTraerMaterial() {
+  const qc = useQueryClient();
+  return (id: string) =>
+    qc.fetchQuery({
+      queryKey: clavesMateriales.detalle(id),
+      queryFn: () => apiRequest<Material>(`/materiales/${id}`),
+      staleTime: 60_000,
+    });
+}
+
 export function useMaterialConHistorial(id: string) {
   return useQuery({
     queryKey: clavesMateriales.historial(id),

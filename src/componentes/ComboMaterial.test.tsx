@@ -35,10 +35,15 @@ const material = (id: string, nombre: string, stockActual = 10): Material =>
     notas: null,
   }) as Material;
 
+/** Un id con forma de los de verdad: la pistola escanea uno de estos. */
+const ID_QR = '1e035e68-e43f-4776-9706-3e64fcd3fe33';
+const BASE_QR = 'https://mantenimiento2-frontend.vercel.app';
+
 const CATALOGO = [
   material('m1', 'Cable 2.5mm'),
   material('m2', 'Cable 4mm'),
   material('m3', 'Tornillo 6x40'),
+  material(ID_QR, 'Reten 40x72x10'),
 ];
 
 function envoltorio() {
@@ -246,5 +251,108 @@ describe('ComboMaterial — alta desde el combo', () => {
     await usuario.type(screen.getByRole('textbox'), '  Buje bronce  ');
     await usuario.click(await screen.findByRole('button', { name: /Crear el material/i }));
     expect(alCrear).toHaveBeenCalledWith('Buje bronce');
+  });
+});
+
+describe('ComboMaterial — pistola de codigos', () => {
+  /**
+   * Para el navegador la pistola es un teclado: deja la direccion escrita en el
+   * campo de una y aprieta Enter. `paste` es lo mas parecido y no tarda 85
+   * pulsaciones en correr.
+   */
+  const escanear = async (user: ReturnType<typeof userEvent.setup>, texto: string) => {
+    await user.click(screen.getByRole('textbox'));
+    await user.paste(texto);
+  };
+
+  it('REGRESION: un QR elige el material, no lo busca por nombre', async () => {
+    // Sin esto el campo sale a buscar un material que se llame
+    // «https://…/materiales/1e03…», que obviamente no existe.
+    const alCambiar = vi.fn();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<ComboMaterial materialId="" onCambio={alCambiar} />, { wrapper: envoltorio() });
+
+    await escanear(user, `${BASE_QR}/materiales/${ID_QR}`);
+
+    await waitFor(() =>
+      expect(alCambiar).toHaveBeenCalledWith(expect.objectContaining({ id: ID_QR })),
+    );
+  });
+
+  it('lee igual un escaneo con la pistola mal configurada', async () => {
+    const alCambiar = vi.fn();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<ComboMaterial materialId="" onCambio={alCambiar} />, { wrapper: envoltorio() });
+
+    await escanear(
+      user,
+      "httpsÑ--mantenimiento2'frontend.vercel.app-materiales-1e035e68'e43f'4776'9706'3e64fcd3fe33",
+    );
+
+    await waitFor(() =>
+      expect(alCambiar).toHaveBeenCalledWith(expect.objectContaining({ id: ID_QR })),
+    );
+  });
+
+  it('con onEscaneo el campo queda libre para el siguiente', async () => {
+    // Es lo que permite pasar diez etiquetas de corrido sin soltar la pistola:
+    // el material se va a la orden y el buscador queda vacio.
+    const alEscanear = vi.fn();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<ComboMaterial materialId="" onCambio={vi.fn()} onEscaneo={alEscanear} />, {
+      wrapper: envoltorio(),
+    });
+
+    await escanear(user, `${BASE_QR}/materiales/${ID_QR}`);
+
+    await waitFor(() =>
+      expect(alEscanear).toHaveBeenCalledWith(expect.objectContaining({ nombre: 'Reten 40x72x10' })),
+    );
+    expect(screen.getByRole('textbox')).toHaveValue('');
+  });
+
+  it('REGRESION: el QR de un equipo no entra como material', async () => {
+    // Las maquinas tambien tienen etiqueta y estan por toda la planta. Sin esto
+    // se cargaria un id de equipo como si fuera un material.
+    const alEscanear = vi.fn();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<ComboMaterial materialId="" onCambio={vi.fn()} onEscaneo={alEscanear} />, {
+      wrapper: envoltorio(),
+    });
+
+    await escanear(user, `${BASE_QR}/equipos?equipo=${ID_QR}`);
+
+    expect(await screen.findByText(/es de un equipo/i)).toBeInTheDocument();
+    expect(alEscanear).not.toHaveBeenCalled();
+  });
+
+  it('un codigo que no es de ningun material lo dice', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<ComboMaterial materialId="" onCambio={vi.fn()} onEscaneo={vi.fn()} />, {
+      wrapper: envoltorio(),
+    });
+
+    await escanear(user, `${BASE_QR}/materiales/00000000-0000-0000-0000-000000000000`);
+
+    expect(await screen.findByText(/no es de ningún material/i)).toBeInTheDocument();
+  });
+
+  it('REGRESION: el Enter con el que termina el escaneo no manda el formulario', async () => {
+    // La pistola aprieta Enter sola al final. Adentro de la orden de compra ese
+    // Enter la creaba con los renglones que hubiera hasta ese momento.
+    const alEnviar = vi.fn((e: React.FormEvent) => e.preventDefault());
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(
+      <form onSubmit={alEnviar}>
+        <ComboMaterial materialId="" onCambio={vi.fn()} />
+        <button type="submit">Crear orden</button>
+      </form>,
+      { wrapper: envoltorio() },
+    );
+
+    await user.click(screen.getByRole('textbox'));
+    await user.keyboard('{Enter}');
+
+    expect(alEnviar).not.toHaveBeenCalled();
   });
 });

@@ -14,6 +14,8 @@ import { NuevoMaterialRapido } from '@/componentes/NuevoMaterialRapido';
 import { ComboProveedor } from '@/componentes/ComboProveedor';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
+import { useTraerMaterial } from '@/api/materiales';
+import { useEscaneoSuelto } from '@/lib/escaneo';
 import { formatearFecha, formatearNumero } from '@/lib/formato';
 import { descargarPdfOrdenCompra } from '@/lib/pdfOrdenCompra';
 import { ComprobantesOrden } from '@/componentes/ComprobantesOrden';
@@ -233,10 +235,16 @@ export function OrdenesCompraPage() {
 
 // ─────────────────────── Nueva orden ───────────────────────
 
-interface RenglonBorrador extends RenglonInput {
+interface RenglonBorrador extends Omit<RenglonInput, 'cantidad'> {
   /** Se guarda para mostrar el nombre sin volver a pedirlo a la API. */
   materialNombre: string;
   unidad: string;
+  /**
+   * Vacía mientras no se cargó. Los renglones escaneados con la pistola nacen
+   * así: se escanean los diez de corrido y las cantidades se ponen después,
+   * sentado, en la tabla. La orden no se puede crear hasta que estén todas.
+   */
+  cantidad: number | undefined;
 }
 
 function ModalNuevaOrden({
@@ -261,7 +269,10 @@ function ModalNuevaOrden({
   const [materialNuevo, setMaterialNuevo] = useState<string | null>(null);
   const [cantidad, setCantidad] = useState<number | undefined>(undefined);
   const [precio, setPrecio] = useState<number | undefined>(undefined);
+  /** Lo último que pasó al agregar, para que se vea que el escaneo entró. */
+  const [aviso, setAviso] = useState<{ texto: string; error: boolean } | null>(null);
 
+  const traerMaterial = useTraerMaterial();
   const crear = useCrearOrden();
   const emitir = useEmitirOrdenPorId();
 
@@ -275,25 +286,62 @@ function ModalNuevaOrden({
     setMaterialNuevo(null);
     setCantidad(undefined);
     setPrecio(undefined);
+    setAviso(null);
   };
 
-  const agregarRenglon = () => {
-    if (!material || cantidad === undefined || cantidad <= 0) return;
+  /**
+   * Mete el material en la orden. La cantidad puede venir vacía: escaneando no
+   * hay ninguna, y se completa después en la tabla.
+   *
+   * Devuelve si entró, para que quien escanea sepa si hay que remontar el
+   * buscador.
+   */
+  const sumarMaterial = (m: Material, c?: number, p?: number): boolean => {
     // El backend rechaza el mismo material dos veces: lo avisamos antes.
-    if (renglones.some((r) => r.materialId === material.id)) {
-      alert(`"${material.nombre}" ya está en la orden. Editá la cantidad de ese renglón.`);
-      return;
+    if (renglones.some((r) => r.materialId === m.id)) {
+      // Nada de `alert` acá. Es modal: se come el escaneo siguiente y corta la
+      // ráfaga, y un doble disparo de la pistola sobre la misma etiqueta es lo
+      // más común que va a pasar.
+      setAviso({ texto: `«${m.nombre}» ya estaba en la orden.`, error: true });
+      return false;
     }
+    setAviso({ texto: `Agregado: ${m.nombre}`, error: false });
     setRenglones((rs) => [
       ...rs,
       {
-        materialId: material.id,
-        materialNombre: material.nombre,
-        unidad: material.unidad,
-        cantidad,
-        precioUnitario: precio,
+        materialId: m.id,
+        materialNombre: m.nombre,
+        unidad: m.unidad,
+        cantidad: c,
+        precioUnitario: p,
       },
     ]);
+    return true;
+  };
+
+  /** Trae el material escaneado y lo suma, venga del campo o del aire. */
+  const usarEscaneo = async (id: string) => {
+    try {
+      sumarMaterial(await traerMaterial(id));
+    } catch {
+      setAviso({ texto: 'Ese código no es de ningún material del sistema.', error: true });
+    }
+  };
+
+  // Un escaneo cae donde esté el cursor. Si quedó en un botón —el «Quitar» de
+  // un renglón— o en ningún lado, este enganche lo levanta igual en vez de
+  // perderlo, y de paso frena el Enter para que no apriete ese botón.
+  useEscaneoSuelto(abierto, (escaneo) => {
+    if (escaneo.clase === 'equipo') {
+      setAviso({ texto: 'Ese QR es de un equipo, no de un material.', error: true });
+      return;
+    }
+    void usarEscaneo(escaneo.id);
+  });
+
+  const agregarRenglon = () => {
+    if (!material) return;
+    if (!sumarMaterial(material, cantidad, precio)) return;
     setMaterial(null);
     // Si no se limpia, el combo remontado volveria a preseleccionar el material
     // recien creado en el renglon siguiente.
@@ -305,20 +353,31 @@ function ModalNuevaOrden({
   const quitarRenglon = (materialId: string) =>
     setRenglones((rs) => rs.filter((r) => r.materialId !== materialId));
 
-  const total = renglones.every((r) => r.precioUnitario !== undefined)
-    ? renglones.reduce((s, r) => s + r.cantidad * (r.precioUnitario ?? 0), 0)
-    : null;
+  /** La cantidad y el precio se editan en la tabla, que es donde se completan. */
+  const cambiarRenglon = (materialId: string, cambio: Partial<RenglonBorrador>) =>
+    setRenglones((rs) => rs.map((r) => (r.materialId === materialId ? { ...r, ...cambio } : r)));
+
+  /** Los que entraron escaneados y todavía esperan que alguien ponga cuánto. */
+  const sinCantidad = renglones.filter((r) => r.cantidad === undefined || r.cantidad <= 0);
+
+  const total =
+    renglones.length > 0 &&
+    renglones.every((r) => r.cantidad !== undefined && r.precioUnitario !== undefined)
+      ? renglones.reduce((s, r) => s + (r.cantidad ?? 0) * (r.precioUnitario ?? 0), 0)
+      : null;
 
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
+    // El botón ya está deshabilitado, pero un Enter suelto no pasa por el botón.
+    if (sinCantidad.length > 0) return;
     const orden = await crear.mutateAsync({
       proveedorId,
       observaciones: observaciones || undefined,
-      renglones: renglones.map(({ materialId, cantidad: c, precioUnitario }) => ({
-        materialId,
-        cantidad: c,
-        precioUnitario,
-      })),
+      // `flatMap` y no `map`: los renglones sin cantidad no son una orden de
+      // compra válida, y acá ya sabemos que no queda ninguno.
+      renglones: renglones.flatMap(({ materialId, cantidad: c, precioUnitario }) =>
+        c === undefined ? [] : [{ materialId, cantidad: c, precioUnitario }],
+      ),
     });
     limpiar();
     onCerrar();
@@ -364,6 +423,13 @@ function ModalNuevaOrden({
               materialId={materialNuevo ?? ''}
               onCambio={setMaterial}
               onCrear={setNombreACrear}
+              // Escanear agrega el renglón directamente, sin cantidad. Es lo que
+              // permite pasar diez etiquetas de corrido sin soltar la pistola.
+              onEscaneo={(m) => sumarMaterial(m)}
+              // Al agregar un renglón el combo se remonta (cambia la `key`), así
+              // que sin esto el cursor se perdería y el escaneo siguiente caería
+              // en cualquier lado. Al abrir la orden no se lo roba al proveedor.
+              enfocarAlMontar={renglones.length > 0}
             />
           </label>
           <label>
@@ -390,16 +456,23 @@ function ModalNuevaOrden({
             type="button"
             className="btn btn-primario alta-renglon-boton"
             onClick={agregarRenglon}
-            disabled={!material || cantidad === undefined || cantidad <= 0}
+            disabled={!material}
           >
             + Agregar
           </button>
         </div>
 
+        {aviso && (
+          <p className={aviso.error ? 'aviso-escaneo es-error' : 'aviso-escaneo'} role="status">
+            {aviso.texto}
+          </p>
+        )}
+
         {renglones.length === 0 && (
           <p className="texto-suave">
-            Buscá un material por nombre, poné la cantidad y tocá «Agregar». La orden necesita
-            al menos uno.
+            Escaneá el QR del material con la pistola y entra solo, uno atrás del otro. O
+            buscálo por nombre y tocá «Agregar». Las cantidades se cargan después, en la
+            tabla. La orden necesita al menos un material.
           </p>
         )}
 
@@ -419,14 +492,38 @@ function ModalNuevaOrden({
                 {renglones.map((r) => (
                   <tr key={r.materialId}>
                     <td data-etiqueta="Material">{r.materialNombre}</td>
-                    <td data-etiqueta="Cantidad">
-                      {formatearNumero(r.cantidad)} {r.unidad}
+                    <td
+                      data-etiqueta="Cantidad"
+                      className={
+                        r.cantidad === undefined
+                          ? 'celda-editable renglon-sin-cantidad'
+                          : 'celda-editable'
+                      }
+                    >
+                      <CampoNumero
+                        step="0.001"
+                        min="0.001"
+                        placeholder="0"
+                        valor={r.cantidad}
+                        aria-label={`Cantidad de ${r.materialNombre}`}
+                        onCambio={(c) => cambiarRenglon(r.materialId, { cantidad: c })}
+                      />
+                      <span className="texto-suave">{r.unidad}</span>
                     </td>
-                    <td data-etiqueta="P. unitario">
-                      {r.precioUnitario !== undefined ? moneda(r.precioUnitario) : '—'}
+                    <td data-etiqueta="P. unitario" className="celda-editable">
+                      {/* Tambien editable: escaneando, el renglón nace sin precio
+                          y antes no habia forma de ponerselo sin rehacerlo. */}
+                      <CampoNumero
+                        step="0.01"
+                        min="0"
+                        placeholder="opcional"
+                        valor={r.precioUnitario}
+                        aria-label={`Precio unitario de ${r.materialNombre}`}
+                        onCambio={(p) => cambiarRenglon(r.materialId, { precioUnitario: p })}
+                      />
                     </td>
                     <td data-etiqueta="Subtotal">
-                      {r.precioUnitario !== undefined
+                      {r.cantidad !== undefined && r.precioUnitario !== undefined
                         ? moneda(r.cantidad * r.precioUnitario)
                         : '—'}
                     </td>
@@ -468,6 +565,14 @@ function ModalNuevaOrden({
           />
         </label>
 
+        {sinCantidad.length > 0 && (
+          <p className="aviso-escaneo es-error">
+            {sinCantidad.length === 1
+              ? `Falta la cantidad de «${sinCantidad[0].materialNombre}».`
+              : `Faltan las cantidades de ${sinCantidad.length} materiales.`}
+          </p>
+        )}
+
         {crear.error && <MensajeError error={crear.error} />}
 
         <div className="acciones">
@@ -477,7 +582,9 @@ function ModalNuevaOrden({
           <button
             type="submit"
             className="btn btn-primario"
-            disabled={crear.isPending || !proveedorId || renglones.length === 0}
+            disabled={
+              crear.isPending || !proveedorId || renglones.length === 0 || sinCantidad.length > 0
+            }
           >
             {crear.isPending ? 'Creando…' : 'Crear orden'}
           </button>

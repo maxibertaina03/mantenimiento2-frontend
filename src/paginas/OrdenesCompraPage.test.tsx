@@ -71,6 +71,16 @@ const orden = {
   creadoEn: '2026-09-04T14:05:00.000Z',
 };
 
+/** Dos materiales con etiqueta QR pegada, para escanear. */
+const RETEN = '1e035e68-e43f-4776-9706-3e64fcd3fe33';
+const BUJE = '2a17bc90-11d2-4e5a-8c31-9f0b7d4e6a12';
+const BASE_QR = 'https://mantenimiento2-frontend.vercel.app';
+
+const DEPOSITO: Record<string, { id: string; nombre: string; unidad: string }> = {
+  [RETEN]: { id: RETEN, nombre: 'Reten 40x72x10', unidad: 'u' },
+  [BUJE]: { id: BUJE, nombre: 'Buje bronce 25mm', unidad: 'u' },
+};
+
 beforeEach(() => {
   apiRequestMock.mockReset();
   apiRequestMock.mockImplementation((rutaCruda: string) => {
@@ -92,6 +102,8 @@ beforeEach(() => {
       });
     }
     if (ruta.endsWith('/envios')) return Promise.resolve([]);
+    const porId = /^\/materiales\/([0-9a-f-]{36})$/.exec(ruta);
+    if (porId) return Promise.resolve(DEPOSITO[porId[1]] ?? null);
     if (ruta.startsWith('/ordenes-compra')) {
       return Promise.resolve({ datos: [orden], total: 1, pagina: 1, limite: 20 });
     }
@@ -161,5 +173,81 @@ describe('OrdenesCompraPage — una sola ventana a la vez', () => {
 
     expect(screen.queryByRole('button', { name: /enviar al proveedor/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /descargar pdf/i })).toBeInTheDocument();
+  });
+});
+
+describe('OrdenesCompraPage — cargar con la pistola', () => {
+  /** Un escaneo: para el navegador, la direccion aparece escrita de una. */
+  const escanear = async (usuario: ReturnType<typeof userEvent.setup>, id: string) => {
+    const campo = screen.getByPlaceholderText(/Buscar material/i);
+    await usuario.click(campo);
+    await usuario.paste(`${BASE_QR}/materiales/${id}`);
+  };
+
+  const abrirAlta = async (usuario: ReturnType<typeof userEvent.setup>) => {
+    mostrar();
+    await usuario.click(await screen.findByRole('button', { name: /nueva orden/i }));
+    await screen.findByRole('heading', { name: /Nueva orden de compra/i });
+  };
+
+  it('escanear varios seguidos los va agregando, sin cantidad', async () => {
+    // Es el flujo que se pidio: pasar las etiquetas de corrido con la pistola y
+    // sentarse despues a poner cuanto se compra de cada una.
+    const usuario = userEvent.setup();
+    await abrirAlta(usuario);
+
+    await escanear(usuario, RETEN);
+    expect(await screen.findByText('Reten 40x72x10')).toBeInTheDocument();
+
+    await escanear(usuario, BUJE);
+    expect(await screen.findByText('Buje bronce 25mm')).toBeInTheDocument();
+
+    // Los dos entraron sin cantidad, esperando que alguien la cargue.
+    expect(screen.getByLabelText('Cantidad de Reten 40x72x10')).toHaveValue(null);
+    expect(screen.getByLabelText('Cantidad de Buje bronce 25mm')).toHaveValue(null);
+  });
+
+  it('REGRESION: no se puede crear la orden con renglones sin cantidad', async () => {
+    // El backend los rechaza igual, pero el error llegaria recien al guardar,
+    // con la orden entera cargada y sin decir cual renglon es.
+    const usuario = userEvent.setup();
+    await abrirAlta(usuario);
+
+    await escanear(usuario, RETEN);
+    await screen.findByText('Reten 40x72x10');
+
+    expect(await screen.findByText(/Falta la cantidad de/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /crear orden/i })).toBeDisabled();
+
+    await usuario.type(screen.getByLabelText('Cantidad de Reten 40x72x10'), '4');
+
+    await waitFor(() =>
+      expect(screen.queryByText(/Falta la cantidad de/i)).not.toBeInTheDocument(),
+    );
+  });
+
+  it('REGRESION: escanear dos veces la misma etiqueta no duplica el renglon', async () => {
+    // Un doble disparo de la pistola sobre la misma caja es lo mas comun que
+    // va a pasar, y el backend rechaza el mismo material dos veces en la orden.
+    const usuario = userEvent.setup();
+    await abrirAlta(usuario);
+
+    await escanear(usuario, RETEN);
+    await screen.findByText('Reten 40x72x10');
+    await escanear(usuario, RETEN);
+
+    expect(await screen.findByText(/ya estaba en la orden/i)).toBeInTheDocument();
+    expect(screen.getAllByLabelText(/Cantidad de Reten 40x72x10/)).toHaveLength(1);
+  });
+
+  it('avisa cuando lo que se escaneo no es un material', async () => {
+    const usuario = userEvent.setup();
+    await abrirAlta(usuario);
+
+    const campo = screen.getByPlaceholderText(/Buscar material/i);
+    await usuario.click(campo);
+    await usuario.paste(`${BASE_QR}/equipos?equipo=${RETEN}`);
+
+    expect(await screen.findByText(/es de un equipo/i)).toBeInTheDocument();
   });
 });
