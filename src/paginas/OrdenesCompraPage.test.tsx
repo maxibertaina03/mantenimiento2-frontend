@@ -78,6 +78,12 @@ beforeEach(() => {
     if (ruta.startsWith('/usuarios/me')) {
       return Promise.resolve({ id: 'u1', nombre: 'Máximo', rol: 'ADMIN' });
     }
+    if (ruta.startsWith('/permisos/mios')) {
+      return Promise.resolve({
+        rol: 'ADMIN',
+        permisos: ['ordenes.ver', 'ordenes.editar', 'ordenes.recibir', 'ordenes.enviar'],
+      });
+    }
     if (ruta.endsWith('/configuracion-envio')) {
       return Promise.resolve({
         mailAdministracion: 'administracion@lacteoslastres.com.ar',
@@ -127,12 +133,20 @@ describe('OrdenesCompraPage — una sola ventana a la vez', () => {
     );
   });
 
-  it('a un operario no se le ofrece enviar', async () => {
-    // El envío automático sigue en prueba: un operario descarga el PDF y listo.
+  it('sin el permiso de enviar, no se ofrece el envio', async () => {
+    // Mandar la orden a un tercero desde la casilla de la empresa es un permiso
+    // aparte de prepararla. Quien no lo tenga descarga el PDF y la manda por su
+    // cuenta, que es el flujo de siempre.
     apiRequestMock.mockImplementation((rutaCruda: string) => {
       const ruta = String(rutaCruda ?? '');
       if (ruta.startsWith('/usuarios/me')) {
-        return Promise.resolve({ id: 'u2', nombre: 'Operario', rol: 'OPERARIO' });
+        return Promise.resolve({ id: 'u2', nombre: 'Operario', rol: 'MANTENIMIENTO' });
+      }
+      if (ruta.startsWith('/permisos/mios')) {
+        return Promise.resolve({
+          rol: 'MANTENIMIENTO',
+          permisos: ['ordenes.ver', 'ordenes.editar', 'ordenes.recibir'],
+        });
       }
       if (ruta.startsWith('/ordenes-compra')) {
         return Promise.resolve({ datos: [orden], total: 1, pagina: 1, limite: 20 });

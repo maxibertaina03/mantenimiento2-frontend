@@ -3,6 +3,12 @@ import { useActualizarUsuario, useUsuarioActual, useUsuarios } from '@/api/usuar
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { formatearFecha } from '@/lib/formato';
 import type { RolUsuario } from '@/tipos/usuario';
+import { ROLES } from '@/api/permisos';
+
+/** Como se llama cada rol en la pantalla. Sale de la lista compartida. */
+const ETIQUETA_ROL: Record<string, string> = Object.fromEntries(
+  ROLES.map((r) => [r.rol, r.etiqueta]),
+);
 
 /** Qué habilita cada rol, para que la elección no sea a ciegas. */
 const DESCRIPCION_ROL: Record<RolUsuario, string> = {
@@ -111,7 +117,7 @@ export function UsuariosPage() {
           {(Object.keys(DESCRIPCION_ROL) as RolUsuario[]).map((rol) => (
             <div className="dato" key={rol}>
               <span className="texto-suave texto-chico">
-                {rol === 'ADMIN' ? 'Administrador' : 'Operario'}
+                {ETIQUETA_ROL[rol] ?? rol}
               </span>
               <span>{DESCRIPCION_ROL[rol]}</span>
             </div>

@@ -3,7 +3,9 @@ import { EquiposPage } from '@/paginas/EquiposPage';
 import { InicioPage } from '@/paginas/InicioPage';
 import { ServiciosPage } from '@/paginas/ServiciosPage';
 import { Layout } from './componentes/Layout';
-import { RutaSoloAdmin } from './componentes/RutaSoloAdmin';
+import { RutaConPermiso } from './componentes/RutaConPermiso';
+import { PermisosPage } from './paginas/PermisosPage';
+import { P } from './lib/permisos';
 import { CredencialesPage } from './paginas/CredencialesPage';
 import { EquiposItPage } from './paginas/EquiposItPage';
 import { MaterialesPage } from './paginas/MaterialesPage';
@@ -23,36 +25,100 @@ export function App() {
             que buscar. */}
         <Route index element={<InicioPage />} />
         <Route path="/inicio" element={<InicioPage />} />
-        <Route path="/materiales" element={<MaterialesPage />} />
-        <Route path="/materiales/:id" element={<MaterialDetallePage />} />
-        <Route path="/movimientos" element={<MovimientosPage />} />
-        <Route path="/movimientos/nuevo" element={<NuevoMovimientoPage />} />
-        <Route path="/ordenes-compra" element={<OrdenesCompraPage />} />
+        <Route
+          path="/materiales"
+          element={
+            <RutaConPermiso permisos={[P.MATERIALES_VER]}>
+              <MaterialesPage />
+            </RutaConPermiso>
+          }
+        />
+        <Route
+          path="/materiales/:id"
+          element={
+            <RutaConPermiso permisos={[P.MATERIALES_VER]}>
+              <MaterialDetallePage />
+            </RutaConPermiso>
+          }
+        />
+        <Route
+          path="/movimientos"
+          element={
+            <RutaConPermiso permisos={[P.MOVIMIENTOS_VER]}>
+              <MovimientosPage />
+            </RutaConPermiso>
+          }
+        />
+        <Route
+          path="/movimientos/nuevo"
+          element={
+            <RutaConPermiso permisos={[P.MOVIMIENTOS_CREAR]}>
+              <NuevoMovimientoPage />
+            </RutaConPermiso>
+          }
+        />
+        <Route
+          path="/ordenes-compra"
+          element={
+            <RutaConPermiso permisos={[P.ORDENES_VER]}>
+              <OrdenesCompraPage />
+            </RutaConPermiso>
+          }
+        />
         <Route
           path="/equipos-it"
           element={
-            <RutaSoloAdmin>
+            <RutaConPermiso permisos={[P.IT_VER]}>
               <EquiposItPage />
-            </RutaSoloAdmin>
+            </RutaConPermiso>
           }
         />
         <Route
           path="/credenciales"
           element={
-            <RutaSoloAdmin>
+            <RutaConPermiso permisos={[P.CREDENCIALES_VER]}>
               <CredencialesPage />
-            </RutaSoloAdmin>
+            </RutaConPermiso>
           }
         />
-        <Route path="/equipos" element={<EquiposPage />} />
-        <Route path="/servicios" element={<ServiciosPage />} />
-        <Route path="/proveedores" element={<ProveedoresPage />} />
+        <Route
+          path="/equipos"
+          element={
+            <RutaConPermiso permisos={[P.EQUIPOS_VER]}>
+              <EquiposPage />
+            </RutaConPermiso>
+          }
+        />
+        <Route
+          path="/servicios"
+          element={
+            <RutaConPermiso permisos={[P.SERVICIOS_VER]}>
+              <ServiciosPage />
+            </RutaConPermiso>
+          }
+        />
+        <Route
+          path="/proveedores"
+          element={
+            <RutaConPermiso permisos={[P.PROVEEDORES_VER]}>
+              <ProveedoresPage />
+            </RutaConPermiso>
+          }
+        />
         <Route
           path="/usuarios"
           element={
-            <RutaSoloAdmin>
+            <RutaConPermiso permisos={[P.USUARIOS_ADMINISTRAR]}>
               <UsuariosPage />
-            </RutaSoloAdmin>
+            </RutaConPermiso>
+          }
+        />
+        <Route
+          path="/permisos"
+          element={
+            <RutaConPermiso permisos={[P.PERMISOS_ADMINISTRAR]}>
+              <PermisosPage />
+            </RutaConPermiso>
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />

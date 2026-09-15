@@ -17,7 +17,6 @@ import { Modal } from '@/componentes/Modal';
 import { formatearFecha, formatearNumero } from '@/lib/formato';
 import { descargarPdfOrdenCompra } from '@/lib/pdfOrdenCompra';
 import { EnviarOrden } from '@/componentes/EnviarOrden';
-import { useUsuarioActual } from '@/api/usuarios';
 import { ETIQUETA_ESTADO_ORDEN } from '@/tipos/ordenCompra';
 import type {
   EstadoOrdenCompra,
@@ -25,6 +24,7 @@ import type {
   RenglonInput,
 } from '@/tipos/ordenCompra';
 import type { Material } from '@/tipos/material';
+import { P, usePuede } from '@/lib/permisos';
 
 const LIMITE = 20;
 const ESTADOS = Object.keys(ETIQUETA_ESTADO_ORDEN) as EstadoOrdenCompra[];
@@ -49,10 +49,11 @@ export function OrdenesCompraPage() {
   const [modalAlta, setModalAlta] = useState(false);
   const [ordenAbierta, setOrdenAbierta] = useState<OrdenCompra | null>(null);
   const [ordenAEnviar, setOrdenAEnviar] = useState<OrdenCompra | null>(null);
-  // El envío por correo y WhatsApp está en prueba: por ahora solo lo ve un
-  // admin. Un operario sigue con el flujo de siempre, descargar el PDF.
-  const { data: usuario } = useUsuarioActual();
-  const puedeEnviar = usuario?.rol === 'ADMIN';
+  // Mandarle la orden a un tercero usando la casilla de la empresa no es lo
+  // mismo que prepararla, por eso tiene permiso propio. Quien no lo tenga
+  // sigue con el flujo de siempre: descargar el PDF y mandarlo por su cuenta.
+  const puede = usePuede();
+  const puedeEnviar = puede(P.ORDENES_ENVIAR);
 
   /**
    * Abre la pantalla de envío y cierra la que estaba.

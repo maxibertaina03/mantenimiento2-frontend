@@ -15,6 +15,7 @@ import { Modal } from '@/componentes/Modal';
 import { descargarCsv, generarCsv, sufijoFechaArchivo } from '@/lib/csv';
 import { exportarPdf } from '@/lib/pdf';
 import { formatearFecha, formatearNumero, isoADatetimeLocal } from '@/lib/formato';
+import { P, usePuede } from '@/lib/permisos';
 import {
   MOTIVOS_MOVIMIENTO,
   MOTIVOS_POR_TIPO,
@@ -31,14 +32,18 @@ const LIMITE = 20;
 export function MovimientosPage() {
   const { data: materiales } = useMateriales(1, 100);
   const { data: usuarioActual } = useUsuarioActual();
+  const puede = usePuede();
 
   // Modales de edición y de auditoría.
   const [editando, setEditando] = useState<Movimiento | null>(null);
   const [viendo, setViendo] = useState<Movimiento | null>(null);
 
-  // Puede editar quien registró el movimiento o un admin.
+  // Puede corregir quien lo cargó, o quien tenga el permiso de corregir.
   const puedeEditar = (m: Movimiento) =>
-    !!usuarioActual && (m.usuarioId === usuarioActual.id || usuarioActual.rol === 'ADMIN');
+    // Cada uno corrige lo que cargó. Quien además tiene el permiso de
+    // corregir movimientos puede tocar los de cualquiera: es lo que hace
+    // falta para arreglar el dedazo de otro sin pedirle que entre.
+    (!!usuarioActual && m.usuarioId === usuarioActual.id) || puede(P.MOVIMIENTOS_EDITAR);
 
   // Estado de filtros + paginación.
   const [materialId, setMaterialId] = useState('');

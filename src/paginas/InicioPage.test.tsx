@@ -56,7 +56,7 @@ const plan = (over = {}) => ({
 
 /** Respuestas del servidor. Lo que no se declare vuelve vacío. */
 function servidor(opciones: {
-  rol?: 'ADMIN' | 'OPERARIO';
+  rol?: 'ADMIN' | 'MANTENIMIENTO';
   bajoStock?: unknown[];
   planes?: unknown[];
   /** Órdenes EMITIDAS: mercadería por llegar. */
@@ -70,6 +70,18 @@ function servidor(opciones: {
     const ruta = String(rutaCruda ?? '');
     if (ruta.startsWith('/usuarios/me')) {
       return Promise.resolve({ id: 'u1', nombre: 'Máximo', rol: opciones.rol ?? 'ADMIN' });
+    }
+    // La pantalla ya no mira el rol sino los permisos: lo que decide si se
+    // muestran los services y los equipos es tenerlos, no ser administrador.
+    if (ruta.startsWith('/permisos/mios')) {
+      const rol = opciones.rol ?? 'ADMIN';
+      return Promise.resolve({
+        rol,
+        permisos:
+          rol === 'ADMIN'
+            ? ['materiales.ver', 'ordenes.ver', 'servicios.ver', 'equipos.ver']
+            : ['materiales.ver', 'ordenes.ver'],
+      });
     }
     if (ruta.startsWith('/materiales/bajo-stock')) {
       return Promise.resolve(opciones.bajoStock ?? []);
@@ -143,7 +155,7 @@ describe('InicioPage', () => {
   it('REGRESION: a un operario no le muestra mantenimiento', async () => {
     // El modulo de Equipos es solo para admins: pedirlo le daria 403 y le
     // llenaria la consola de errores sin que nada este mal.
-    servidor({ rol: 'OPERARIO', planes: [plan()] });
+    servidor({ rol: 'MANTENIMIENTO', planes: [plan()] });
     mostrar();
 
     await screen.findByText(/No hay nada pendiente/);
@@ -220,7 +232,7 @@ describe('InicioPage — equipos parados', () => {
 
   it('REGRESION: a un operario no se le pide el resumen de equipos', async () => {
     // El modulo es solo para admins: el pedido le daria 403.
-    servidor({ rol: 'OPERARIO' });
+    servidor({ rol: 'MANTENIMIENTO' });
     mostrar();
 
     await screen.findByText(/No hay nada pendiente/);
@@ -299,7 +311,7 @@ describe('InicioPage — de que no puede avisar el sistema', () => {
   it('a un operario no se le muestra el hueco de los equipos', async () => {
     // No ve el modulo, asi que no puede hacer nada al respecto.
     servidor({
-      rol: 'OPERARIO',
+      rol: 'MANTENIMIENTO',
       cobertura: { enUso: 911, conMinimo: 112, sinMinimo: 799, bajoStock: 0 },
     });
     mostrar();

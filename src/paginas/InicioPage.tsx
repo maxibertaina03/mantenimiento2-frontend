@@ -2,11 +2,11 @@ import { Link } from 'react-router-dom';
 import { useCoberturaAlertas, useMaterialesBajoStock } from '@/api/materiales';
 import { useOrdenes } from '@/api/ordenesCompra';
 import { usePlanesQueVencen, useResumenEquipos } from '@/api/equipos';
-import { useUsuarioActual } from '@/api/usuarios';
 import { Cargando } from '@/componentes/Estados';
 import { textoVencimiento } from '@/componentes/PlanesEquipo';
 import { formatearNumero } from '@/lib/formato';
 import { ETIQUETA_ESTADO_EQUIPO } from '@/tipos/equipo';
+import { P, usePuede } from '@/lib/permisos';
 
 /** Cuántas filas se listan antes de mandar a la pantalla completa. */
 const MAXIMO_EN_LISTA = 6;
@@ -31,16 +31,19 @@ const NO_OPERATIVOS = ['EN_REPARACION', 'FUERA_DE_SERVICIO'] as const;
  * sería peor que no tener la pantalla.
  */
 export function InicioPage() {
-  const { data: usuario } = useUsuarioActual();
-  const esAdmin = usuario?.rol === 'ADMIN';
+  // Antes esto era "sos administrador". Con cuatro roles no alcanza: gerencia
+  // ve los services y no ve usuarios.
+  const puede = usePuede();
+  const veServicios = puede(P.SERVICIOS_VER);
+  const veEquipos = puede(P.EQUIPOS_VER);
 
   const bajoStock = useMaterialesBajoStock();
   const cobertura = useCoberturaAlertas();
   const emitidas = useOrdenes(1, MAXIMO_EN_LISTA, '', 'EMITIDA');
   const borradores = useOrdenes(1, MAXIMO_EN_LISTA, '', 'BORRADOR');
   // Equipos es solo para admins: a un operario el pedido le daría 403.
-  const servicios = usePlanesQueVencen(7, esAdmin);
-  const equipos = useResumenEquipos(esAdmin);
+  const servicios = usePlanesQueVencen(7, veServicios);
+  const equipos = useResumenEquipos(veEquipos);
 
   if (bajoStock.isLoading || emitidas.isLoading) return <Cargando />;
 
@@ -79,7 +82,7 @@ export function InicioPage() {
           <p style={{ margin: 0 }}>
             No hay nada pendiente: ningún equipo parado, ningún material bajo su mínimo y ninguna
             orden esperando
-            {esAdmin && ', y ningún service por vencer'}.
+            {veServicios && ', y ningún service por vencer'}.
           </p>
         </div>
       )}
@@ -107,7 +110,7 @@ export function InicioPage() {
         </div>
       )}
 
-      {esAdmin && vencen.length > 0 && (
+      {veServicios && vencen.length > 0 && (
         <div className="panel">
           <div className="cabecera-bloque">
             <h2>Mantenimiento</h2>
@@ -203,7 +206,7 @@ export function InicioPage() {
                 arriba. Se carga desde la ficha de cada material.
               </li>
             )}
-            {esAdmin && sinPlan > 0 && (
+            {veEquipos && sinPlan > 0 && (
               <li>
                 <b>
                   {sinPlan} de {equipos.data?.total} equipos
