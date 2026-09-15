@@ -3,22 +3,26 @@ import { useActualizarUsuario, useUsuarioActual, useUsuarios } from '@/api/usuar
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { formatearFecha } from '@/lib/formato';
 import type { RolUsuario } from '@/tipos/usuario';
-import { ROLES } from '@/api/permisos';
+import { ROLES, usePermisosPorRol } from '@/api/permisos';
+import { P, usePuede } from '@/lib/permisos';
 
-/** Como se llama cada rol en la pantalla. Sale de la lista compartida. */
+/**
+ * Los roles salen de la lista compartida, no de una copia escrita acá.
+ *
+ * Esta pantalla ofrecía dos roles cuando el sistema ya tenía cuatro, y elegir
+ * "Operario" terminaba en un error del servidor que no explicaba nada.
+ */
 const ETIQUETA_ROL: Record<string, string> = Object.fromEntries(
   ROLES.map((r) => [r.rol, r.etiqueta]),
 );
 
-/** Qué habilita cada rol, para que la elección no sea a ciegas. */
-const DESCRIPCION_ROL: Record<RolUsuario, string> = {
-  ADMIN: 'Accede a Equipos IT y puede corregir movimientos de cualquier usuario.',
-  OPERARIO: 'Uso normal del sistema. Solo puede corregir los movimientos que cargó.',
-};
-
 export function UsuariosPage() {
   const { data, isLoading, error } = useUsuarios(1, 100);
   const { data: yo } = useUsuarioActual();
+  // Solo se pide si quien mira puede administrar permisos: es un numero al
+  // lado de cada rol, no vale un 403 de fondo.
+  const puede = usePuede();
+  const permisosPorRol = usePermisosPorRol(puede(P.PERMISOS_ADMINISTRAR));
   const actualizar = useActualizarUsuario();
   const [guardando, setGuardando] = useState<string | null>(null);
 
@@ -30,8 +34,8 @@ export function UsuariosPage() {
         [
           `Te estás quitando el rol de administrador a vos mismo (${nombre}).`,
           '',
-          'Vas a perder el acceso a Equipos IT y a esta pantalla.',
-          'Solo otro administrador va a poder devolvértelo.',
+          `Vas a pasar a ${ETIQUETA_ROL[rol] ?? rol} y vas a perder el acceso a esta pantalla`,
+          'y a la de permisos. Solo otro administrador va a poder devolvértelo.',
           '',
           '¿Continuar?',
         ].join('\n'),
@@ -97,8 +101,11 @@ export function UsuariosPage() {
                       onChange={(e) => cambiarRol(u.id, e.target.value as RolUsuario, u.nombre)}
                       aria-label={`Rol de ${u.nombre}`}
                     >
-                      <option value="OPERARIO">Operario</option>
-                      <option value="ADMIN">Administrador</option>
+                      {ROLES.map((r) => (
+                        <option key={r.rol} value={r.rol}>
+                          {r.etiqueta}
+                        </option>
+                      ))}
                     </select>
                     {guardando === u.id && (
                       <span className="texto-suave texto-chico"> guardando…</span>
@@ -113,19 +120,25 @@ export function UsuariosPage() {
 
       <div className="panel" style={{ marginTop: '1rem' }}>
         <h3 className="subtitulo-form">Qué puede hacer cada rol</h3>
-        <div className="grilla-datos">
-          {(Object.keys(DESCRIPCION_ROL) as RolUsuario[]).map((rol) => (
-            <div className="dato" key={rol}>
-              <span className="texto-suave texto-chico">
-                {ETIQUETA_ROL[rol] ?? rol}
+        <ul className="lista-catalogo">
+          {ROLES.map((r) => (
+            <li key={r.rol}>
+              <span>
+                <strong>{r.etiqueta}</strong>
+                <div className="texto-suave texto-chico">{r.descripcion}</div>
               </span>
-              <span>{DESCRIPCION_ROL[rol]}</span>
-            </div>
+              <span className="texto-suave texto-chico">
+                {permisosPorRol.data
+                  ? `${permisosPorRol.data[r.rol]?.length ?? 0} permiso(s)`
+                  : ''}
+              </span>
+            </li>
           ))}
-        </div>
+        </ul>
         <p className="texto-suave texto-chico" style={{ marginTop: '0.6rem' }}>
-          El sistema no permite quedarse sin ningún administrador: antes de quitarle el rol al
-          último, hay que nombrar a otro.
+          Lo que puede hacer cada rol se define en <strong>Permisos</strong>, y se aplica en el
+          momento. El sistema no permite quedarse sin ningún administrador: antes de quitarle el
+          rol al último, hay que nombrar a otro.
         </p>
       </div>
     </>

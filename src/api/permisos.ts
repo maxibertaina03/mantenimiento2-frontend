@@ -61,10 +61,19 @@ export function useCatalogoPermisos() {
   });
 }
 
-export function usePermisosPorRol() {
+/**
+ * Qué permisos tiene cada rol.
+ *
+ * `habilitado` existe porque esta consulta pide el permiso de administrar
+ * permisos, y la usa también la pantalla de Usuarios, que pide otro. Quien
+ * administre usuarios sin administrar permisos vería un 403 de fondo por un
+ * dato que solo sirve para mostrar un número al lado de cada rol.
+ */
+export function usePermisosPorRol(habilitado = true) {
   return useQuery({
     queryKey: clavesPermisos.porRol,
     queryFn: () => apiRequest<Record<Rol, string[]>>('/permisos'),
+    enabled: habilitado,
   });
 }
 
