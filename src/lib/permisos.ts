@@ -26,6 +26,8 @@ export const P = {
   ORDENES_EDITAR: 'ordenes.editar',
   ORDENES_RECIBIR: 'ordenes.recibir',
   ORDENES_ENVIAR: 'ordenes.enviar',
+  TRABAJOS_VER: 'trabajos.ver',
+  TRABAJOS_EDITAR: 'trabajos.editar',
   EQUIPOS_VER: 'equipos.ver',
   EQUIPOS_EDITAR: 'equipos.editar',
   SERVICIOS_VER: 'servicios.ver',
