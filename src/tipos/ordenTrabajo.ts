@@ -49,6 +49,9 @@ export interface OrdenTrabajo {
   abiertaEn: string;
   abiertaPorId: string | null;
   abiertaPorNombre: string | null;
+  /** Quién tiene que hacer el trabajo. Solo esa persona puede terminarlo. */
+  asignadoAId: string;
+  asignadoANombre: string | null;
   resolucion: string | null;
   cerradaEn: string | null;
   cerradaPorId: string | null;
@@ -67,6 +70,14 @@ export interface CrearOrdenTrabajoInput {
   descripcion?: string | null;
   tipo: TipoTrabajo;
   equipoId?: string | null;
+  /** Si no viene, la orden queda para quien la abre. */
+  asignadoAId?: string | null;
+}
+
+/** Alguien que puede hacerse cargo de una orden. */
+export interface UsuarioAsignable {
+  id: string;
+  nombre: string;
 }
 
 export interface FiltrosOrdenesTrabajo {
@@ -74,4 +85,5 @@ export interface FiltrosOrdenesTrabajo {
   estado?: EstadoOrdenTrabajo;
   tipo?: TipoTrabajo;
   equipoId?: string;
+  asignadoAId?: string;
 }

@@ -3,6 +3,7 @@ import { apiRequest } from '@/lib/apiClient';
 import { clavesMateriales } from './materiales';
 import type { RespuestaPaginada } from '@/tipos/comunes';
 import type {
+  UsuarioAsignable,
   CrearOrdenTrabajoInput,
   FiltrosOrdenesTrabajo,
   OrdenTrabajo,
@@ -49,8 +50,37 @@ export function useOrdenesTrabajo(
           estado: filtros.estado || undefined,
           tipo: filtros.tipo || undefined,
           equipoId: filtros.equipoId || undefined,
+          asignadoAId: filtros.asignadoAId || undefined,
         },
       }),
+  });
+}
+
+/**
+ * Quiénes pueden hacerse cargo de una orden.
+ *
+ * Sale del módulo de trabajos y no del padón de usuarios porque mantenimiento
+ * no tiene permiso para listar usuarios, y sin embargo tiene que poder elegir a
+ * quién le pasa un trabajo.
+ */
+export function useAsignables(habilitado = true) {
+  return useQuery({
+    enabled: habilitado,
+    queryKey: ['ordenes-trabajo', 'asignables'],
+    queryFn: () => apiRequest<UsuarioAsignable[]>('/ordenes-trabajo/asignables'),
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useReasignarOrdenTrabajo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, asignadoAId }: { id: string; asignadoAId: string }) =>
+      apiRequest<OrdenTrabajo>(`/ordenes-trabajo/${id}/reasignar`, {
+        method: 'POST',
+        body: { asignadoAId },
+      }),
+    onSuccess: () => invalidarTodo(qc),
   });
 }
 

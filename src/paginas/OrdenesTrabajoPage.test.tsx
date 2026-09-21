@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type { ReactNode } from 'react';
@@ -44,6 +44,8 @@ const ORDEN = {
   abiertaEn: '2026-09-21T10:00:00.000Z',
   abiertaPorId: 'u1',
   abiertaPorNombre: 'Facundo',
+  asignadoAId: 'u1',
+  asignadoANombre: 'Facundo',
   resolucion: null,
   cerradaEn: null,
   cerradaPorId: null,
@@ -79,6 +81,12 @@ beforeEach(() => {
     }
     if (ruta.startsWith('/permisos/mios')) {
       return Promise.resolve({ rol: 'MANTENIMIENTO', permisos });
+    }
+    if (ruta.startsWith('/ordenes-trabajo/asignables')) {
+      return Promise.resolve([
+        { id: 'u1', nombre: 'Facundo' },
+        { id: 'u2', nombre: 'Leandro' },
+      ]);
     }
     if (/^\/ordenes-trabajo\/[^/]+$/.test(ruta)) {
       return Promise.resolve({
@@ -193,6 +201,7 @@ describe('OrdenesTrabajoPage', () => {
         cerradaEn: '2026-09-21T15:00:00.000Z',
         cerradaPorNombre: 'Facundo',
       };
+      if (ruta.startsWith('/ordenes-trabajo/asignables')) return Promise.resolve([]);
       if (/^\/ordenes-trabajo\/[^/]+$/.test(ruta)) {
         return Promise.resolve({
           ...cerrada,
@@ -215,6 +224,138 @@ describe('OrdenesTrabajoPage', () => {
   });
 });
 
+describe('el trabajo es de quien lo tiene asignado', () => {
+  /** La misma orden, pero a cargo de otra persona. */
+  const deOtro = { ...ORDEN, asignadoAId: 'u2', asignadoANombre: 'Leandro' };
+
+  const mockearDeOtro = () => {
+    apiRequestMock.mockImplementation((rutaCruda: string) => {
+      const ruta = String(rutaCruda ?? '');
+      if (ruta.startsWith('/usuarios/me')) {
+        return Promise.resolve({ id: 'u1', nombre: 'Facundo', rol: 'MANTENIMIENTO' });
+      }
+      if (ruta.startsWith('/permisos/mios')) {
+        return Promise.resolve({ rol: 'MANTENIMIENTO', permisos });
+      }
+      if (ruta.startsWith('/ordenes-trabajo/asignables')) {
+        return Promise.resolve([
+          { id: 'u1', nombre: 'Facundo' },
+          { id: 'u2', nombre: 'Leandro' },
+        ]);
+      }
+      if (/^\/ordenes-trabajo\/[^/]+$/.test(ruta)) {
+        return Promise.resolve({ ...deOtro, resumen: { materialesDistintos: 1, unidadesTotales: 2 } });
+      }
+      if (ruta.startsWith('/ordenes-trabajo')) {
+        return Promise.resolve({ datos: [deOtro], total: 1, pagina: 1, limite: 20 });
+      }
+      return Promise.resolve({ datos: [], total: 0, pagina: 1, limite: 20 });
+    });
+  };
+
+  it('la lista dice de quien es cada trabajo', async () => {
+    mostrar();
+    expect(await screen.findByText('Facundo')).toBeInTheDocument();
+    expect(screen.getByText(/\(vos\)/)).toBeInTheDocument();
+  });
+
+  it('REGRESION: un trabajo de otro se ve pero no se puede cargar ni cerrar', async () => {
+    // Sin esto, "asignada a" seria una etiqueta decorativa y dos personas
+    // podrian cargar repuestos sobre el mismo trabajo sin saberlo.
+    mockearDeOtro();
+    const usuario = userEvent.setup();
+    mostrar();
+
+    await usuario.click(await screen.findByRole('button', { name: /^ver$/i }));
+    await screen.findByRole('heading', { name: /Orden OT-2026-0001/ });
+
+    expect(screen.getByText(/es de Leandro/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /\+ usar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /cerrar orden/i })).not.toBeInTheDocument();
+    // Pero el material que ya se cargo se ve igual: saber que pasa es de todos.
+    expect(screen.getByText('Reten 40x72x10')).toBeInTheDocument();
+  });
+
+  it('el trabajo propio si se puede cargar y cerrar', async () => {
+    const usuario = userEvent.setup();
+    mostrar();
+
+    await usuario.click(await screen.findByRole('button', { name: /^ver$/i }));
+
+    expect(await screen.findByRole('button', { name: /\+ usar/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /cerrar orden/i })).toBeInTheDocument();
+  });
+
+  it('al abrir una orden se puede elegir a quien se le asigna', async () => {
+    const usuario = userEvent.setup();
+    mostrar();
+
+    await usuario.click(await screen.findByRole('button', { name: /nueva orden/i }));
+    await usuario.click(screen.getByLabelText(/Qué pasó/i));
+    await usuario.paste('Cambio de rodamiento');
+    await usuario.selectOptions(screen.getByLabelText(/Asignar a/i), 'u2');
+    await usuario.click(screen.getByRole('button', { name: /abrir orden/i }));
+
+    await waitFor(() => {
+      const alta = apiRequestMock.mock.calls.find(
+        (c) => c[0] === '/ordenes-trabajo' && c[1]?.method === 'POST',
+      );
+      expect(alta?.[1].body).toMatchObject({ asignadoAId: 'u2' });
+    });
+  });
+
+  it('sin elegir a nadie, no se manda asignado: queda para uno mismo', async () => {
+    // El backend lo resuelve asi. Mandar el propio id desde la pantalla seria
+    // repetir en dos lados una regla que ya vive en uno.
+    const usuario = userEvent.setup();
+    mostrar();
+
+    await usuario.click(await screen.findByRole('button', { name: /nueva orden/i }));
+    await usuario.click(screen.getByLabelText(/Qué pasó/i));
+    await usuario.paste('Reviso la bomba');
+    await usuario.click(screen.getByRole('button', { name: /abrir orden/i }));
+
+    await waitFor(() => {
+      const alta = apiRequestMock.mock.calls.find(
+        (c) => c[0] === '/ordenes-trabajo' && c[1]?.method === 'POST',
+      );
+      expect(alta?.[1].body.asignadoAId).toBeUndefined();
+    });
+  });
+
+  it('REGRESION: sin el permiso de asignar no se ofrece reasignar', async () => {
+    // Es la unica accion que no exige ser el duenio, por eso pide permiso aparte.
+    mockearDeOtro();
+    const usuario = userEvent.setup();
+    mostrar();
+
+    await usuario.click(await screen.findByRole('button', { name: /^ver$/i }));
+    await screen.findByText(/es de Leandro/i);
+
+    expect(screen.queryByRole('button', { name: /reasignar/i })).not.toBeInTheDocument();
+  });
+
+  it('con el permiso, el admin puede pasarle el trabajo a otro', async () => {
+    permisos = ['trabajos.ver', 'trabajos.editar', 'trabajos.asignar'];
+    mockearDeOtro();
+    const usuario = userEvent.setup();
+    mostrar();
+
+    await usuario.click(await screen.findByRole('button', { name: /^ver$/i }));
+    const selector = await screen.findByLabelText(/Pasarle el trabajo/i);
+    // Leandro no aparece: ya la tiene, ofrecerselo no tendria sentido.
+    expect(within(selector).queryByRole('option', { name: 'Leandro' })).not.toBeInTheDocument();
+
+    await usuario.selectOptions(selector, 'u1');
+    await usuario.click(screen.getByRole('button', { name: /reasignar/i }));
+
+    await waitFor(() => {
+      const llamada = apiRequestMock.mock.calls.find((c) => String(c[0]).includes('/reasignar'));
+      expect(llamada?.[1].body).toEqual({ asignadoAId: 'u1' });
+    });
+  });
+});
+
 describe('eliminar una orden', () => {
   /** Una orden anulada, que es la unica que se puede borrar. */
   const anulada = { ...ORDEN, estado: 'ANULADA', motivoAnulacion: 'Era de prueba' };
@@ -227,6 +368,7 @@ describe('eliminar una orden', () => {
       }
       if (ruta.startsWith('/permisos/mios')) return Promise.resolve({ rol: 'ADMIN', permisos });
       if (opciones?.method === 'DELETE') return Promise.resolve(undefined);
+      if (ruta.startsWith('/ordenes-trabajo/asignables')) return Promise.resolve([]);
       if (/^\/ordenes-trabajo\/[^/]+$/.test(ruta)) {
         return Promise.resolve({ ...anulada, resumen: { materialesDistintos: 1, unidadesTotales: 2 } });
       }

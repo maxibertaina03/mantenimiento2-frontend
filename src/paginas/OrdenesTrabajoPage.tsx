@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useUsuarioActual } from '@/api/usuarios';
 import {
   useAnularOrdenTrabajo,
+  useAsignables,
   useCerrarOrdenTrabajo,
   useCrearOrdenTrabajo,
   useEditarOrdenTrabajo,
@@ -9,6 +11,7 @@ import {
   useOrdenTrabajo,
   useQuitarMaterialUsado,
   useReabrirOrdenTrabajo,
+  useReasignarOrdenTrabajo,
   useUsarMaterial,
 } from '@/api/ordenesTrabajo';
 import { CampoNumero } from '@/componentes/CampoNumero';
@@ -50,6 +53,8 @@ export function OrdenesTrabajoPage() {
   const [tipo, setTipo] = useState<TipoTrabajo | ''>('');
   const [modalAlta, setModalAlta] = useState(false);
   const [ordenAbierta, setOrdenAbierta] = useState<string | null>(null);
+  const [soloMias, setSoloMias] = useState(false);
+  const { data: yo } = useUsuarioActual();
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -63,6 +68,7 @@ export function OrdenesTrabajoPage() {
     buscar: busqueda,
     estado: estado || undefined,
     tipo: tipo || undefined,
+    asignadoAId: soloMias ? (yo?.id ?? undefined) : undefined,
   });
 
   const ordenes = data?.datos ?? [];
@@ -144,6 +150,20 @@ export function OrdenesTrabajoPage() {
             </option>
           ))}
         </select>
+        {/* Lo primero que quiere ver cualquiera al entrar: qué le toca a él. */}
+        {yo && (
+          <label className="casilla">
+            <input
+              type="checkbox"
+              checked={soloMias}
+              onChange={(e) => {
+                setSoloMias(e.target.checked);
+                setPagina(1);
+              }}
+            />
+            Solo las mías
+          </label>
+        )}
       </div>
 
       {isLoading && <Cargando />}
@@ -164,6 +184,7 @@ export function OrdenesTrabajoPage() {
                 <th>Número</th>
                 <th>Trabajo</th>
                 <th>Tipo</th>
+                <th>Asignada a</th>
                 <th>Equipo</th>
                 <th>Materiales</th>
                 <th>Estado</th>
@@ -179,6 +200,12 @@ export function OrdenesTrabajoPage() {
                   </td>
                   <td data-etiqueta="Trabajo">{o.titulo}</td>
                   <td data-etiqueta="Tipo">{ETIQUETA_TIPO_TRABAJO[o.tipo]}</td>
+                  <td data-etiqueta="Asignada a">
+                    {o.asignadoANombre ?? '—'}
+                    {yo && o.asignadoAId === yo.id && (
+                      <span className="texto-suave texto-chico"> (vos)</span>
+                    )}
+                  </td>
                   <td data-etiqueta="Equipo">{o.equipoNombre ?? '—'}</td>
                   <td data-etiqueta="Materiales">
                     {o.materiales.length === 0 ? '—' : `${o.materiales.length}`}
@@ -236,12 +263,16 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
   const [tipo, setTipo] = useState<TipoTrabajo>('CORRECTIVO');
   const [descripcion, setDescripcion] = useState('');
   const [equipo, setEquipo] = useState<{ id: string; nombre: string } | null>(null);
+  /** Vacío quiere decir "para mí": el backend lo resuelve así. */
+  const [asignadoA, setAsignadoA] = useState('');
+  const { data: asignables } = useAsignables(abierto);
 
   const limpiar = () => {
     setTitulo('');
     setTipo('CORRECTIVO');
     setDescripcion('');
     setEquipo(null);
+    setAsignadoA('');
   };
 
   const enviar = async (e: React.FormEvent) => {
@@ -251,6 +282,7 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
       tipo,
       descripcion: descripcion || undefined,
       equipoId: equipo?.id ?? undefined,
+      asignadoAId: asignadoA || undefined,
     });
     limpiar();
     onCerrar();
@@ -277,6 +309,21 @@ function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
             {TIPOS_TRABAJO.map((t) => (
               <option key={t} value={t}>
                 {ETIQUETA_TIPO_TRABAJO[t]}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {/* Si no se elige a nadie queda para uno mismo, que es el caso de
+            abrirse una orden propia. Elegir a otro es el caso del encargado
+            que reparte el trabajo. */}
+        <label className="campo">
+          Asignar a
+          <select value={asignadoA} onChange={(e) => setAsignadoA(e.target.value)}>
+            <option value="">Para mí</option>
+            {(asignables ?? []).map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.nombre}
               </option>
             ))}
           </select>
@@ -340,8 +387,21 @@ function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () => void 
   const [cantidad, setCantidad] = useState<number | undefined>(undefined);
   const [resolucion, setResolucion] = useState('');
   const [equipoNuevo, setEquipoNuevo] = useState<{ id: string; nombre: string } | null>(null);
+  const [nuevoAsignado, setNuevoAsignado] = useState('');
 
-  const editable = orden?.estado === 'ABIERTA' && puede(P.TRABAJOS_EDITAR);
+  const { data: yo } = useUsuarioActual();
+  const reasignar = useReasignarOrdenTrabajo();
+  const puedeReasignar = puede(P.TRABAJOS_ASIGNAR) && orden?.estado === 'ABIERTA';
+  const { data: asignables } = useAsignables(puedeReasignar);
+
+  /**
+   * El trabajo es de quien lo tiene asignado. Los demás ven la orden entera
+   * —saber qué pasa en la planta es de todos— pero no pueden cargarle
+   * materiales ni cerrarla. El backend lo vuelve a comprobar; esto es no
+   * ofrecer botones que van a dar error.
+   */
+  const esMia = !!yo && orden?.asignadoAId === yo.id;
+  const editable = orden?.estado === 'ABIERTA' && puede(P.TRABAJOS_EDITAR) && esMia;
 
   const agregar = async (m: Material, cuanto: number) => {
     await usar.mutateAsync({ ordenId: id, materialId: m.id, cantidad: cuanto });
@@ -376,6 +436,52 @@ function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () => void 
             {orden.abiertaPorNombre ? ` por ${orden.abiertaPorNombre}` : ''}
             {orden.equipoNombre ? ` · Equipo: ${orden.equipoNombre}` : ''}
           </p>
+
+          <p>
+            <span className="texto-suave">Asignada a: </span>
+            <strong>{orden.asignadoANombre ?? '—'}</strong>
+            {esMia && <span className="texto-suave"> (vos)</span>}
+          </p>
+
+          {/* Dicho de frente, para que nadie se quede buscando el botón. */}
+          {!esMia && orden.estado === 'ABIERTA' && (
+            <p className="aviso-escaneo es-error">
+              Este trabajo es de {orden.asignadoANombre ?? 'otra persona'}. Podés verlo, pero lo
+              termina quien lo tiene a cargo.
+            </p>
+          )}
+
+          {puedeReasignar && (
+            <label className="campo">
+              Pasarle el trabajo a otra persona
+              <div className="fila-acciones">
+                <select value={nuevoAsignado} onChange={(e) => setNuevoAsignado(e.target.value)}>
+                  <option value="">Elegí a quién</option>
+                  {(asignables ?? [])
+                    .filter((u) => u.id !== orden.asignadoAId)
+                    .map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.nombre}
+                      </option>
+                    ))}
+                </select>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  disabled={!nuevoAsignado || reasignar.isPending}
+                  onClick={() =>
+                    reasignar.mutate(
+                      { id, asignadoAId: nuevoAsignado },
+                      { onSuccess: () => setNuevoAsignado('') },
+                    )
+                  }
+                >
+                  {reasignar.isPending ? 'Pasando…' : 'Reasignar'}
+                </button>
+              </div>
+              {reasignar.error && <MensajeError error={reasignar.error} />}
+            </label>
+          )}
 
           {/* Relacionar la máquina después: es el caso del administrador que
               revisa una orden que cargó mantenimiento sin equipo. */}
@@ -554,7 +660,7 @@ function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () => void 
             </>
           )}
 
-          {orden.estado === 'CERRADA' && puede(P.TRABAJOS_EDITAR) && (
+          {orden.estado === 'CERRADA' && puede(P.TRABAJOS_EDITAR) && esMia && (
             <div className="acciones">
               <button
                 type="button"
