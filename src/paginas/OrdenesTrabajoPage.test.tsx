@@ -214,3 +214,44 @@ describe('OrdenesTrabajoPage', () => {
     expect(screen.getByRole('button', { name: /reabrir/i })).toBeInTheDocument();
   });
 });
+
+describe('TrabajosDelEquipo', () => {
+  it('REGRESION: sin permiso de ver trabajos, la ficha del equipo no pide nada', async () => {
+    // Pedirlo igual daria un 403 y una pantalla con un error rojo por una
+    // seccion que esa persona ni tendria que ver.
+    permisos = ['equipos.ver'];
+    const { TrabajosDelEquipo } = await import('@/componentes/TrabajosDelEquipo');
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter>
+          <TrabajosDelEquipo equipoId="eq-7" />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(
+        apiRequestMock.mock.calls.filter((c) => String(c[0]).startsWith('/ordenes-trabajo')),
+      ).toHaveLength(0);
+    });
+  });
+
+  it('muestra las ordenes del equipo con lo que se uso', async () => {
+    permisos = ['equipos.ver', 'trabajos.ver'];
+    const { TrabajosDelEquipo } = await import('@/componentes/TrabajosDelEquipo');
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter>
+          <TrabajosDelEquipo equipoId="eq-7" />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText('OT-2026-0001')).toBeInTheDocument();
+    expect(screen.getByText(/Reten 40x72x10 \(2 u\)/)).toBeInTheDocument();
+  });
+});

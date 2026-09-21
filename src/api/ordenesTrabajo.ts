@@ -26,8 +26,19 @@ function invalidarTodo(qc: ReturnType<typeof useQueryClient>) {
   void qc.invalidateQueries({ queryKey: clavesMateriales.base });
 }
 
-export function useOrdenesTrabajo(pagina = 1, limite = 20, filtros: FiltrosOrdenesTrabajo = {}) {
+/**
+ * `habilitado` existe porque un hook no se puede llamar condicionalmente: sin
+ * esto, una pantalla que no tiene permiso para ver trabajos igual saldría a
+ * pedirlos y se comería un 403 que se muestra como un error rojo.
+ */
+export function useOrdenesTrabajo(
+  pagina = 1,
+  limite = 20,
+  filtros: FiltrosOrdenesTrabajo = {},
+  habilitado = true,
+) {
   return useQuery({
+    enabled: habilitado,
     queryKey: clavesTrabajos.lista(pagina, limite, filtros),
     queryFn: () =>
       apiRequest<RespuestaPaginada<OrdenTrabajo>>('/ordenes-trabajo', {
