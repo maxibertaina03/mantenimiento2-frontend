@@ -24,3 +24,6 @@ npm-debug.log*
 
 .vercel
 dist-muestra
+
+# Capturas del manual: se regeneran, no se versionan (casi 5 MB que quedan viejos).
+docs/manual/capturas/

@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<title>Manual del sistema de Mantenimiento</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm 18mm 14mm; }
+
+  :root {
+    --tinta: #1d2430;
+    --suave: #5b6676;
+    --linea: #d9dee6;
+    --marca: #b01020;
+    --fondo-nota: #f4f6f9;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: var(--tinta);
+    font-size: 10.5pt;
+    line-height: 1.55;
+  }
+
+  /* ── Portada ───────────────────────────────────────────────────────── */
+  .portada {
+    height: 250mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    page-break-after: always;
+  }
+  .portada .marca { color: var(--marca); font-weight: 700; letter-spacing: .14em; font-size: 11pt; }
+  .portada h1 { font-size: 30pt; margin: 6mm 0 3mm; line-height: 1.15; }
+  .portada p { color: var(--suave); font-size: 12pt; margin: 0 0 2mm; max-width: 120mm; }
+  .portada .pie { margin-top: 14mm; border-top: 2px solid var(--linea); padding-top: 5mm; font-size: 9.5pt; color: var(--suave); }
+
+  /* ── Estructura ────────────────────────────────────────────────────── */
+  section { page-break-before: always; }
+  section.seguida { page-break-before: auto; }
+
+  h2 {
+    font-size: 17pt;
+    margin: 0 0 1mm;
+    padding-bottom: 2mm;
+    border-bottom: 2px solid var(--marca);
+  }
+  h2 .numero { color: var(--marca); margin-right: 3mm; }
+  h3 { font-size: 12pt; margin: 6mm 0 2mm; }
+  p { margin: 0 0 3mm; }
+  ul { margin: 0 0 3mm; padding-left: 5mm; }
+  li { margin-bottom: 1.5mm; }
+
+  .entrada { color: var(--suave); font-size: 11pt; margin-bottom: 4mm; }
+
+  figure { margin: 4mm 0 5mm; page-break-inside: avoid; }
+  figure img {
+    width: 100%;
+    border: 1px solid var(--linea);
+    border-radius: 3px;
+    display: block;
+  }
+  figcaption { font-size: 8.5pt; color: var(--suave); margin-top: 1.5mm; }
+
+  .nota {
+    background: var(--fondo-nota);
+    border-left: 3px solid var(--marca);
+    padding: 3mm 4mm;
+    margin: 4mm 0;
+    page-break-inside: avoid;
+  }
+  .nota strong { display: block; margin-bottom: 1mm; }
+
+  table { width: 100%; border-collapse: collapse; margin: 3mm 0 5mm; font-size: 9.5pt; }
+  th, td { text-align: left; padding: 2mm 3mm; border-bottom: 1px solid var(--linea); vertical-align: top; }
+  th { background: var(--fondo-nota); font-weight: 600; }
+
+  .indice li { margin-bottom: 2mm; }
+  .indice .n { color: var(--marca); font-weight: 700; display: inline-block; width: 8mm; }
+</style>
+</head>
+<body>
+
+<div class="portada">
+  <div class="marca">LÁCTEOS LAS TRES S.R.L.</div>
+  <h1>Manual del sistema<br>de Mantenimiento</h1>
+  <p>Cómo usar cada pantalla, para qué sirve y qué conviene cargar.
+     Las imágenes son del sistema en funcionamiento, con los datos reales de la planta.</p>
+  <div class="pie">
+    Versión de septiembre de 2026 · Vista de administrador<br>
+    mantenimiento2-frontend.vercel.app
+  </div>
+</div>
+
+<section>
+  <h2><span class="numero">1</span>Qué es esto</h2>
+  <p class="entrada">Un sistema para saber qué hay en el pañol, en qué se usa y en qué estado están
+    las máquinas de la planta.</p>
+
+  <p>Antes cada cosa vivía en un lugar distinto: el stock en una planilla, las compras en papel,
+    las máquinas en carpetas de fotos. Acá está todo junto y, sobre todo, relacionado: se puede
+    preguntar en qué se fue un material, qué se le hizo a una bomba, o cuánto se le compró a un
+    proveedor.</p>
+
+  <h3>Cómo se entra</h3>
+  <p>Desde cualquier navegador, en <strong>mantenimiento2-frontend.vercel.app</strong>. Cada
+    persona entra con su cuenta de correo. No hace falta instalar nada, y anda igual en la
+    computadora que en el celular.</p>
+
+  <h3>Qué ve cada uno</h3>
+  <p>No todos ven lo mismo. El sistema tiene roles, y cada rol tiene permisos que se pueden
+    cambiar desde la pantalla de Permisos.</p>
+
+  <table>
+    <tr><th>Rol</th><th>Qué puede hacer</th></tr>
+    <tr><td><strong>Administrador</strong></td><td>Todo: cargar, editar, borrar, y repartir permisos.</td></tr>
+    <tr><td><strong>Mantenimiento</strong></td><td>El pañol de punta a punta: materiales, movimientos, órdenes de compra y proveedores.</td></tr>
+    <tr><td><strong>Gerencia</strong></td><td>Mira todo, no toca nada.</td></tr>
+    <tr><td><strong>Administrativo</strong></td><td>Solo las órdenes de compra, para verlas.</td></tr>
+  </table>
+
+  <div class="nota">
+    <strong>Este manual está hecho desde la pantalla del administrador</strong>
+    Por eso se ven todas las opciones. Si a vos te falta algún botón de los que aparecen acá,
+    es porque tu rol no tiene ese permiso, no porque el sistema esté fallando.
+  </div>
+
+  <h3>Lo que hay cargado hoy</h3>
+  <table>
+    <tr><td>Materiales en el pañol</td><td><strong>480</strong></td></tr>
+    <tr><td>Movimientos de stock registrados</td><td><strong>562</strong></td></tr>
+    <tr><td>Máquinas e instalaciones de planta</td><td><strong>326</strong></td></tr>
+    <tr><td>Equipos de informática</td><td><strong>65</strong></td></tr>
+    <tr><td>Proveedores</td><td><strong>1.070</strong></td></tr>
+    <tr><td>Órdenes de compra</td><td><strong>11</strong></td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="numero">2</span>Hoy</h2>
+  <p class="entrada">La primera pantalla. Lo que hay que mirar hoy, sin buscarlo.</p>
+
+  <figure>
+    <img src="capturas/hoy.png" alt="Pantalla de inicio">
+    <figcaption>Pantalla de inicio: lo que hay que reponer y lo que el sistema todavía no puede avisar.</figcaption>
+  </figure>
+
+  <p>Sirve para arrancar el día sin entrar a cada módulo a ver si pasa algo.</p>
+
+  <h3>Hay que reponer</h3>
+  <p>Los materiales que quedaron en o por debajo de su stock mínimo, con cuánto queda y cuál era
+    el mínimo. Hoy son 56. Tocando cualquiera se abre su ficha.</p>
+
+  <h3>De esto el sistema todavía no te puede avisar</h3>
+  <p>Esta segunda caja es la más importante del sistema, y conviene leerla entera. Dice qué le
+    falta cargar al sistema para poder avisar bien. Hoy dice dos cosas:</p>
+  <ul>
+    <li><strong>368 de 480 materiales no tienen stock mínimo cargado.</strong> Pueden llegar a
+      cero sin que aparezcan arriba. El mínimo se carga desde la ficha de cada material.</li>
+    <li><strong>326 de 326 equipos no tienen plan de mantenimiento.</strong> Nunca van a generar
+      un aviso de service. El plan se define desde la ficha de cada equipo.</li>
+  </ul>
+
+  <div class="nota">
+    <strong>Esos dos números son la tarea pendiente</strong>
+    El sistema no inventa mínimos ni planes: los tiene que decidir alguien que conozca la planta.
+    A medida que se vayan cargando, esa caja se va achicando y los avisos empiezan a servir.
+  </div>
+</section>
+
+<section>
+  <h2><span class="numero">3</span>Materiales</h2>
+  <p class="entrada">El pañol: qué hay, cuánto hay y dónde está.</p>
+
+  <figure>
+    <img src="capturas/materiales.png" alt="Listado de materiales">
+    <figcaption>Listado de materiales, con el stock actual de cada uno.</figcaption>
+  </figure>
+
+  <h3>Para qué sirve</h3>
+  <p>Es el corazón del sistema. Cada material tiene su stock, y ese número no se escribe a mano:
+    sale de sumar y restar todos los movimientos. Por eso siempre coincide con lo que se cargó, y
+    si no coincide con la realidad del estante, se hace un ajuste y queda asentado.</p>
+
+  <h3>Cómo se usa</h3>
+  <ul>
+    <li><strong>Buscar.</strong> Escribís parte del nombre y filtra solo. No hace falta apretar nada.</li>
+    <li><strong>Filtros.</strong> Por categoría, por unidad, por estantería, o los que están bajo el mínimo.</li>
+    <li><strong>+ Nuevo material.</strong> Para dar de alta algo que nunca se compró.</li>
+    <li><strong>Etiquetas QR.</strong> Imprime las etiquetas para pegar en las cajas del pañol.</li>
+    <li><strong>CSV y PDF.</strong> Bajan el listado para mandarlo o imprimirlo.</li>
+  </ul>
+
+  <div class="nota">
+    <strong>Stock mínimo</strong>
+    Si le cargás un mínimo a un material, el sistema avisa cuando baja de ahí. Es lo que después
+    evita quedarse sin un repuesto en medio de una rotura.
+  </div>
+</section>
+
+<section class="seguida">
+  <h3>La ficha de un material</h3>
+  <p>Tocando el ojo de cualquier fila se abre su ficha.</p>
+
+  <figure>
+    <img src="capturas/material-detalle.png" alt="Ficha de un material">
+    <figcaption>Ficha de un material, con su stock y su historial de movimientos.</figcaption>
+  </figure>
+
+  <p>Acá se ve de dónde salió cada unidad: cada entrada, cada salida, con fecha y quién la cargó.
+    Es lo que permite reconstruir una diferencia de inventario en vez de tener que adivinarla.</p>
+</section>
+
+<section>
+  <h2><span class="numero">4</span>Historial de movimientos</h2>
+  <p class="entrada">Todo lo que entró y salió del pañol, junto.</p>
+
+  <figure>
+    <img src="capturas/historial.png" alt="Historial de movimientos">
+    <figcaption>Historial general, con el tipo y el motivo de cada movimiento.</figcaption>
+  </figure>
+
+  <p>Lo mismo que la ficha de un material, pero de todos a la vez. Sirve para responder
+    "qué pasó esta semana" o "quién sacó esto".</p>
+
+  <table>
+    <tr><th>Tipo</th><th>Qué significa</th></tr>
+    <tr><td><strong>Entrada</strong></td><td>Llegó material. Casi siempre por una compra.</td></tr>
+    <tr><td><strong>Salida</strong></td><td>Se usó material, normalmente para un trabajo.</td></tr>
+    <tr><td><strong>Ajuste</strong></td><td>Se corrigió el stock al valor real contado en el estante.</td></tr>
+  </table>
+
+  <div class="nota">
+    <strong>Los movimientos no se borran</strong>
+    Si uno se carga mal, se edita y queda registrado que se editó, quién y cuándo. Borrar el error
+    dejaría el stock bien y la historia mal.
+  </div>
+</section>
+
+<section>
+  <h2><span class="numero">5</span>Nuevo movimiento</h2>
+  <p class="entrada">Cargar una entrada, una salida o un ajuste.</p>
+
+  <figure>
+    <img src="capturas/nuevo-movimiento.png" alt="Formulario de nuevo movimiento">
+    <figcaption>Formulario para registrar un movimiento de stock.</figcaption>
+  </figure>
+
+  <h3>Cómo se carga</h3>
+  <ul>
+    <li><strong>Material.</strong> Lo buscás por nombre. También podés escanear el QR de la caja con la pistola.</li>
+    <li><strong>Tipo.</strong> Entrada, salida o ajuste.</li>
+    <li><strong>Motivo.</strong> Por qué. Un ajuste va con motivo ajuste; una salida por trabajo, con motivo trabajo.</li>
+    <li><strong>Cantidad.</strong> Siempre en positivo. El sistema sabe si suma o resta según el tipo.</li>
+    <li><strong>Fecha.</strong> Opcional. Si se deja vacía, es hoy. Sirve para cargar algo de ayer.</li>
+    <li><strong>Notas.</strong> Opcional, pero es lo que dentro de un mes explica el movimiento.</li>
+  </ul>
+
+  <div class="nota">
+    <strong>El ajuste es distinto</strong>
+    Entrada y salida suman y restan. El ajuste <em>fija</em> el stock en el número que pongas,
+    porque es el resultado de haber contado. Por eso no se puede cargar un movimiento con fecha
+    anterior a un ajuste: quedaría sin efecto y el total mentiría.
+  </div>
+</section>
+
+<section>
+  <h2><span class="numero">6</span>Órdenes de compra</h2>
+  <p class="entrada">Lo que se le pide a un proveedor, desde que se arma hasta que llega.</p>
+
+  <figure>
+    <img src="capturas/ordenes-compra.png" alt="Listado de órdenes de compra">
+    <figcaption>Listado de órdenes, con su estado y el comprobante con el que llegaron.</figcaption>
+  </figure>
+
+  <h3>El circuito</h3>
+  <table>
+    <tr><th>Estado</th><th>Qué quiere decir</th></tr>
+    <tr><td><strong>Borrador</strong></td><td>Se está armando. Todavía se puede cambiar todo.</td></tr>
+    <tr><td><strong>Emitida</strong></td><td>Ya se le mandó al proveedor. Se espera la mercadería.</td></tr>
+    <tr><td><strong>Recibida</strong></td><td>Llegó. En ese momento el stock sube solo.</td></tr>
+    <tr><td><strong>Anulada</strong></td><td>No va más. Queda registrada, no se borra.</td></tr>
+  </table>
+</section>
+
+<section class="seguida">
+  <h3>Armar una orden</h3>
+  <figure>
+    <img src="capturas/orden-compra-nueva.png" alt="Nueva orden de compra">
+    <figcaption>Alta de una orden: proveedor y los materiales que se piden.</figcaption>
+  </figure>
+
+  <ul>
+    <li>Elegís el proveedor buscándolo por nombre o CUIT.</li>
+    <li>Agregás los materiales. Podés buscarlos por nombre <strong>o escanear el QR de la caja</strong>,
+      y en ese caso entran uno atrás del otro sin tocar el teclado.</li>
+    <li>Las cantidades y los precios se cargan en la tabla, y podés dejarlos para el final.</li>
+    <li>Al crearla, el sistema ofrece imprimir el PDF y mandárselo al proveedor.</li>
+  </ul>
+</section>
+
+<section class="seguida">
+  <h3>Recibir la mercadería</h3>
+  <figure>
+    <img src="capturas/orden-compra-detalle.png" alt="Detalle de una orden de compra">
+    <figcaption>Detalle de una orden, con sus renglones y el comprobante.</figcaption>
+  </figure>
+
+  <p>Cuando llega, se marca como recibida y se carga el número de remito o de factura. Ese número
+    es lo único que ata la entrada de stock al papel que quedó en la empresa: sin él, una
+    diferencia de inventario no se puede reconstruir.</p>
+  <p>También se le puede adjuntar la foto o el PDF del comprobante, y queda guardado con la orden.</p>
+
+  <div class="nota">
+    <strong>Recibir mueve el stock</strong>
+    No hay que cargar los movimientos a mano después. Al dar por recibida la orden, cada material
+    entra al pañol con su cantidad, y en el historial queda la referencia de la orden.
+  </div>
+</section>
+
+<section>
+  <h2><span class="numero">7</span>Proveedores</h2>
+  <p class="entrada">A quién se le compra.</p>
+
+  <figure>
+    <img src="capturas/proveedores.png" alt="Listado de proveedores">
+    <figcaption>Padrón de proveedores, con CUIT y datos de contacto.</figcaption>
+  </figure>
+
+  <p>Sirve para dos cosas. La primera es tener el contacto a mano. La segunda, más importante, es
+    que cada orden de compra se le carga a un proveedor, y así se puede preguntar cuánto se le
+    compró a cada uno.</p>
+  <p>El correo y el teléfono son los que el sistema usa para mandarle la orden, así que conviene
+    tenerlos cargados.</p>
+</section>
+
+<section>
+  <h2><span class="numero">8</span>Equipos</h2>
+  <p class="entrada">Las máquinas e instalaciones de la planta.</p>
+
+  <figure>
+    <img src="capturas/equipos.png" alt="Listado de equipos">
+    <figcaption>Listado de equipos, agrupados por tipo y ubicación.</figcaption>
+  </figure>
+
+  <p>Las 326 máquinas están clasificadas en 24 tipos: silos, bombas, motores, tableros, válvulas,
+    equipos de frío y demás. Eso es lo que permite filtrar y encontrar algo sin recorrer la lista
+    entera.</p>
+
+  <h3>Cómo se usa</h3>
+  <ul>
+    <li><strong>Los filtros de arriba</strong> son los de todos los días: tipo, estado y ubicación.</li>
+    <li><strong>Tocando cualquier fila</strong> se abre la ficha de esa máquina.</li>
+    <li><strong>Etiquetas QR.</strong> Imprime las etiquetas para pegar en las máquinas.</li>
+    <li><strong>Cargar fotos.</strong> Sube fotos en lote desde una carpeta.</li>
+  </ul>
+</section>
+
+<section class="seguida">
+  <h3>La ficha de una máquina</h3>
+  <figure>
+    <img src="capturas/equipo-ficha.png" alt="Ficha de un equipo">
+    <figcaption>Ficha completa: foto, datos, plan de mantenimiento, historial y órdenes de trabajo.</figcaption>
+  </figure>
+
+  <p>Es donde está todo lo de esa máquina:</p>
+  <ul>
+    <li><strong>La foto y los datos.</strong> Marca, modelo, número de serie, ubicación, garantía.</li>
+    <li><strong>Mantenimiento programado.</strong> Qué se le hace y cada cuánto. El sistema calcula la próxima fecha sola.</li>
+    <li><strong>Historial.</strong> Cada service o reparación que se le hizo, con su costo y las horas que estuvo parada.</li>
+    <li><strong>Órdenes de trabajo.</strong> Los trabajos que la nombraron, con los materiales que se usaron.</li>
+  </ul>
+
+  <div class="nota">
+    <strong>El QR de la máquina</strong>
+    Escaneando la etiqueta con el celular se abre esta ficha directamente. Sirve para estar parado
+    frente a la máquina y ver qué se le hizo la última vez.
+  </div>
+</section>
+
+<section>
+  <h2><span class="numero">9</span>Servicios</h2>
+  <p class="entrada">Los mantenimientos programados de toda la planta, juntos.</p>
+
+  <figure>
+    <img src="capturas/servicios.png" alt="Pantalla de servicios">
+    <figcaption>Servicios que vencen. Está vacía porque todavía no hay planes cargados.</figcaption>
+  </figure>
+
+  <p>Cada plan que se carga en la ficha de una máquina aparece acá. En vez de entrar equipo por
+    equipo a ver si toca el service, se mira esta pantalla.</p>
+  <p>Arriba se elige el plazo: esta semana, quince días, un mes o tres meses. No aparecen los
+    equipos fuera de servicio ni los dados de baja, porque no tiene sentido pedir un service para
+    algo desafectado.</p>
+  <p>Al registrar el trabajo en la ficha de la máquina, la próxima fecha se adelanta sola.</p>
+
+  <div class="nota">
+    <strong>Hoy está vacía, y tiene explicación</strong>
+    Ninguno de los 326 equipos tiene plan definido todavía. Hasta que se carguen, esta pantalla
+    no va a mostrar nada. También sale todos los días un correo con lo que vence en la semana y
+    lo que ya venció, y no se repite mientras no haya nada nuevo.
+  </div>
+</section>
+
+<section>
+  <h2><span class="numero">10</span>Equipos IT</h2>
+  <p class="entrada">Las computadoras, impresoras y teléfonos de la empresa.</p>
+
+  <figure>
+    <img src="capturas/equipos-it.png" alt="Listado de equipos de informática">
+    <figcaption>Equipos de informática, con a quién está asignado cada uno.</figcaption>
+  </figure>
+
+  <p>Está separado de Equipos a propósito: comparten la mitad de los campos pero no la otra mitad
+    ni quién los usa. Acá lo importante es a quién se le entregó cada cosa y desde cuándo.</p>
+  <p>Cuando un equipo cambia de manos, se registra la nueva asignación y la anterior queda en el
+    historial.</p>
+</section>
+
+<section>
+  <h2><span class="numero">11</span>Contraseñas</h2>
+  <p class="entrada">El baúl de credenciales de la empresa.</p>
+
+  <figure>
+    <img src="capturas/credenciales.png" alt="Pantalla de contraseñas">
+    <figcaption>Listado de credenciales, con cuándo toca rotar cada una.</figcaption>
+  </figure>
+
+  <p>Guarda las contraseñas de los sistemas, los correos y los servicios. Están cifradas: ni
+    entrando a la base de datos se pueden leer.</p>
+
+  <ul>
+    <li><strong>Ver el valor</strong> de una contraseña queda registrado: quién la miró y cuándo.</li>
+    <li><strong>Rotar.</strong> Cambiar una contraseña deja asentado el cambio, sin guardar la vieja.</li>
+    <li><strong>Vencimiento.</strong> Se puede marcar cada cuánto hay que cambiarla.</li>
+  </ul>
+
+  <div class="nota">
+    <strong>Solo el administrador</strong>
+    Este módulo no lo ve nadie más, y cada vez que se revela una contraseña queda el registro.
+  </div>
+</section>
+
+<section>
+  <h2><span class="numero">12</span>Órdenes de trabajo</h2>
+  <p class="entrada">Para qué se usó lo que salió del pañol.</p>
+
+  <figure>
+    <img src="capturas/ordenes-trabajo.png" alt="Listado de órdenes de trabajo">
+    <figcaption>Listado de órdenes de trabajo. Es un módulo nuevo y todavía no tiene órdenes cargadas.</figcaption>
+  </figure>
+
+  <p>Antes, una salida por trabajo era una fila de stock con una nota suelta, y ahí terminaba el
+    rastro. Nadie podía contestar cuánto costó en repuestos arreglar una bomba, ni en qué se
+    fueron diez metros de manguera. La orden de trabajo es donde esas dos preguntas se cruzan.</p>
+
+  <h3>Cómo funciona</h3>
+  <figure>
+    <img src="capturas/orden-trabajo-nueva.png" alt="Nueva orden de trabajo">
+    <figcaption>Alta de una orden: qué pasó, de qué tipo es, a quién se le asigna y sobre qué máquina.</figcaption>
+  </figure>
+
+  <ul>
+    <li><strong>Se abre la orden</strong> contando qué pasó, cuando arranca el trabajo.</li>
+    <li><strong>Se le asigna a alguien.</strong> Si no elegís a nadie, queda para vos. Solo esa
+      persona puede terminarla; los demás la ven pero no la tocan.</li>
+    <li><strong>Se le cargan los materiales</strong> a medida que se usan. Cada carga saca el
+      material del pañol de verdad, no anota un número al costado.</li>
+    <li><strong>Se cierra contando qué se hizo.</strong> Ese texto es obligatorio: es lo que va a
+      leer el próximo que agarre la máquina.</li>
+  </ul>
+
+  <div class="nota">
+    <strong>Hoy es solo del administrador</strong>
+    El módulo se apoya en los equipos, y mantenimiento todavía no tiene ese módulo. Cuando se les
+    abra Equipos, las órdenes de trabajo pasan a ser de ellos, que son quienes hacen el trabajo.
+  </div>
+</section>
+
+<section>
+  <h2><span class="numero">13</span>Usuarios y permisos</h2>
+  <p class="entrada">Quién entra al sistema y qué puede hacer.</p>
+
+  <figure>
+    <img src="capturas/usuarios.png" alt="Pantalla de usuarios">
+    <figcaption>Usuarios del sistema, con su rol.</figcaption>
+  </figure>
+
+  <p>Acá se da de alta a las personas y se les asigna el rol. El nombre que se le ponga es el que
+    va a aparecer en las órdenes de compra y en los movimientos que esa persona cargue.</p>
+
+  <figure>
+    <img src="capturas/permisos.png" alt="Pantalla de permisos">
+    <figcaption>Permisos por rol. Cada casilla se puede prender y apagar.</figcaption>
+  </figure>
+
+  <p>El rol no decide por sí mismo lo que se puede hacer: decide qué permisos tiene, y esos se
+    editan acá, uno por uno. Si mañana querés que mantenimiento pueda ver los equipos, se prende
+    esa casilla y listo, sin tocar el sistema.</p>
+
+  <div class="nota">
+    <strong>El administrador siempre tiene todo</strong>
+    Es lo que evita que una función nueva quede sin nadie que pueda usarla ni repartirla. Los
+    demás roles se configuran acá, y lo que se configura manda.
+  </div>
+</section>
+
+<section>
+  <h2><span class="numero">14</span>La pistola de códigos</h2>
+  <p class="entrada">Escanear en vez de buscar.</p>
+
+  <p>Cada caja del pañol y cada máquina tienen una etiqueta con código QR. La pistola no es una
+    cámara: para la computadora es un teclado, y escanear es como si alguien tecleara la dirección
+    muy rápido.</p>
+
+  <h3>Dónde sirve</h3>
+  <ul>
+    <li><strong>Armando una orden de compra.</strong> Escaneás las etiquetas de corrido y los
+      materiales entran uno atrás del otro. Después te sentás y cargás las cantidades.</li>
+    <li><strong>Cargando un movimiento.</strong> El material queda elegido sin buscarlo. Es la
+      pantalla que se usa parado frente al estante.</li>
+    <li><strong>En una orden de trabajo.</strong> Igual que arriba, con el repuesto en la mano.</li>
+    <li><strong>Con el celular.</strong> La cámara de cualquier teléfono abre la ficha del
+      material o de la máquina.</li>
+  </ul>
+
+  <div class="nota">
+    <strong>Si la pistola escribe raro</strong>
+    Si al escanear aparecen símbolos cambiados, es que su teclado quedó en inglés y Windows está
+    en español. Se arregla escaneando el código de configuración del manual de la pistola, el que
+    dice Español o Latinoamérica. El sistema entiende las dos formas igual, pero conviene
+    arreglarla para que el QR también abra la ficha.
+  </div>
+</section>
+
+<section>
+  <h2><span class="numero">15</span>Cosas que conviene saber</h2>
+
+  <h3>La primera pantalla del día tarda</h3>
+  <p>El servidor se duerme cuando nadie lo usa. La primera vez que alguien entra después de un
+    rato largo puede tardar hasta medio minuto en abrir. Las siguientes van normales. No es un
+    problema del sistema.</p>
+
+  <h3>Nada se borra solo</h3>
+  <p>Los movimientos, las órdenes y el historial quedan. Cuando algo se carga mal se corrige, y la
+    corrección también queda registrada. Es a propósito: un número que se puede arreglar sin dejar
+    rastro es un número en el que no se puede confiar.</p>
+
+  <h3>El stock sale de los movimientos</h3>
+  <p>Ningún stock se escribe a mano. Si el número no coincide con el estante, la forma correcta de
+    arreglarlo es un ajuste, que deja dicho que se contó y cuándo.</p>
+
+  <h3>Si algo no aparece</h3>
+  <p>Antes de pensar que se rompió, fijate si es un tema de permisos. Los botones que tu rol no
+    puede usar directamente no se muestran, para que nadie apriete algo que le va a rebotar.</p>
+</section>
+
+</body>
+</html>
