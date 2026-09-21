@@ -127,6 +127,19 @@ export function useReabrirOrdenTrabajo() {
   });
 }
 
+/**
+ * Borra la orden del sistema. Solo anda sobre una anulada que nunca movió
+ * stock; el backend rechaza el resto, que es donde vive esa regla.
+ */
+export function useEliminarOrdenTrabajo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiRequest(`/ordenes-trabajo/${id}`, { method: 'DELETE' }),
+    onSuccess: () => invalidarTodo(qc),
+  });
+}
+
 export function useAnularOrdenTrabajo() {
   const qc = useQueryClient();
   return useMutation({

@@ -215,6 +215,83 @@ describe('OrdenesTrabajoPage', () => {
   });
 });
 
+describe('eliminar una orden', () => {
+  /** Una orden anulada, que es la unica que se puede borrar. */
+  const anulada = { ...ORDEN, estado: 'ANULADA', motivoAnulacion: 'Era de prueba' };
+
+  const mockearAnulada = () => {
+    apiRequestMock.mockImplementation((rutaCruda: string, opciones?: { method?: string }) => {
+      const ruta = String(rutaCruda ?? '');
+      if (ruta.startsWith('/usuarios/me')) {
+        return Promise.resolve({ id: 'u1', nombre: 'Maximo', rol: 'ADMIN' });
+      }
+      if (ruta.startsWith('/permisos/mios')) return Promise.resolve({ rol: 'ADMIN', permisos });
+      if (opciones?.method === 'DELETE') return Promise.resolve(undefined);
+      if (/^\/ordenes-trabajo\/[^/]+$/.test(ruta)) {
+        return Promise.resolve({ ...anulada, resumen: { materialesDistintos: 1, unidadesTotales: 2 } });
+      }
+      if (ruta.startsWith('/ordenes-trabajo')) {
+        return Promise.resolve({ datos: [anulada], total: 1, pagina: 1, limite: 20 });
+      }
+      return Promise.resolve({ datos: [], total: 0, pagina: 1, limite: 20 });
+    });
+  };
+
+  it('el administrador puede borrar una orden anulada', async () => {
+    permisos = ['trabajos.ver', 'trabajos.editar', 'trabajos.eliminar'];
+    mockearAnulada();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    const usuario = userEvent.setup();
+    mostrar();
+    await usuario.click(await screen.findByRole('button', { name: /^ver$/i }));
+    await usuario.click(await screen.findByRole('button', { name: /^eliminar$/i }));
+
+    await waitFor(() => {
+      const borrado = apiRequestMock.mock.calls.find((c) => c[1]?.method === 'DELETE');
+      expect(borrado?.[0]).toContain('/ordenes-trabajo/');
+    });
+  });
+
+  it('REGRESION: sin confirmar no se borra nada', async () => {
+    // Es la unica accion del modulo que no deja rastro de lo que hubo.
+    permisos = ['trabajos.ver', 'trabajos.editar', 'trabajos.eliminar'];
+    mockearAnulada();
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    const usuario = userEvent.setup();
+    mostrar();
+    await usuario.click(await screen.findByRole('button', { name: /^ver$/i }));
+    await usuario.click(await screen.findByRole('button', { name: /^eliminar$/i }));
+
+    expect(apiRequestMock.mock.calls.filter((c) => c[1]?.method === 'DELETE')).toHaveLength(0);
+  });
+
+  it('REGRESION: sin el permiso de eliminar, el boton no esta', async () => {
+    // Mantenimiento abre, carga y cierra, pero no hace desaparecer ordenes.
+    permisos = ['trabajos.ver', 'trabajos.editar'];
+    mockearAnulada();
+
+    const usuario = userEvent.setup();
+    mostrar();
+    await usuario.click(await screen.findByRole('button', { name: /^ver$/i }));
+    await screen.findByText(/Era de prueba/);
+
+    expect(screen.queryByRole('button', { name: /^eliminar$/i })).not.toBeInTheDocument();
+  });
+
+  it('REGRESION: una orden abierta no ofrece eliminar', async () => {
+    // Borrar son dos pasos: primero anular, que pide el motivo.
+    permisos = ['trabajos.ver', 'trabajos.editar', 'trabajos.eliminar'];
+    const usuario = userEvent.setup();
+    mostrar();
+    await usuario.click(await screen.findByRole('button', { name: /^ver$/i }));
+    await screen.findByRole('heading', { name: /Orden OT-2026-0001/ });
+
+    expect(screen.queryByRole('button', { name: /^eliminar$/i })).not.toBeInTheDocument();
+  });
+});
+
 describe('TrabajosDelEquipo', () => {
   it('REGRESION: sin permiso de ver trabajos, la ficha del equipo no pide nada', async () => {
     // Pedirlo igual daria un 403 y una pantalla con un error rojo por una

@@ -28,6 +28,7 @@ export const P = {
   ORDENES_ENVIAR: 'ordenes.enviar',
   TRABAJOS_VER: 'trabajos.ver',
   TRABAJOS_EDITAR: 'trabajos.editar',
+  TRABAJOS_ELIMINAR: 'trabajos.eliminar',
   EQUIPOS_VER: 'equipos.ver',
   EQUIPOS_EDITAR: 'equipos.editar',
   SERVICIOS_VER: 'servicios.ver',

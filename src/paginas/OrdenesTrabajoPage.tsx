@@ -4,6 +4,7 @@ import {
   useCerrarOrdenTrabajo,
   useCrearOrdenTrabajo,
   useEditarOrdenTrabajo,
+  useEliminarOrdenTrabajo,
   useOrdenesTrabajo,
   useOrdenTrabajo,
   useQuitarMaterialUsado,
@@ -332,6 +333,7 @@ function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () => void 
   const cerrarOrden = useCerrarOrdenTrabajo();
   const reabrir = useReabrirOrdenTrabajo();
   const anular = useAnularOrdenTrabajo();
+  const eliminar = useEliminarOrdenTrabajo();
   const editar = useEditarOrdenTrabajo();
 
   const [material, setMaterial] = useState<Material | null>(null);
@@ -486,7 +488,31 @@ function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () => void 
           )}
 
           {orden.estado === 'ANULADA' && (
-            <p className="texto-suave">Anulada: {orden.motivoAnulacion}</p>
+            <>
+              <p className="texto-suave">Anulada: {orden.motivoAnulacion}</p>
+
+              {/* Borrar de verdad, y solo acá: una orden anulada nunca movió
+                  stock, así que no deja ninguna salida huérfana. El backend
+                  vuelve a comprobarlo, esto es solo no ofrecer lo imposible. */}
+              {puede(P.TRABAJOS_ELIMINAR) && (
+                <div className="acciones">
+                  {eliminar.error && <MensajeError error={eliminar.error} />}
+                  <button
+                    type="button"
+                    className="btn btn-peligro"
+                    disabled={eliminar.isPending}
+                    onClick={() => {
+                      if (!confirm(`¿Eliminar la orden ${orden.numero}? No se puede deshacer.`)) {
+                        return;
+                      }
+                      eliminar.mutate(id, { onSuccess: onCerrar });
+                    }}
+                  >
+                    {eliminar.isPending ? 'Eliminando…' : 'Eliminar'}
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           {editable && (
