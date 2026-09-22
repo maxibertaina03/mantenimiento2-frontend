@@ -42,6 +42,14 @@ const ORDEN = {
   equipoNombre: null,
   equipoCodigo: null,
   abiertaEn: '2026-09-21T10:00:00.000Z',
+  fecha: '2026-09-21T10:00:00.000Z',
+  ejecutor: 'INTERNO',
+  proveedorId: null,
+  proveedorNombre: null,
+  costoManoObra: null,
+  horasParada: null,
+  planId: null,
+  planNombre: null,
   abiertaPorId: 'u1',
   abiertaPorNombre: 'Facundo',
   asignadoAId: 'u1',
@@ -445,7 +453,7 @@ describe('TrabajosDelEquipo', () => {
     render(
       <QueryClientProvider client={qc}>
         <MemoryRouter>
-          <TrabajosDelEquipo equipoId="eq-7" />
+          <TrabajosDelEquipo equipoId="eq-7" equipoNombre="Bomba recibo 7" />
         </MemoryRouter>
       </QueryClientProvider>,
     );
@@ -465,12 +473,106 @@ describe('TrabajosDelEquipo', () => {
     render(
       <QueryClientProvider client={qc}>
         <MemoryRouter>
-          <TrabajosDelEquipo equipoId="eq-7" />
+          <TrabajosDelEquipo equipoId="eq-7" equipoNombre="Bomba recibo 7" />
         </MemoryRouter>
       </QueryClientProvider>,
     );
 
     expect(await screen.findByText('OT-2026-0001')).toBeInTheDocument();
     expect(screen.getByText(/Reten 40x72x10 \(2 u\)/)).toBeInTheDocument();
+  });
+});
+
+describe('registrar un trabajo desde la ficha de una maquina', () => {
+  const abrirFormulario = async (usuario: ReturnType<typeof userEvent.setup>) => {
+    const { RegistrarTrabajoEquipo } = await import('@/componentes/RegistrarTrabajoEquipo');
+    const qc = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter>
+          <RegistrarTrabajoEquipo
+            equipoId="eq-7"
+            equipoNombre="Bomba recibo 7"
+            planes={[{ id: 'plan-1', nombre: 'Cambio de aceite' }]}
+            onCerrar={() => {}}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    return usuario;
+  };
+
+  it('manda la resolucion, que es lo que hace que nazca cerrada', async () => {
+    // Es el punto del cambio: desde la ficha se registra un hecho consumado en
+    // un paso, y sale una orden de trabajo ya cerrada.
+    const usuario = userEvent.setup();
+    await abrirFormulario(usuario);
+
+    await usuario.click(screen.getByLabelText(/Qué pasó/i));
+    await usuario.paste('Perdida por el sello');
+    await usuario.click(screen.getByLabelText(/Qué se hizo/i));
+    await usuario.paste('Se cambio el sello');
+    await usuario.click(screen.getByRole('button', { name: /registrar trabajo/i }));
+
+    await waitFor(() => {
+      const alta = apiRequestMock.mock.calls.find(
+        (c) => c[0] === '/ordenes-trabajo' && c[1]?.method === 'POST',
+      );
+      expect(alta?.[1].body).toMatchObject({
+        titulo: 'Perdida por el sello',
+        resolucion: 'Se cambio el sello',
+        equipoId: 'eq-7',
+      });
+    });
+  });
+
+  it('REGRESION: sin contar que se hizo no se puede registrar', async () => {
+    // Sin ese texto queda el mismo vacio que habia antes: se sabe que material
+    // salio pero no para que sirvio.
+    const usuario = userEvent.setup();
+    await abrirFormulario(usuario);
+
+    await usuario.click(screen.getByLabelText(/Qué pasó/i));
+    await usuario.paste('Algo se rompio');
+
+    expect(screen.getByRole('button', { name: /registrar trabajo/i })).toBeDisabled();
+  });
+
+  it('los datos de costo estan plegados hasta que se piden', async () => {
+    // El que solo anota que cambio un reten no tiene que encontrarse con diez
+    // campos.
+    const usuario = userEvent.setup();
+    await abrirFormulario(usuario);
+
+    expect(screen.queryByLabelText(/Costo de mano de obra/i)).not.toBeInTheDocument();
+
+    await usuario.click(screen.getByRole('button', { name: /más datos/i }));
+
+    expect(screen.getByLabelText(/Costo de mano de obra/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Horas de parada/i)).toBeInTheDocument();
+  });
+
+  it('REGRESION: un service externo exige decir que proveedor', async () => {
+    // Sin eso no se podria contestar cuanto se gasto con cada proveedor.
+    const usuario = userEvent.setup();
+    await abrirFormulario(usuario);
+
+    await usuario.click(screen.getByLabelText(/Qué pasó/i));
+    await usuario.paste('Service de caldera');
+    await usuario.click(screen.getByLabelText(/Qué se hizo/i));
+    await usuario.paste('Vino el service anual');
+    await usuario.click(screen.getByRole('button', { name: /más datos/i }));
+    await usuario.selectOptions(screen.getByLabelText(/Quién lo hizo/i), 'EXTERNO');
+
+    expect(screen.getByRole('button', { name: /registrar trabajo/i })).toBeDisabled();
+  });
+
+  it('ofrece el plan de mantenimiento de esa maquina', async () => {
+    const usuario = userEvent.setup();
+    await abrirFormulario(usuario);
+
+    expect(screen.getByRole('option', { name: 'Cambio de aceite' })).toBeInTheDocument();
   });
 });

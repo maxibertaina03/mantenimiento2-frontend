@@ -4,6 +4,7 @@ import { clavesMateriales } from './materiales';
 import type { RespuestaPaginada } from '@/tipos/comunes';
 import type {
   UsuarioAsignable,
+  CerrarOrdenTrabajoInput,
   CrearOrdenTrabajoInput,
   FiltrosOrdenesTrabajo,
   OrdenTrabajo,
@@ -139,10 +140,10 @@ export function useQuitarMaterialUsado() {
 export function useCerrarOrdenTrabajo() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, resolucion }: { id: string; resolucion: string }) =>
+    mutationFn: ({ id, ...cierre }: { id: string } & CerrarOrdenTrabajoInput) =>
       apiRequest<OrdenTrabajo>(`/ordenes-trabajo/${id}/cerrar`, {
         method: 'POST',
-        body: { resolucion },
+        body: cierre,
       }),
     onSuccess: () => invalidarTodo(qc),
   });

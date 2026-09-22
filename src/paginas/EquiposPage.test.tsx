@@ -21,7 +21,6 @@ vi.mock('@/lib/apiClient', () => ({
 }));
 
 vi.mock('@/componentes/FotoEquipo', () => ({ FotoEquipo: () => null }));
-vi.mock('@/componentes/HistorialEquipo', () => ({ HistorialEquipo: () => null }));
 vi.mock('@/componentes/PlanesEquipo', () => ({
   PlanesEquipo: () => null,
   textoVencimiento: () => '',

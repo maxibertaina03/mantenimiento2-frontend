@@ -9,12 +9,11 @@ import {
   useEquipos,
 } from '@/api/equipos';
 import { useCatalogoEquipos } from '@/api/catalogosEquipo';
-import { useResumenEquipos } from '@/api/equipos';
+import { usePlanesDeEquipo, useResumenEquipos } from '@/api/equipos';
 import { AccionesFila } from '@/componentes/AccionesFila';
 import { CampoNumero } from '@/componentes/CampoNumero';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { FotoEquipo } from '@/componentes/FotoEquipo';
-import { HistorialEquipo } from '@/componentes/HistorialEquipo';
 import { TrabajosDelEquipo } from '@/componentes/TrabajosDelEquipo';
 import { PlanesEquipo } from '@/componentes/PlanesEquipo';
 import { ImportarEquiposPlanta } from '@/componentes/ImportarEquiposPlanta';
@@ -392,6 +391,9 @@ function FichaEquipo({ equipo, onCerrar }: { equipo: Equipo; onCerrar: () => voi
   // Si el servidor no tiene almacén, no se ofrece cargar fotos: prometer algo
   // que va a fallar es peor que no ofrecerlo.
   const almacen = useAlmacenDisponible();
+  // Los planes se traen acá y se pasan abajo, para que el formulario de un
+  // trabajo pueda decir a cual responde sin volver a pedirlos.
+  const planes = usePlanesDeEquipo(equipo.id);
 
   const dato = (etiqueta: string, valor: string | null | undefined) => (
     <div className="dato">
@@ -438,9 +440,15 @@ function FichaEquipo({ equipo, onCerrar }: { equipo: Equipo; onCerrar: () => voi
 
         <PlanesEquipo equipo={equipo} />
 
-        <HistorialEquipo equipo={equipo} />
-
-        <TrabajosDelEquipo equipoId={equipo.id} />
+        {/* Un solo historial. Antes habia dos —las intervenciones y las
+            ordenes de trabajo— que contestaban la misma pregunta, y para saber
+            cuanto costo mantener algo habia que sumar dos listas. */}
+        <TrabajosDelEquipo
+          equipoId={equipo.id}
+          equipoNombre={equipo.nombre}
+          planes={(planes.data ?? []).map((p) => ({ id: p.id, nombre: p.nombre }))}
+          permiteNuevos={equipo.estado !== 'DADO_DE_BAJA'}
+        />
 
         <p className="texto-suave texto-chico">
           {almacen.data?.disponible === false && 'La carga de fotos no está configurada. '}
