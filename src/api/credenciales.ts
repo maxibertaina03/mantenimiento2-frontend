@@ -67,8 +67,19 @@ export const clavesCredenciales = {
   historial: (id: string) => ['credenciales', 'historial', id] as const,
 };
 
-export function useCredenciales(pagina = 1, limite = 20, filtros: FiltrosCredenciales = {}) {
+/**
+ * `habilitado` existe porque un hook no se puede llamar condicionalmente: sin
+ * esto, una pantalla que no tiene permiso para ver credenciales igual saldría a
+ * pedirlas y se comería un 403 que se muestra como un error rojo.
+ */
+export function useCredenciales(
+  pagina = 1,
+  limite = 20,
+  filtros: FiltrosCredenciales = {},
+  habilitado = true,
+) {
   return useQuery({
+    enabled: habilitado,
     queryKey: clavesCredenciales.lista(pagina, filtros),
     queryFn: () =>
       apiRequest<RespuestaPaginada<Credencial>>('/credenciales', {

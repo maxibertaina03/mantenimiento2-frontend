@@ -15,6 +15,7 @@ import {
   RotarCredencial,
   VerSecreto,
 } from '@/componentes/AccionesCredencial';
+import { useEquipos as useEquiposIt } from '@/api/equiposIt';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
 
@@ -41,6 +42,8 @@ interface FormCredencial {
   url: string;
   notas: string;
   rotarCadaDias: string;
+  /** A qué equipo de IT pertenece. Vacío es "no es de ninguno". */
+  equipoItId: string;
 }
 
 const FORM_VACIO: FormCredencial = {
@@ -51,6 +54,7 @@ const FORM_VACIO: FormCredencial = {
   url: '',
   notas: '',
   rotarCadaDias: '',
+  equipoItId: '',
 };
 
 /**
@@ -66,6 +70,7 @@ export function CredencialesPage() {
   const [busqueda, setBusqueda] = useState('');
   const [tipo, setTipo] = useState<TipoCredencial | ''>('');
   const [rotacion, setRotacion] = useState<FiltrosCredenciales['rotacion']>('');
+  const [equipoIt, setEquipoIt] = useState('');
   const [verInactivas, setVerInactivas] = useState(false);
   const [pagina, setPagina] = useState(1);
 
@@ -81,6 +86,7 @@ export function CredencialesPage() {
     buscar: busqueda,
     tipo,
     rotacion,
+    equipoItId: equipoIt || undefined,
     mostrar: verInactivas ? 'todas' : 'activas',
   };
   const { data, isLoading, error, isFetching } = useCredenciales(pagina, LIMITE, filtros);
@@ -88,6 +94,14 @@ export function CredencialesPage() {
   const crear = useCrearCredencial();
   const actualizar = useActualizarCredencial();
   const eliminar = useEliminarCredencial();
+
+  /**
+   * El padón de equipos de IT, para el selector y el filtro.
+   *
+   * Son 65: entran de una y se pueden mostrar en un desplegable común. Si
+   * algún día fueran cientos, esto tendría que pasar a ser un buscador.
+   */
+  const equiposIt = useEquiposIt(1, 200);
 
   const [form, setForm] = useState<FormCredencial | null>(null);
   const [editando, setEditando] = useState<Credencial | null>(null);
@@ -113,6 +127,7 @@ export function CredencialesPage() {
       url: c.url ?? '',
       notas: c.notas ?? '',
       rotarCadaDias: c.rotarCadaDias ? String(c.rotarCadaDias) : '',
+      equipoItId: c.equipoItId ?? '',
     });
   };
 
@@ -125,6 +140,10 @@ export function CredencialesPage() {
       url: form.url.trim() || undefined,
       notas: form.notas.trim() || undefined,
       rotarCadaDias: form.rotarCadaDias ? Number(form.rotarCadaDias) : undefined,
+      // `null` y no `undefined` cuando está vacío: así se puede despegar una
+      // credencial del equipo al que dejó de pertenecer. `undefined` seria
+      // "no lo toques", que no es lo mismo.
+      equipoItId: form.equipoItId || null,
     };
 
     if (editando) await actualizar.mutateAsync({ id: editando.id, ...comun });
@@ -205,6 +224,26 @@ export function CredencialesPage() {
             <option value="pendiente">Hay que cambiarlas</option>
             <option value="vencida">Vencidas</option>
             <option value="por-vencer">Vencen esta semana</option>
+          </select>
+        </div>
+
+        <div className="campo">
+          <label>Equipo</label>
+          <select
+            value={equipoIt}
+            onChange={(e) => {
+              setEquipoIt(e.target.value);
+              setPagina(1);
+            }}
+          >
+            <option value="">Todos</option>
+            {(equiposIt.data?.datos ?? []).map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.codigoInterno ? `${e.codigoInterno} · ` : ''}
+                {e.tipoNombre ?? 'Equipo'}
+                {e.responsableNombre ? ` — ${e.responsableNombre}` : ''}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -414,6 +453,30 @@ export function CredencialesPage() {
                   Vacío es sin vencimiento. No todo acceso necesita cambiarse.
                 </span>
               </div>
+            </div>
+
+            {/* Muchas claves son de una maquina concreta: el inicio de sesion
+                de una PC, el ingreso a una grabadora. Atarlas al equipo hace
+                que despues aparezcan en su ficha, que es donde alguien las va
+                a buscar. Las casillas de correo no son de ninguna maquina, y
+                por eso esto es opcional. */}
+            <div className="campo">
+              <label>Equipo de informatica</label>
+              <select
+                value={form.equipoItId}
+                onChange={(e) => setForm({ ...form, equipoItId: e.target.value })}
+              >
+                <option value="">No es de ningún equipo</option>
+                {(equiposIt.data?.datos ?? []).map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.codigoInterno ? `${e.codigoInterno} · ` : ''}
+                    {e.tipoNombre ?? 'Equipo'}
+                    {e.marcaNombre ? ` ${e.marcaNombre}` : ''}
+                    {e.modeloNombre ? ` ${e.modeloNombre}` : ''}
+                    {e.responsableNombre ? ` — ${e.responsableNombre}` : ''}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="campo">

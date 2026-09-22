@@ -17,6 +17,7 @@ import {
 } from '@/api/catalogosEquipo';
 import { useCrearResponsable, useResponsables } from '@/api/responsables';
 import { AccionesFila } from '@/componentes/AccionesFila';
+import { CredencialesDelEquipo } from '@/componentes/CredencialesDelEquipo';
 import { ResponsablesEquipo } from '@/componentes/ResponsablesEquipo';
 import { SelectorCatalogo } from '@/componentes/SelectorCatalogo';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
@@ -806,6 +807,13 @@ function ModalDetalleEquipo({
             ))}
           </ul>
         )}
+
+        {/* Muchas de estas maquinas tienen clave de ingreso: el inicio de
+            sesion de la PC, el acceso a una grabadora. Aca se ven las que le
+            pertenecen, que es donde alguien parado frente al equipo las va a
+            buscar. Los valores no: para eso hay que pedirlos desde el baul y
+            queda registrado quien los miro. */}
+        <CredencialesDelEquipo equipoItId={equipo.id} />
 
         {eliminar.error && <MensajeError error={eliminar.error} />}
 
