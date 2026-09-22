@@ -783,18 +783,22 @@ button.combo-item:hover {
   padding-bottom: 0.3rem;
 }
 
-/* Filtros: buscador ancho + selects que no se estiran de más. */
+/* Filtros: buscador ancho + selects que no se estiran de más.
+   Van con `>` a propósito. Sin eso, la regla también alcanzaba a los <select>
+   metidos adentro de un .campo de un formulario, y ahí el `flex-basis` deja de
+   significar ancho: el label de un modal es flex en COLUMNA, así que 190px
+   pasaban a ser 190px de ALTO. El desplegable quedaba del tamaño de una tarjeta. */
 .grilla-filtros {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
   margin-bottom: 1rem;
 }
-.grilla-filtros input[type='search'] {
+.grilla-filtros > input[type='search'] {
   flex: 1 1 260px;
   min-width: 0;
 }
-.grilla-filtros select {
+.grilla-filtros > select {
   flex: 0 1 190px;
 }
 
@@ -968,8 +972,8 @@ button.combo-item:hover {
   .grilla-filtros {
     flex-direction: column;
   }
-  .grilla-filtros input[type='search'],
-  .grilla-filtros select {
+  .grilla-filtros > input[type='search'],
+  .grilla-filtros > select {
     flex: 1 1 auto;
     width: 100%;
   }
