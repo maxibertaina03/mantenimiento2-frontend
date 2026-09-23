@@ -6,6 +6,7 @@ import { Cargando } from '@/componentes/Estados';
 import { textoVencimiento } from '@/componentes/PlanesEquipo';
 import { formatearNumero } from '@/lib/formato';
 import { ETIQUETA_ESTADO_EQUIPO } from '@/tipos/equipo';
+import { MisTareasDeHoy } from '@/componentes/MisTareasDeHoy';
 import { P, usePuede } from '@/lib/permisos';
 
 /** Cuántas filas se listan antes de mandar a la pantalla completa. */
@@ -76,6 +77,10 @@ export function InicioPage() {
       <div className="cabecera-pagina">
         <h1>Hoy</h1>
       </div>
+
+      {/* Primero lo que le toca a uno. Es el aviso de verdad: el correo puede
+          rebotar, esto se ve siempre que alguien entre. */}
+      <MisTareasDeHoy />
 
       {nadaQueHacer && (
         <div className="panel">

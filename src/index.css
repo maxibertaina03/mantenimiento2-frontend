@@ -1629,3 +1629,147 @@ button {
 .lista-simple li:last-child {
   border-bottom: none;
 }
+
+/* ─────────── Calendario ─────────── */
+
+.barra-calendario {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.8rem;
+}
+
+/* Siete columnas iguales. `minmax(0,1fr)` y no `1fr`: los items de grid traen
+   min-width auto y un titulo largo ensancharia su columna, desalineando la
+   semana entera. */
+.calendario {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--color-borde);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  overflow: hidden;
+}
+.calendario-cabecera {
+  background: var(--color-panel);
+  padding: 0.4rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--color-texto-suave);
+}
+.calendario-dia {
+  background: var(--color-panel);
+  min-height: 92px;
+  padding: 0.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.calendario-dia.otro-mes {
+  background: var(--color-fondo);
+}
+.calendario-dia.otro-mes .calendario-numero {
+  opacity: 0.45;
+}
+.calendario-dia.es-hoy {
+  box-shadow: inset 0 0 0 2px var(--color-primario);
+}
+.calendario-numero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--color-texto-suave);
+}
+.calendario-agregar {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-primario);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 0.2rem;
+  opacity: 0;
+}
+/* El «+» aparece al pasar por encima: siete por semana siempre visibles son
+   cuarenta y dos botones compitiendo con el contenido. */
+.calendario-dia:hover .calendario-agregar {
+  opacity: 1;
+}
+.calendario-tarea {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-left: 3px solid var(--color-primario);
+  background: var(--color-fondo);
+  border-radius: 4px;
+  padding: 0.25rem 0.35rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+}
+.calendario-tarea:hover {
+  filter: brightness(0.97);
+}
+.calendario-tarea-titulo {
+  display: block;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.calendario-tarea.estado-hecha {
+  border-left-color: var(--color-exito);
+  opacity: 0.6;
+}
+.calendario-tarea.estado-hecha .calendario-tarea-titulo {
+  text-decoration: line-through;
+}
+.calendario-tarea.estado-cancelada {
+  border-left-color: var(--color-texto-suave);
+  opacity: 0.45;
+}
+
+/* ─────────── Impresión ─────────── */
+
+.solo-imprimir {
+  display: none;
+}
+
+@media print {
+  /* Fuera todo lo que no es el calendario: el menú, los botones, los filtros. */
+  .no-imprimir,
+  .barra-lateral,
+  nav,
+  .btn {
+    display: none !important;
+  }
+  .solo-imprimir {
+    display: block;
+  }
+  body,
+  .pagina {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+  /* Que ninguna casilla se parta entre dos hojas. */
+  .calendario-dia {
+    break-inside: avoid;
+    min-height: 70px;
+  }
+  .calendario-tarea {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-left-width: 3px;
+  }
+  /* Impreso no hay hover, así que el título completo importa más que la
+     alineación: una tarea cortada en el papel no se puede desplegar. */
+  .calendario-tarea-titulo {
+    white-space: normal;
+  }
+}
