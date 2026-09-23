@@ -81,3 +81,32 @@ describe('DatoFicha', () => {
     expect(screen.getByText('0')).toBeInTheDocument();
   });
 });
+
+describe('AccionesFila — sacar de circulacion', () => {
+  it('REGRESION: ofrece jubilar, que antes no estaba en ninguna parte', async () => {
+    // El boton de eliminar respondia "tiene movimientos, desactivalo", y
+    // desactivar no existia en la pantalla: el mensaje mandaba a un callejon.
+    const jubilar = vi.fn();
+    const usuario = userEvent.setup();
+    render(<AccionesFila descripcion="Reten 40x72x10" onJubilar={jubilar} />);
+
+    await usuario.click(screen.getByRole('button', { name: /Sacar Reten 40x72x10 de circulaci/i }));
+
+    expect(jubilar).toHaveBeenCalled();
+  });
+
+  it('si ya esta jubilado, ofrece devolverlo', async () => {
+    render(<AccionesFila descripcion="Reten 40x72x10" jubilado onJubilar={vi.fn()} />);
+
+    expect(
+      screen.getByRole('button', { name: /Devolver Reten 40x72x10 a circulaci/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Sacar/i })).not.toBeInTheDocument();
+  });
+
+  it('sin onJubilar no aparece el boton', () => {
+    // No toda fila tiene algo que jubilar.
+    render(<AccionesFila descripcion="Algo" onEditar={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: /circulaci/i })).not.toBeInTheDocument();
+  });
+});

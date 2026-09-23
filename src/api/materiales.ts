@@ -180,6 +180,23 @@ export function useCrearMaterial() {
   });
 }
 
+/**
+ * Saca un material de circulación, o lo devuelve.
+ *
+ * Aparte de `useActualizarMaterial` porque aquel fija el id al crearse, y acá
+ * el id sale de la fila que se toca. Además deja el nombre de la intención en
+ * el código: quien lee "jubilar" entiende qué pasa; quien lee "actualizar con
+ * activo en false", no tanto.
+ */
+export function useJubilarMaterial() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, activo }: { id: string; activo: boolean }) =>
+      apiRequest<Material>(`/materiales/${id}`, { method: 'PATCH', body: { activo } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesMateriales.base }),
+  });
+}
+
 export function useActualizarMaterial(id: string) {
   const qc = useQueryClient();
   return useMutation({

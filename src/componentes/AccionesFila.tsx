@@ -4,6 +4,16 @@ interface Props {
   onVer?: () => void;
   onEditar?: () => void;
   onEliminar?: () => void;
+  /**
+   * Sacar de circulación o devolver, cuando la cosa tiene historial y borrarla
+   * se lo llevaría puesto.
+   *
+   * Existe porque sin esto no había salida: el botón de eliminar respondía
+   * "tiene movimientos, desactivalo", y desactivar no estaba en ninguna parte.
+   */
+  onJubilar?: () => void;
+  /** Si ya está fuera de circulación, el botón ofrece devolverla. */
+  jubilado?: boolean;
 }
 
 /**
@@ -14,7 +24,14 @@ interface Props {
  * ícono solo no dice nada a un lector de pantalla, y el title da el tooltip en
  * escritorio.
  */
-export function AccionesFila({ descripcion, onVer, onEditar, onEliminar }: Props) {
+export function AccionesFila({
+  descripcion,
+  onVer,
+  onEditar,
+  onEliminar,
+  onJubilar,
+  jubilado = false,
+}: Props) {
   return (
     <div className="acciones-fila">
       {onVer && (
@@ -37,6 +54,21 @@ export function AccionesFila({ descripcion, onVer, onEditar, onEliminar }: Props
           title="Editar"
         >
           ✏️
+        </button>
+      )}
+      {onJubilar && (
+        <button
+          type="button"
+          className="btn btn-icono"
+          onClick={onJubilar}
+          aria-label={
+            jubilado
+              ? `Devolver ${descripcion} a circulación`
+              : `Sacar ${descripcion} de circulación`
+          }
+          title={jubilado ? 'Devolver a circulación' : 'Sacar de circulación'}
+        >
+          {jubilado ? '↺' : '⏏'}
         </button>
       )}
       {onEliminar && (

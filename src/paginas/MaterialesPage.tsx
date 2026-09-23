@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { obtenerTodosLosMateriales, useEliminarMaterial, useMateriales } from '@/api/materiales';
+import {
+  obtenerTodosLosMateriales,
+  useEliminarMaterial,
+  useJubilarMaterial,
+  useMateriales,
+} from '@/api/materiales';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { AccionesFila } from '@/componentes/AccionesFila';
 import { CategoriasMaterial } from '@/componentes/CategoriasMaterial';
@@ -22,6 +27,7 @@ const LIMITE = 20;
 export function MaterialesPage() {
   const navegar = useNavigate();
   const eliminar = useEliminarMaterial();
+  const jubilar = useJubilarMaterial();
   const [buscar, setBuscar] = useState('');
   const [busquedaDebounced, setBusquedaDebounced] = useState('');
   const [pagina, setPagina] = useState(1);
@@ -214,8 +220,20 @@ export function MaterialesPage() {
                 <td className="celda-acciones" onClick={(e) => e.stopPropagation()}>
                   <AccionesFila
                     descripcion={m.nombre}
+                    jubilado={!m.activo}
                     onVer={() => navegar(`/materiales/${m.id}`)}
                     onEditar={() => setEditando(m)}
+                    onJubilar={() => {
+                      // Lo que hay que hacer con casi todo lo que ya se usó:
+                      // sale de las listas y el historial queda.
+                      const aviso = m.activo
+                        ? `¿Sacar "${m.nombre}" de circulación?
+
+Deja de aparecer al cargar ` +
+                          'movimientos y órdenes, pero se conserva todo lo registrado.'
+                        : `¿Devolver "${m.nombre}" a circulación?`;
+                      if (confirm(aviso)) jubilar.mutate({ id: m.id, activo: !m.activo });
+                    }}
                     onEliminar={() => {
                       if (confirm(`¿Eliminar el material "${m.nombre}"?`)) eliminar.mutate(m.id);
                     }}
