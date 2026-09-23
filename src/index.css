@@ -35,13 +35,23 @@ a:hover {
   text-decoration: underline;
 }
 
+/* Los titulos llevan mas peso del que trae el navegador. Con un sistema de
+   pantallas parecidas entre si, el titulo es lo que le dice a alguien donde
+   esta parado, y a 700 competia con el texto normal. */
 h1 {
-  font-size: 1.5rem;
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
   margin: 0 0 0.25rem;
 }
 h2 {
   font-size: 1.15rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
   margin: 0 0 0.75rem;
+}
+h3 {
+  font-weight: 700;
 }
 
 /* ── Layout ── */
@@ -66,6 +76,7 @@ h2 {
   padding: 0.55rem 0.75rem;
   border-radius: var(--radio);
   color: var(--color-texto);
+  font-weight: 600;
   margin-bottom: 0.25rem;
 }
 .sidebar nav a.activo {
@@ -271,10 +282,14 @@ h2 {
   border-bottom: 1px solid var(--color-borde);
 }
 .tabla th {
-  background: #f9fafb;
-  font-weight: 600;
-  color: var(--color-texto-suave);
-  font-size: 0.8rem;
+  background: #f3f5f8;
+  /* Antes era gris claro a 600 y quedaba mas apagado que el contenido, asi que
+     costaba encontrar la columna. En mayusculas chicas hace falta separar las
+     letras o se empastan. */
+  font-weight: 700;
+  color: var(--color-texto);
+  font-size: 0.76rem;
+  letter-spacing: 0.045em;
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
@@ -779,8 +794,13 @@ button.combo-item:hover {
 .subtitulo-form {
   margin: 1.1rem 0 0.5rem;
   font-size: 0.95rem;
+  font-weight: 700;
   border-bottom: 1px solid var(--color-borde, #e5e7eb);
   padding-bottom: 0.3rem;
+  /* Una barrita del color de la marca al costado. Ubica las secciones de un
+     vistazo sin agregar otra linea ni otro recuadro. */
+  border-left: 3px solid var(--color-primario);
+  padding-left: 0.55rem;
 }
 
 /* Filtros: buscador ancho + selects que no se estiran de más.
@@ -858,9 +878,11 @@ button.combo-item:hover {
   min-width: 104px;
 }
 .tarjeta-numero {
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 800;
   line-height: 1.1;
+  /* El numero es el dato; la etiqueta de abajo solo lo explica. */
+  color: var(--color-primario);
 }
 
 /* Ficha de datos (detalle de equipo / orden) */
@@ -1741,35 +1763,71 @@ button {
 }
 
 @media print {
-  /* Fuera todo lo que no es el calendario: el menú, los botones, los filtros. */
+  /* Horizontal: un calendario son siete columnas, y en vertical cada dia queda
+     tan angosto que los titulos no entran. */
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+
+  /* Fuera todo lo que no es el calendario. La barra lateral tiene que irse por
+     su clase: es un <aside>, no un <nav>, y ademas trae el logo y el usuario. */
+  .sidebar,
+  .barra-movil,
+  .overlay,
   .no-imprimir,
-  .barra-lateral,
-  nav,
   .btn {
     display: none !important;
   }
+
   .solo-imprimir {
     display: block;
   }
+
+  /* El layout es flex con la barra al costado: sacada la barra, el contenido
+     tiene que ocupar la hoja entera en vez de quedar con su padding de
+     pantalla. */
+  html,
   body,
+  .app,
+  .contenido,
   .pagina {
+    display: block;
     margin: 0;
     padding: 0;
+    width: 100%;
+    max-width: none;
+    min-height: 0;
     background: #fff;
+    color: #000;
   }
+
+  .solo-imprimir {
+    margin: 0 0 4mm;
+    font-size: 13pt;
+  }
+
   /* Que ninguna casilla se parta entre dos hojas. */
   .calendario-dia {
     break-inside: avoid;
-    min-height: 70px;
+    min-height: 26mm;
   }
   .calendario-tarea {
     background: #fff;
-    border: 1px solid #ccc;
+    border: 1px solid #999;
     border-left-width: 3px;
   }
-  /* Impreso no hay hover, así que el título completo importa más que la
-     alineación: una tarea cortada en el papel no se puede desplegar. */
+  /* Impreso no hay hover, asi que el titulo completo importa mas que la
+     alineacion: una tarea cortada en el papel no se puede desplegar. */
   .calendario-tarea-titulo {
     white-space: normal;
+  }
+
+  /* Los colores de fondo no se imprimen si el navegador no los pide. */
+  .calendario,
+  .calendario-cabecera,
+  .calendario-dia {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
