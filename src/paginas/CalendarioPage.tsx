@@ -14,6 +14,18 @@ import { ETIQUETA_ESTADO_TAREA } from '@/tipos/tarea';
 import type { Tarea } from '@/tipos/tarea';
 
 const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+/**
+ * Cuántas tareas se muestran en la casilla antes de resumir el resto.
+ *
+ * Sin tope, un solo día con seis tareas estira toda la semana y deja los otros
+ * seis días como huecos enormes. Con tope, las casillas quedan parejas y el
+ * calendario se lee de un vistazo, que es para lo que sirve.
+ *
+ * **Al imprimir no hay tope**: en el papel no se puede hacer clic en "ver
+ * todas", así que salen todas (ver `@media print` en index.css).
+ */
+const TAREAS_VISIBLES = 3;
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
@@ -65,6 +77,8 @@ export function CalendarioPage() {
   const [soloMias, setSoloMias] = useState(false);
   const [tareaAbierta, setTareaAbierta] = useState<Tarea | null>(null);
   const [diaElegido, setDiaElegido] = useState<string | null>(null);
+  /** El día cuyo detalle se está mirando, con todas sus tareas. */
+  const [diaDetalle, setDiaDetalle] = useState<string | null>(null);
   const [verRutinas, setVerRutinas] = useState(false);
 
   const dias = useMemo(() => diasDelMes(ancla), [ancla]);
@@ -228,9 +242,14 @@ export function CalendarioPage() {
                 'calendario-dia',
                 delMes ? '' : 'otro-mes',
                 iso === hoy ? 'es-hoy' : '',
+                tareas.length > 0 ? 'con-tareas' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
+              // Doble clic sobre la casilla abre el día entero. Es un atajo,
+              // no el único camino: el "+N más" hace lo mismo y se ve, que es
+              // lo que encuentra quien no sabe que el atajo existe.
+              onDoubleClick={() => tareas.length > 0 && setDiaDetalle(iso)}
             >
               <div className="calendario-numero">
                 <span>{dia.getDate()}</span>
@@ -245,7 +264,7 @@ export function CalendarioPage() {
                 )}
               </div>
 
-              {tareas.map((t) => {
+              {tareas.slice(0, TAREAS_VISIBLES).map((t) => {
                 const { color, sinAsignar } = colorDeTarea(t.asignadoAId, colores);
                 return (
                 <button
@@ -269,6 +288,42 @@ export function CalendarioPage() {
                 </button>
                 );
               })}
+
+              {tareas.length > TAREAS_VISIBLES && (
+                <button
+                  className="calendario-mas no-imprimir"
+                  onClick={() => setDiaDetalle(iso)}
+                >
+                  +{tareas.length - TAREAS_VISIBLES} más
+                </button>
+              )}
+
+              {/* Al imprimir no hay "ver todas", así que las que la pantalla
+                  resume salen igual en el papel. */}
+              {tareas.slice(TAREAS_VISIBLES).map((t) => {
+                const { color, sinAsignar } = colorDeTarea(t.asignadoAId, colores);
+                return (
+                  <div
+                    key={t.id}
+                    className={[
+                      'calendario-tarea',
+                      'solo-imprimir-tarea',
+                      `estado-${t.estado.toLowerCase()}`,
+                      sinAsignar ? 'sin-asignar' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    style={{ borderLeftColor: color }}
+                  >
+                    <span className="calendario-tarea-titulo">{t.titulo}</span>
+                    <span className="texto-suave texto-chico">
+                      {t.asignadoANombre ?? 'sin repartir'}
+                      {t.equipoNombre ? ` · ${t.equipoNombre}` : ''}
+                      {t.equipoItNombre ? ` · ${t.equipoItNombre}` : ''}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           );
         })}
@@ -286,12 +341,97 @@ export function CalendarioPage() {
         <NuevaTarea fecha={diaElegido} onCerrar={() => setDiaElegido(null)} />
       )}
 
+      {diaDetalle && (
+        <TareasDelDia
+          fecha={diaDetalle}
+          tareas={porDia.get(diaDetalle) ?? []}
+          colores={colores}
+          onAbrirTarea={(t) => {
+            setDiaDetalle(null);
+            setTareaAbierta(t);
+          }}
+          onCerrar={() => setDiaDetalle(null)}
+        />
+      )}
+
       {verRutinas && <RutinasDeTareas onCerrar={() => setVerRutinas(false)} />}
     </div>
   );
 }
 
 // ─────────────────────── Detalle de una tarea ───────────────────────
+
+/**
+ * Todas las tareas de un día.
+ *
+ * La casilla del calendario muestra las primeras y resume el resto: acá están
+ * todas, con lugar para leerlas. Se abre con doble clic en el día o desde el
+ * "+N más".
+ */
+function TareasDelDia({
+  fecha,
+  tareas,
+  colores,
+  onAbrirTarea,
+  onCerrar,
+}: {
+  fecha: string;
+  tareas: Tarea[];
+  colores: Map<string, string>;
+  onAbrirTarea: (t: Tarea) => void;
+  onCerrar: () => void;
+}) {
+  const dia = new Date(`${fecha}T00:00:00`);
+  const pendientes = tareas.filter((t) => t.estado === 'PENDIENTE').length;
+
+  return (
+    <Modal
+      titulo={`${dia.getDate()} de ${MESES[dia.getMonth()]} de ${dia.getFullYear()}`}
+      abierto
+      onCerrar={onCerrar}
+    >
+      <div className="formulario-modal">
+        <p className="texto-suave texto-chico">
+          {tareas.length === 1 ? 'Una tarea' : `${tareas.length} tareas`}
+          {pendientes > 0 && `, ${pendientes} sin hacer`}.
+        </p>
+
+        <div className="lista-tareas-dia">
+          {tareas.map((t) => {
+            const { color, sinAsignar } = colorDeTarea(t.asignadoAId, colores);
+            return (
+              <button
+                key={t.id}
+                className={[
+                  'calendario-tarea',
+                  `estado-${t.estado.toLowerCase()}`,
+                  sinAsignar ? 'sin-asignar' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                style={{ borderLeftColor: color }}
+                onClick={() => onAbrirTarea(t)}
+              >
+                <span className="calendario-tarea-titulo">{t.titulo}</span>
+                <span className="texto-suave texto-chico">
+                  {t.asignadoANombre ?? 'sin repartir'}
+                  {t.equipoNombre ? ` · ${t.equipoNombre}` : ''}
+                  {t.equipoItNombre ? ` · ${t.equipoItNombre}` : ''}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="acciones">
+          <button className="btn" onClick={onCerrar}>
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
 
 function DetalleTarea({
   tarea,

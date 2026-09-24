@@ -1665,17 +1665,17 @@ button {
 /* Siete columnas iguales. `minmax(0,1fr)` y no `1fr`: los items de grid traen
    min-width auto y un titulo largo ensancharia su columna, desalineando la
    semana entera. */
+/* Tarjetas sueltas y no una grilla con lineas: cada dia es una cosa con la que
+   se puede interactuar, y el aire entre ellas es lo que deja que una se levante
+   al pasar por encima sin pisar a la de al lado.
+
+   Nada de `overflow: hidden` aca: cortaria la sombra y el relieve. */
 .calendario {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--color-borde);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio);
-  overflow: hidden;
+  gap: 0.4rem;
 }
 .calendario-cabecera {
-  background: var(--color-panel);
   padding: 0.4rem;
   text-align: center;
   font-weight: 600;
@@ -1684,20 +1684,78 @@ button {
 }
 .calendario-dia {
   background: var(--color-panel);
-  min-height: 92px;
-  padding: 0.3rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  min-height: 108px;
+  padding: 0.4rem;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.25rem;
+  /* Para que el que se levanta quede por encima de sus vecinos. */
+  position: relative;
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.14s ease;
 }
+
+/* El relieve solo donde hay con qué apuntar. En una pantalla táctil el
+   navegador simula el hover y la tarjeta se queda agrandada después de tocarla,
+   que es peor que no tener el efecto. */
+@media (hover: hover) {
+  .calendario-dia.con-tareas:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 22px rgb(15 23 42 / 0.14);
+    z-index: 2;
+    cursor: pointer;
+  }
+}
+
 .calendario-dia.otro-mes {
   background: var(--color-fondo);
+  border-style: dashed;
 }
 .calendario-dia.otro-mes .calendario-numero {
   opacity: 0.45;
 }
 .calendario-dia.es-hoy {
-  box-shadow: inset 0 0 0 2px var(--color-primario);
+  border-color: var(--color-primario);
+  box-shadow: inset 0 0 0 1px var(--color-primario);
+}
+@media (hover: hover) {
+  .calendario-dia.es-hoy.con-tareas:hover {
+    box-shadow:
+      inset 0 0 0 1px var(--color-primario),
+      0 10px 22px rgb(15 23 42 / 0.14);
+  }
+}
+
+/* El resumen de lo que no entra en la casilla. */
+.calendario-mas {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-primario);
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.1rem 0.2rem;
+  border-radius: 4px;
+}
+.calendario-mas:hover {
+  background: var(--color-fondo);
+}
+
+/* Las que la pantalla resume en "+N más" solo aparecen en el papel. */
+.solo-imprimir-tarea {
+  display: none;
+}
+
+/* Las tareas del día, dentro del modal. */
+.lista-tareas-dia {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 .calendario-numero {
   display: flex;
@@ -1840,10 +1898,27 @@ button {
     font-size: 13pt;
   }
 
-  /* Que ninguna casilla se parta entre dos hojas. */
+  /* En el papel no hay "ver todas", asi que sale todo lo que la pantalla
+     resume en el "+N mas". */
+  .solo-imprimir-tarea {
+    display: block;
+  }
+
+  /* Que ninguna casilla se parta entre dos hojas. Ni relieve ni sombras: son
+     de la pantalla, y en tinta solo ensucian. */
   .calendario-dia {
     break-inside: avoid;
-    min-height: 26mm;
+    min-height: 22mm;
+    transform: none !important;
+    box-shadow: none !important;
+    border: 1px solid #bbb;
+    border-radius: 0;
+  }
+  .calendario {
+    gap: 0;
+  }
+  .calendario-dia.otro-mes {
+    border-style: solid;
   }
   /* `border: 1px solid #999` pisaria el color de la persona, asi que el borde
      de la izquierda se declara aparte y DESPUES. Sin esto, impreso salian

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type { ReactNode } from 'react';
@@ -210,6 +210,64 @@ describe('CalendarioPage', () => {
 
     expect(await screen.findByText(/Cambio de aceite/)).toBeInTheDocument();
     expect(screen.getByText(/la próxima fecha del plan corre sola/i)).toBeInTheDocument();
+  });
+
+  it('con muchas tareas en un dia, la casilla resume el resto', async () => {
+    // Sin tope, un solo dia con seis tareas estira toda la semana y deja los
+    // otros seis dias como huecos enormes.
+    tareas = Array.from({ length: 6 }, (_, i) => ({
+      ...TAREA,
+      id: `t-${i}`,
+      titulo: `Tarea numero ${i}`,
+    }));
+    mostrar();
+
+    expect(await screen.findByText('Tarea numero 0')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /\+3 más/ })).toBeInTheDocument();
+  });
+
+  it('el "+N mas" abre el dia con TODAS las tareas', async () => {
+    tareas = Array.from({ length: 6 }, (_, i) => ({
+      ...TAREA,
+      id: `t-${i}`,
+      titulo: `Tarea numero ${i}`,
+    }));
+    const usuario = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    mostrar();
+
+    await usuario.click(await screen.findByRole('button', { name: /\+3 más/ }));
+
+    // Se busca DENTRO del modal: las que la casilla resume siguen en el DOM,
+    // escondidas por CSS para que salgan al imprimir, y sin acotar la busqueda
+    // cada titulo aparece dos veces.
+    const dialogo = within(await screen.findByRole('dialog'));
+    expect(dialogo.getByText('Tarea numero 5')).toBeInTheDocument();
+    expect(dialogo.getByText(/6 tareas/)).toBeInTheDocument();
+  });
+
+  it('REGRESION: un dia sin tareas no se puede abrir', async () => {
+    // Abrir un modal vacio al hacer doble clic en un dia libre es ruido.
+    tareas = [];
+    mostrar();
+
+    await waitFor(() => expect(apiRequestMock).toHaveBeenCalled());
+    expect(screen.queryByRole('button', { name: /más$/ })).not.toBeInTheDocument();
+  });
+
+  it('desde el dia se puede abrir una tarea y ver su detalle', async () => {
+    tareas = Array.from({ length: 5 }, (_, i) => ({
+      ...TAREA,
+      id: `t-${i}`,
+      titulo: `Tarea numero ${i}`,
+    }));
+    const usuario = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    mostrar();
+
+    await usuario.click(await screen.findByRole('button', { name: /\+2 más/ }));
+    const dialogo = within(await screen.findByRole('dialog'));
+    await usuario.click(dialogo.getByText('Tarea numero 4'));
+
+    expect(await screen.findByRole('button', { name: /darla por hecha/i })).toBeInTheDocument();
   });
 
   it('una tarea hecha muestra la orden de trabajo que quedo', async () => {
