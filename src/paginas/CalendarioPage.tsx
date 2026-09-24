@@ -215,6 +215,7 @@ export function CalendarioPage() {
                   <span className="texto-suave texto-chico">
                     {t.asignadoANombre ?? 'sin repartir'}
                     {t.equipoNombre ? ` · ${t.equipoNombre}` : ''}
+                    {t.equipoItNombre ? ` · ${t.equipoItNombre}` : ''}
                   </span>
                 </button>
               ))}
@@ -273,6 +274,7 @@ function DetalleTarea({
           {new Date(tarea.fecha).toLocaleDateString('es-AR', { timeZone: 'UTC' })} ·{' '}
           {ETIQUETA_ESTADO_TAREA[tarea.estado]}
           {tarea.equipoNombre ? ` · ${tarea.equipoNombre}` : ''}
+          {tarea.equipoItNombre ? ` · ${tarea.equipoItNombre}` : ''}
         </p>
 
         {tarea.descripcion && <p>{tarea.descripcion}</p>}

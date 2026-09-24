@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   useAsignacionesEquipo,
   useAsignarEquipo,
   useActualizarEquipo,
   useCrearEquipo,
   useEliminarEquipo,
+  useEquipo,
   useEquipos,
   useResumenEquipos,
   useTiposEquipo,
@@ -18,6 +20,8 @@ import {
 import { useCrearResponsable, useResponsables } from '@/api/responsables';
 import { AccionesFila } from '@/componentes/AccionesFila';
 import { CredencialesDelEquipo } from '@/componentes/CredencialesDelEquipo';
+import { EtiquetasQrEquiposIt } from '@/componentes/EtiquetasQrEquiposIt';
+import { TrabajosDelEquipo } from '@/componentes/TrabajosDelEquipo';
 import { ResponsablesEquipo } from '@/componentes/ResponsablesEquipo';
 import { SelectorCatalogo } from '@/componentes/SelectorCatalogo';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
@@ -25,6 +29,7 @@ import { CampoNumero } from '@/componentes/CampoNumero';
 import { ImportarEquipos } from '@/componentes/ImportarEquipos';
 import { TiposEquipo } from '@/componentes/TiposEquipo';
 import { Modal } from '@/componentes/Modal';
+import { nombreDeEquipoIt } from '@/lib/etiquetaQr';
 import { formatearFecha, formatearFechaSola } from '@/lib/formato';
 import { ETIQUETA_ACCESO, ETIQUETA_ESTADO } from '@/tipos/equipoIt';
 import type { CrearEquipoInput, EquipoIt, EstadoEquipoIt } from '@/tipos/equipoIt';
@@ -52,11 +57,12 @@ const FORMULARIO_VACIO: CrearEquipoInput = {
  * Marca y modelo salen del catálogo y pueden faltar: en el inventario real, 28
  * de 65 equipos no tienen marca porque decía "Sin especificar". Cuando faltan,
  * el que identifica es el código interno, que es la etiqueta pegada al equipo.
+ *
+ * La regla vive en `etiquetaQr` porque también la usa la etiqueta impresa: si
+ * cada una lo armara por su cuenta, lo pegado en la máquina podría decir algo
+ * distinto de lo que dice el sistema.
  */
-function nombreDelEquipo(e: EquipoIt): string {
-  const marcaYModelo = [e.marcaNombre, e.modeloNombre].filter(Boolean).join(' ');
-  return marcaYModelo || e.codigoInterno || e.tipoNombre || 'Equipo sin identificar';
-}
+const nombreDelEquipo = nombreDeEquipoIt;
 
 export function EquiposItPage() {
   const [pagina, setPagina] = useState(1);
@@ -75,6 +81,27 @@ export function EquiposItPage() {
   const [equipoDetalle, setEquipoDetalle] = useState<EquipoIt | null>(null);
   const [equipoAsignar, setEquipoAsignar] = useState<EquipoIt | null>(null);
   const [equipoEditar, setEquipoEditar] = useState<EquipoIt | null>(null);
+  const [modalEtiquetas, setModalEtiquetas] = useState(false);
+
+  // El QR pegado en el equipo lleva a /equipos-it?equipo=<id>. Sin esto la
+  // dirección abría el listado y no la ficha, que es lo que necesita ver el que
+  // escaneó la etiqueta parado delante de la máquina.
+  const [parametros, setParametros] = useSearchParams();
+  const idPedido = parametros.get('equipo') ?? '';
+  const equipoPedido = useEquipo(idPedido);
+
+  useEffect(() => {
+    if (equipoPedido.data) setEquipoDetalle(equipoPedido.data);
+  }, [equipoPedido.data]);
+
+  /** Cierra la ficha y saca el id de la dirección, para que no vuelva a abrirse. */
+  const cerrarDetalle = () => {
+    setEquipoDetalle(null);
+    if (idPedido) {
+      parametros.delete('equipo');
+      setParametros(parametros, { replace: true });
+    }
+  };
 
   // Debounce de la búsqueda para no pegarle a la API en cada tecla.
   useEffect(() => {
@@ -119,6 +146,9 @@ export function EquiposItPage() {
           </button>
           <button className="btn" onClick={() => setModalResponsables(true)}>
             👤 Responsables
+          </button>
+          <button className="btn" onClick={() => setModalEtiquetas(true)}>
+            🏷 Etiquetas QR
           </button>
           <button className="btn" onClick={() => setModalImportar(true)}>
             ↑ Importar CSV
@@ -323,6 +353,7 @@ export function EquiposItPage() {
       )}
 
       <ImportarEquipos abierto={modalImportar} onCerrar={() => setModalImportar(false)} />
+      {modalEtiquetas && <EtiquetasQrEquiposIt onCerrar={() => setModalEtiquetas(false)} />}
       <TiposEquipo abierto={modalTipos} onCerrar={() => setModalTipos(false)} />
       {modalResponsables && <ResponsablesEquipo onCerrar={() => setModalResponsables(false)} />}
       {modalAlta && <ModalAltaEquipo alCerrar={() => setModalAlta(false)} />}
@@ -332,10 +363,10 @@ export function EquiposItPage() {
       {equipoDetalle && (
         <ModalDetalleEquipo
           equipo={equipoDetalle}
-          alCerrar={() => setEquipoDetalle(null)}
+          alCerrar={cerrarDetalle}
           alEditar={() => {
             const e = equipoDetalle;
-            setEquipoDetalle(null);
+            cerrarDetalle();
             setEquipoEditar(e);
           }}
         />
@@ -814,6 +845,17 @@ function ModalDetalleEquipo({
             buscar. Los valores no: para eso hay que pedirlos desde el baul y
             queda registrado quien los miro. */}
         <CredencialesDelEquipo equipoItId={equipo.id} />
+
+        {/* Las limpiezas, las actualizaciones de software y los arreglos: lo
+            mismo que se anota de una máquina de planta, con el mismo módulo.
+            Una PC formateada dos veces en un mes es un dato que solo aparece si
+            queda escrito en algún lado. Un equipo dado de baja no recibe
+            trabajos nuevos: el historial queda como está. */}
+        <TrabajosDelEquipo
+          equipoItId={equipo.id}
+          equipoNombre={nombreDelEquipo(equipo)}
+          permiteNuevos={equipo.estado !== 'DADO_DE_BAJA'}
+        />
 
         {eliminar.error && <MensajeError error={eliminar.error} />}
 

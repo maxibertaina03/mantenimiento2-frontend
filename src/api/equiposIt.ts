@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/apiClient';
+import { traerTodasLasPaginas } from './paginado';
 import type { RespuestaPaginada } from '@/tipos/comunes';
 import type {
   ActualizarEquipoInput,
@@ -34,6 +35,8 @@ interface FiltrosEquipos {
   responsableId?: string;
   /** Solo los que no tienen responsable. Gana sobre `responsableId`. */
   sinResponsable?: boolean;
+  /** Solo los que todavía no tienen la etiqueta QR impresa. */
+  sinQr?: boolean;
 }
 
 export function useEquipos(pagina = 1, limite = 20, filtros: FiltrosEquipos = {}) {
@@ -60,8 +63,47 @@ export function useEquipos(pagina = 1, limite = 20, filtros: FiltrosEquipos = {}
           ubicacionId: normalizados.ubicacionId || undefined,
           responsableId: normalizados.responsableId || undefined,
           sinResponsable: normalizados.sinResponsable || undefined,
+          sinQr: filtros.sinQr ? 'true' : undefined,
         },
       }),
+  });
+}
+
+/**
+ * Trae TODOS los equipos de informática, recorriendo las páginas.
+ *
+ * Lo usa la hoja de etiquetas: para imprimir una tanda hace falta el padrón
+ * entero, y el listado no da más de 100 por vez.
+ */
+export function obtenerTodosLosEquiposIt(filtros: FiltrosEquipos = {}): Promise<EquipoIt[]> {
+  return traerTodasLasPaginas<EquipoIt>('/equipos-it', {
+    buscar: filtros.buscar || undefined,
+    tipoId: filtros.tipoId || undefined,
+    estado: filtros.estado || undefined,
+    marcaId: filtros.marcaId || undefined,
+    ubicacionId: filtros.ubicacionId || undefined,
+    sinQr: filtros.sinQr ? 'true' : undefined,
+  });
+}
+
+export function useTodosLosEquiposIt(filtros: FiltrosEquipos = {}, habilitado = true) {
+  return useQuery({
+    queryKey: ['equipos-it', 'todos', filtros] as const,
+    queryFn: () => obtenerTodosLosEquiposIt(filtros),
+    enabled: habilitado,
+  });
+}
+
+/** Deja constancia de que a estos equipos se les imprimió la etiqueta. */
+export function useMarcarQrGeneradoIt() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: string[]) =>
+      apiRequest<{ marcados: number }>('/equipos-it/qr/marcar-generados', {
+        method: 'POST',
+        body: { ids },
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesEquipos.base }),
   });
 }
 

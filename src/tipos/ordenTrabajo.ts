@@ -55,6 +55,10 @@ export interface OrdenTrabajo {
   equipoId: string | null;
   equipoNombre: string | null;
   equipoCodigo: string | null;
+  /** El equipo de informática, si el trabajo fue sobre uno. Excluyente con equipoId. */
+  equipoItId: string | null;
+  equipoItNombre: string | null;
+  equipoItCodigo: string | null;
   /** Cuándo se hizo el trabajo, que no es cuándo se abrió la orden. */
   fecha: string;
   ejecutor: Ejecutor;
@@ -88,6 +92,8 @@ export interface CrearOrdenTrabajoInput {
   descripcion?: string | null;
   tipo: TipoTrabajo;
   equipoId?: string | null;
+  /** O un equipo de informática. Uno de los dos, nunca los dos. */
+  equipoItId?: string | null;
   /** Si no viene, la orden queda para quien la abre. */
   asignadoAId?: string | null;
 
@@ -128,5 +134,6 @@ export interface FiltrosOrdenesTrabajo {
   estado?: EstadoOrdenTrabajo;
   tipo?: TipoTrabajo;
   equipoId?: string;
+  equipoItId?: string;
   asignadoAId?: string;
 }

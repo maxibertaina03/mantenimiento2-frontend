@@ -12,7 +12,10 @@ import { Cargando, MensajeError } from './Estados';
 import { RegistrarTrabajoEquipo } from './RegistrarTrabajoEquipo';
 
 interface Props {
-  equipoId: string;
+  /** La máquina de planta... */
+  equipoId?: string;
+  /** ...o el equipo de informática. Uno de los dos, nunca los dos. */
+  equipoItId?: string;
   equipoNombre: string;
   /** Los planes de la máquina, para decir a cuál responde un trabajo. */
   planes?: { id: string; nombre: string }[];
@@ -41,13 +44,19 @@ function resumir(ordenes: OrdenTrabajo[]) {
  * Es el único historial. Antes había dos —las intervenciones y las órdenes de
  * trabajo— que contestaban la misma pregunta, y para saber cuánto costó
  * mantener algo había que sumar dos listas.
+ *
+ * Sirve igual para una máquina de planta que para un equipo de informática: son
+ * dos inventarios distintos, pero "qué se le hizo y cuánto costó" es la misma
+ * pregunta. Una limpieza de gabinete y un cambio de retén se anotan igual.
  */
 export function TrabajosDelEquipo({
   equipoId,
+  equipoItId,
   equipoNombre,
   planes = [],
   permiteNuevos = true,
 }: Props) {
+  const esInformatica = Boolean(equipoItId);
   const puede = usePuede();
   const [registrando, setRegistrando] = useState(false);
 
@@ -55,7 +64,12 @@ export function TrabajosDelEquipo({
   // que la consulta se apaga con `enabled`: si no, esta sección saldría a
   // pedir trabajos igual y se comería un 403 que se ve como un error rojo.
   const habilitado = puede(P.TRABAJOS_VER);
-  const { data, isLoading, error } = useOrdenesTrabajo(1, 20, { equipoId }, habilitado);
+  const { data, isLoading, error } = useOrdenesTrabajo(
+    1,
+    20,
+    { equipoId, equipoItId },
+    habilitado,
+  );
 
   if (!habilitado) return null;
 
@@ -75,8 +89,8 @@ export function TrabajosDelEquipo({
 
       {!permiteNuevos && (
         <p className="texto-suave texto-chico">
-          La máquina está dada de baja: no se le registran trabajos nuevos. El historial queda
-          como estaba.
+          {esInformatica ? 'El equipo está' : 'La máquina está'} dado de baja: no se le registran
+          trabajos nuevos. El historial queda como estaba.
         </p>
       )}
 
@@ -109,7 +123,7 @@ export function TrabajosDelEquipo({
 
       {data && ordenes.length === 0 && (
         <p className="texto-suave texto-chico">
-          Todavía no se registró ningún trabajo sobre esta máquina.
+          Todavía no se registró ningún trabajo sobre {esInformatica ? 'este equipo' : 'esta máquina'}.
         </p>
       )}
 
@@ -154,6 +168,7 @@ export function TrabajosDelEquipo({
       {registrando && (
         <RegistrarTrabajoEquipo
           equipoId={equipoId}
+          equipoItId={equipoItId}
           equipoNombre={equipoNombre}
           planes={planes}
           onCerrar={() => setRegistrando(false)}

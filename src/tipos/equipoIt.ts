@@ -54,6 +54,8 @@ export const ETIQUETA_ACCESO: Record<TipoAccesoRemoto, string> = {
 export interface EquipoIt {
   id: string;
   codigoInterno: string | null;
+  /** Cuándo se imprimió la etiqueta QR. `null` si todavía no se imprimió. */
+  qrGeneradoEn: string | null;
   tipoId: string;
   tipoNombre: string | null;
   /** Si corresponde pedir procesador, RAM y disco (viene del catálogo). */

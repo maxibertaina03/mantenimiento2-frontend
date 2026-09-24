@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCrearTarea } from '@/api/calendario';
 import { useAsignables } from '@/api/ordenesTrabajo';
 import { ComboEquipo } from './ComboEquipo';
+import { ComboEquipoIt } from './ComboEquipoIt';
 import { MensajeError } from './Estados';
 import { Modal } from './Modal';
 import { P, usePuede } from '@/lib/permisos';
@@ -11,6 +12,10 @@ import { P, usePuede } from '@/lib/permisos';
  *
  * El equipo es opcional y solo lo ofrece quien puede ver equipos, igual que en
  * las órdenes de trabajo: si no, se elegiría cualquiera con tal de guardar.
+ *
+ * Son dos campos, planta e informática, y elegir en uno limpia el otro: una
+ * tarea es sobre una máquina o sobre una PC, nunca sobre las dos. El backend lo
+ * rechaza igual; acá se evita que alguien llegue a intentarlo.
  */
 export function NuevaTarea({ fecha, onCerrar }: { fecha: string; onCerrar: () => void }) {
   const puede = usePuede();
@@ -22,6 +27,7 @@ export function NuevaTarea({ fecha, onCerrar }: { fecha: string; onCerrar: () =>
   const [cuando, setCuando] = useState(fecha);
   const [asignadoA, setAsignadoA] = useState('');
   const [equipo, setEquipo] = useState<{ id: string; nombre: string } | null>(null);
+  const [equipoIt, setEquipoIt] = useState<{ id: string; nombre: string } | null>(null);
 
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +37,7 @@ export function NuevaTarea({ fecha, onCerrar }: { fecha: string; onCerrar: () =>
       fecha: cuando,
       asignadoAId: asignadoA || undefined,
       equipoId: equipo?.id ?? undefined,
+      equipoItId: equipoIt?.id ?? undefined,
     });
     onCerrar();
   };
@@ -76,8 +83,27 @@ export function NuevaTarea({ fecha, onCerrar }: { fecha: string; onCerrar: () =>
 
         {puede(P.EQUIPOS_VER) && (
           <label className="campo">
-            Equipo (opcional)
-            <ComboEquipo onCambio={setEquipo} />
+            Máquina de planta (opcional)
+            <ComboEquipo
+              key={`planta-${equipoIt?.id ?? 'no'}`}
+              onCambio={(e) => {
+                setEquipo(e);
+                if (e) setEquipoIt(null);
+              }}
+            />
+          </label>
+        )}
+
+        {puede(P.IT_VER) && (
+          <label className="campo">
+            Equipo de informática (opcional)
+            <ComboEquipoIt
+              key={`it-${equipo?.id ?? 'no'}`}
+              onCambio={(e) => {
+                setEquipoIt(e);
+                if (e) setEquipo(null);
+              }}
+            />
           </label>
         )}
 

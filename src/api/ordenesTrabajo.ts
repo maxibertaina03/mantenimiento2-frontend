@@ -51,6 +51,7 @@ export function useOrdenesTrabajo(
           estado: filtros.estado || undefined,
           tipo: filtros.tipo || undefined,
           equipoId: filtros.equipoId || undefined,
+          equipoItId: filtros.equipoItId || undefined,
           asignadoAId: filtros.asignadoAId || undefined,
         },
       }),

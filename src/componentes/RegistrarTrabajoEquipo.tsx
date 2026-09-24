@@ -16,7 +16,10 @@ import type { Ejecutor, TipoTrabajo } from '@/tipos/ordenTrabajo';
 import type { Material } from '@/tipos/material';
 
 interface Props {
-  equipoId: string;
+  /** La máquina de planta... */
+  equipoId?: string;
+  /** ...o el equipo de informática. Uno de los dos. */
+  equipoItId?: string;
   equipoNombre: string;
   /** Los planes de la máquina, para decir a cuál responde el trabajo. */
   planes?: { id: string; nombre: string }[];
@@ -42,7 +45,17 @@ interface MaterialElegido {
  * Los campos de costo y servicio externo van plegados a propósito: el que solo
  * quiere anotar que cambió un retén no tiene que encontrarse con diez campos.
  */
-export function RegistrarTrabajoEquipo({ equipoId, equipoNombre, planes = [], onCerrar }: Props) {
+export function RegistrarTrabajoEquipo({
+  equipoId,
+  equipoItId,
+  equipoNombre,
+  planes = [],
+  onCerrar,
+}: Props) {
+  // Los ejemplos de los campos cambian según qué se esté arreglando. Un
+  // "sello mecánico" en el formulario de una PC no ayuda a nadie a entender
+  // qué se espera que escriba.
+  const esInformatica = Boolean(equipoItId);
   const crear = useCrearOrdenTrabajo();
   const proveedores = useProveedores(1, 200, '');
 
@@ -78,6 +91,7 @@ export function RegistrarTrabajoEquipo({ equipoId, equipoNombre, planes = [], on
       titulo,
       tipo,
       equipoId,
+      equipoItId,
       // La resolución es lo que hace que la orden nazca cerrada.
       resolucion,
       fecha: fecha || undefined,
@@ -103,7 +117,7 @@ export function RegistrarTrabajoEquipo({ equipoId, equipoNombre, planes = [], on
             value={titulo}
             maxLength={200}
             required
-            placeholder="Perdida por el sello mecanico"
+            placeholder={esInformatica ? 'La PC no arrancaba' : 'Perdida por el sello mecanico'}
             onChange={(e) => setTitulo(e.target.value)}
           />
         </label>
@@ -115,11 +129,15 @@ export function RegistrarTrabajoEquipo({ equipoId, equipoNombre, planes = [], on
             value={resolucion}
             maxLength={2000}
             required
-            placeholder="Se cambio el sello y la junta de la tapa"
+            placeholder={
+              esInformatica
+                ? 'Se limpio el gabinete y se actualizo Windows'
+                : 'Se cambio el sello y la junta de la tapa'
+            }
             onChange={(e) => setResolucion(e.target.value)}
           />
           <span className="texto-suave texto-chico">
-            Es lo que va a leer el próximo que agarre la máquina.
+            Es lo que va a leer el próximo que agarre {esInformatica ? 'el equipo' : 'la máquina'}.
           </span>
         </label>
 

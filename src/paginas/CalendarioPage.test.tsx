@@ -36,6 +36,8 @@ const TAREA: Tarea = {
   asignadoANombre: 'Facundo',
   equipoId: null,
   equipoNombre: null,
+  equipoItId: null,
+  equipoItNombre: null,
   planId: null,
   planNombre: null,
   rutinaId: null,

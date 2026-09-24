@@ -1,24 +1,28 @@
 import { useEffect, useRef, useState } from 'react';
-import { useEquipos } from '@/api/equipos';
+import { useEquipos } from '@/api/equiposIt';
 import { leerEscaneo } from '@/lib/escaneo';
 import type { ClaseEscaneo } from '@/lib/escaneo';
-import type { Equipo } from '@/tipos/equipo';
+import { nombreDeEquipoIt } from '@/lib/etiquetaQr';
+import type { EquipoIt } from '@/tipos/equipoIt';
 
 interface Props {
-  /** El equipo ya elegido, para mostrarlo al abrir una orden que lo tenía. */
+  /** El equipo ya elegido, para mostrarlo al abrir algo que lo tenía. */
   inicial?: { id: string; nombre: string } | null;
   onCambio: (equipo: { id: string; nombre: string } | null) => void;
 }
 
 /**
- * Buscador de equipos de planta.
+ * Buscador de equipos de informática.
  *
- * Con 326 máquinas un desplegable es inusable: hay que poder escribir. Y como
- * cada máquina tiene su etiqueta QR pegada, también se puede apuntar la pistola
- * a la chapa y queda elegida, que es lo más rápido cuando se está parado al
- * lado del equipo que se acaba de arreglar.
+ * Es el hermano de `ComboEquipo`, contra el otro inventario. Son dos y no uno
+ * con un selector de tipo adentro porque son dos tablas distintas y cada campo
+ * espera una de las dos: un solo buscador tendría que devolver "este id, de
+ * esta clase" y todos los que lo usan deberían preguntar cuál vino.
+ *
+ * Acepta la pistola, igual que el otro: apuntar a la etiqueta del gabinete lo
+ * deja elegido, que es lo más rápido cuando se está parado delante del equipo.
  */
-export function ComboEquipo({ inicial = null, onCambio }: Props) {
+export function ComboEquipoIt({ inicial = null, onCambio }: Props) {
   const [texto, setTexto] = useState('');
   const [busq, setBusq] = useState('');
   const [abierto, setAbierto] = useState(false);
@@ -50,10 +54,9 @@ export function ComboEquipo({ inicial = null, onCambio }: Props) {
   };
 
   /**
-   * Un escaneo trae el id, no el nombre, así que hay que buscarlo en la lista
-   * que ya vino. Si no está —porque el filtro de texto la tiene recortada— se
-   * pide por id: con 326 equipos, el que se escaneó casi nunca está entre los
-   * veinte que se están mostrando.
+   * El escaneo trae el id, no el nombre, así que se busca en lo que ya vino. Si
+   * no está —porque el filtro de texto tiene la lista recortada— se elige igual
+   * por id: el backend valida que exista, y el nombre aparece al guardar.
    */
   const usarEscaneo = (id: string, clase: ClaseEscaneo) => {
     setTexto('');
@@ -61,23 +64,12 @@ export function ComboEquipo({ inicial = null, onCambio }: Props) {
       setAviso('Ese QR es de un material, no de un equipo.');
       return;
     }
-    // Desde que los equipos de informatica tambien tienen etiqueta, este campo
-    // puede recibir la de una PC. Aceptarla guardaria un id que no existe en
-    // esta tabla, y el error recien aparece al guardar, con un mensaje que no
-    // explica nada.
-    if (clase === 'equipo-it') {
-      setAviso('Ese QR es de un equipo de informatica. Este campo es para las maquinas de planta.');
+    if (clase === 'equipo') {
+      setAviso('Ese QR es de una máquina de planta. Este campo es para los equipos de informática.');
       return;
     }
-    const encontrado = (data?.datos ?? []).find((e: Equipo) => e.id === id);
-    if (encontrado) {
-      elegir({ id: encontrado.id, nombre: encontrado.nombre });
-      return;
-    }
-    // Se elige igual: el backend valida que exista, y el nombre aparece al
-    // guardar. Peor sería rechazar un equipo que existe solo porque no entró
-    // en la página que se estaba mostrando.
-    elegir({ id, nombre: 'Equipo escaneado' });
+    const encontrado = (data?.datos ?? []).find((e: EquipoIt) => e.id === id);
+    elegir({ id, nombre: encontrado ? nombreDeEquipoIt(encontrado) : 'Equipo escaneado' });
   };
 
   return (
@@ -113,15 +105,15 @@ export function ComboEquipo({ inicial = null, onCambio }: Props) {
           </button>
           {isFetching && <div className="combo-item texto-suave">Buscando…</div>}
           {!isFetching &&
-            (data?.datos ?? []).map((e: Equipo) => (
+            (data?.datos ?? []).map((e: EquipoIt) => (
               <button
                 type="button"
                 key={e.id}
                 className="combo-item"
-                onClick={() => elegir({ id: e.id, nombre: e.nombre })}
+                onClick={() => elegir({ id: e.id, nombre: nombreDeEquipoIt(e) })}
               >
-                {e.nombre}
-                {e.ubicacionNombre && <span className="texto-suave"> — {e.ubicacionNombre}</span>}
+                {nombreDeEquipoIt(e)}
+                {e.codigoInterno && <span className="texto-suave"> — {e.codigoInterno}</span>}
               </button>
             ))}
           {!isFetching && data && data.datos.length === 0 && (

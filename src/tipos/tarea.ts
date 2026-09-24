@@ -24,6 +24,9 @@ export interface Tarea {
   asignadoANombre: string | null;
   equipoId: string | null;
   equipoNombre: string | null;
+  /** O el equipo de informática. Uno de los dos, nunca los dos. */
+  equipoItId: string | null;
+  equipoItNombre: string | null;
   planId: string | null;
   planNombre: string | null;
   rutinaId: string | null;
@@ -49,6 +52,9 @@ export interface Rutina {
   hasta: string | null;
   equipoId: string | null;
   equipoNombre: string | null;
+  /** O el equipo de informática. Uno de los dos, nunca los dos. */
+  equipoItId: string | null;
+  equipoItNombre: string | null;
   asignadoAId: string | null;
   asignadoANombre: string | null;
   activa: boolean;
@@ -61,6 +67,7 @@ export interface CrearTareaInput {
   fecha: string;
   asignadoAId?: string | null;
   equipoId?: string | null;
+  equipoItId?: string | null;
 }
 
 export interface CrearRutinaInput {
@@ -70,6 +77,7 @@ export interface CrearRutinaInput {
   desde: string;
   hasta?: string | null;
   equipoId?: string | null;
+  equipoItId?: string | null;
   asignadoAId?: string | null;
 }
 

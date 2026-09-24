@@ -1,5 +1,6 @@
 import QRCode from 'qrcode';
 import type { Equipo } from '@/tipos/equipo';
+import type { EquipoIt } from '@/tipos/equipoIt';
 import type { Material } from '@/tipos/material';
 
 /**
@@ -36,6 +37,17 @@ export function esDireccionLocal(url: string): boolean {
 /** A dónde apunta el QR de un equipo. */
 export function urlDeLaFicha(equipoId: string, origen = baseDeLasEtiquetas()): string {
   return `${origen.replace(/\/+$/, '')}/equipos?equipo=${equipoId}`;
+}
+
+/**
+ * A dónde apunta el QR de un equipo de informática.
+ *
+ * Misma forma que la de los equipos de planta —parámetro sobre el listado— pero
+ * contra otra pantalla. La palabra "it" en la dirección es lo que después deja
+ * distinguir las dos etiquetas al escanearlas (ver `leerEscaneo`).
+ */
+export function urlDeLaFichaEquipoIt(equipoId: string, origen = baseDeLasEtiquetas()): string {
+  return `${origen.replace(/\/+$/, '')}/equipos-it?equipo=${equipoId}`;
 }
 
 /**
@@ -173,6 +185,48 @@ export async function armarEtiquetasMateriales(
       pie: unidadQueAporta(material.unidadNombre),
     })),
   );
+}
+
+/**
+ * Las etiquetas de los equipos de informática.
+ *
+ * El título se arma igual que en la pantalla: marca y modelo, y si faltan, el
+ * código interno. Un equipo de informática no tiene columna `nombre`.
+ *
+ * Corrección media y no alta, al revés que en las máquinas de planta: estas van
+ * pegadas en un gabinete o en el borde de un monitor, limpias, no en una bomba
+ * llena de grasa. Con `M` cada módulo del código queda más grande y el celular
+ * lo lee más rápido.
+ */
+export async function armarEtiquetasEquiposIt(
+  equipos: EquipoIt[],
+  origen = baseDeLasEtiquetas(),
+): Promise<Etiqueta[]> {
+  return Promise.all(
+    equipos.map(async (equipo) => ({
+      qr: await qrComoImagen(urlDeLaFichaEquipoIt(equipo.id, origen), 320, 'M'),
+      titulo: nombreDeEquipoIt(equipo),
+      subtitulo: equipo.ubicacionNombre,
+      pie: equipo.codigoInterno,
+    })),
+  );
+}
+
+/**
+ * Cómo se nombra un equipo de informática en una línea.
+ *
+ * Vive acá y no en la pantalla porque lo usan las dos: la lista y la etiqueta
+ * impresa. Si cada una lo armara por su cuenta, la etiqueta pegada en la
+ * máquina podría decir algo distinto de lo que dice el sistema.
+ */
+export function nombreDeEquipoIt(e: {
+  marcaNombre?: string | null;
+  modeloNombre?: string | null;
+  codigoInterno?: string | null;
+  tipoNombre?: string | null;
+}): string {
+  const marcaYModelo = [e.marcaNombre, e.modeloNombre].filter(Boolean).join(' ');
+  return marcaYModelo || e.codigoInterno || e.tipoNombre || 'Equipo sin identificar';
 }
 
 function escapar(texto: string): string {

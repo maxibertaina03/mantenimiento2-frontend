@@ -30,7 +30,7 @@ const ID =
  * `sin-dato` es un id pelado, sin dirección alrededor: no se puede saber de qué
  * módulo es, así que decide quien lo recibe.
  */
-export type ClaseEscaneo = 'material' | 'equipo' | 'sin-dato';
+export type ClaseEscaneo = 'material' | 'equipo' | 'equipo-it' | 'sin-dato';
 
 export interface Escaneo {
   clase: ClaseEscaneo;
@@ -48,6 +48,16 @@ export function leerEscaneo(texto: string): Escaneo | null {
   // Las palabras de la dirección llegan intactas aunque los símbolos no, así
   // que sirven para distinguir la etiqueta de un material de la de un equipo.
   if (/material/i.test(texto)) return { clase: 'material', id };
+  // ANTES que `equipo`, y no es un detalle: la dirección de un equipo de
+  // informática es /equipos-it, que contiene la palabra "equipo". Al revés,
+  // toda etiqueta de una PC se leería como si fuera de una máquina de planta y
+  // abriría una ficha que no existe.
+  //
+  // El guion del medio va flojo por lo mismo que los del id: con el mapa de
+  // teclado cambiado sale apostrofe, y `equipos'it` tiene que reconocerse
+  // igual. Lo que sigue a "it" no puede ser una letra ni un numero, para no
+  // confundirse con una palabra que empiece igual.
+  if (/equipos?[^a-z0-9]?it(?![a-z0-9])/i.test(texto)) return { clase: 'equipo-it', id };
   if (/equipo/i.test(texto)) return { clase: 'equipo', id };
   return { clase: 'sin-dato', id };
 }

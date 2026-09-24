@@ -20,6 +20,24 @@ describe('leerEscaneo', () => {
     expect(leerEscaneo(`${BASE}/equipos?equipo=${ID}`)).toEqual({ clase: 'equipo', id: ID });
   });
 
+  it('reconoce la etiqueta de un equipo de informatica', () => {
+    expect(leerEscaneo(`${BASE}/equipos-it?equipo=${ID}`)).toEqual({ clase: 'equipo-it', id: ID });
+  });
+
+  it('REGRESION: la etiqueta de una PC no se confunde con la de una maquina de planta', () => {
+    // "/equipos-it" contiene la palabra "equipo". Si el orden de las dos
+    // comprobaciones se invirtiera, toda etiqueta de informatica abriria la
+    // ficha de un equipo de planta que no existe.
+    expect(leerEscaneo(`${BASE}/equipos-it?equipo=${ID}`)?.clase).not.toBe('equipo');
+  });
+
+  it('REGRESION: tambien con el teclado de la pistola mal configurado', () => {
+    // Los simbolos salen cambiados pero las letras no, asi que "equipos-it"
+    // sigue reconociendose. El guion del medio sale apostrofe.
+    const mal = `httpsÑ--x.com-equipos'it?equipoÑ${ID.replace(/-/g, "'")}`;
+    expect(leerEscaneo(mal)).toEqual({ clase: 'equipo-it', id: ID });
+  });
+
   it('REGRESION: lee igual un escaneo con el teclado de la pistola mal configurado', () => {
     // Esto es literalmente lo que escribio la pistola en produccion, con el mapa
     // de teclado en ingles y Windows en español: los dos puntos salieron Ñ, las
