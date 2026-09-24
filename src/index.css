@@ -1744,16 +1744,49 @@ button {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* El color del borde lo pone la pantalla según de quién sea la tarea (ver
+   `coloresUsuario.ts`). El estado no lo usa: se lee por el tachado y la
+   opacidad, que se ven igual en una impresora en blanco y negro. */
 .calendario-tarea.estado-hecha {
-  border-left-color: var(--color-exito);
   opacity: 0.6;
+}
+
+/* Sin duenio: punteado además de color. El punteado es lo único que sobrevive
+   a una impresora en blanco y negro, y estas son justo las que hay que ver. */
+.calendario-tarea.sin-asignar {
+  border-left-style: dashed;
+  border-left-width: 4px;
 }
 .calendario-tarea.estado-hecha .calendario-tarea-titulo {
   text-decoration: line-through;
 }
 .calendario-tarea.estado-cancelada {
-  border-left-color: var(--color-texto-suave);
   opacity: 0.45;
+}
+
+/* ─── Referencia de colores ─── */
+.calendario-referencias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin: 0 0 0.6rem;
+  font-size: 0.78rem;
+  color: var(--color-texto-suave);
+}
+.calendario-referencia {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.calendario-marca {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 3px;
+  flex: none;
+}
+.calendario-marca-sin-asignar {
+  background: transparent;
+  border: 2px dashed #b45309;
 }
 
 /* ─────────── Impresión ─────────── */
@@ -1812,10 +1845,31 @@ button {
     break-inside: avoid;
     min-height: 26mm;
   }
+  /* `border: 1px solid #999` pisaria el color de la persona, asi que el borde
+     de la izquierda se declara aparte y DESPUES. Sin esto, impreso salian
+     todas iguales y el color no servia para nada. */
   .calendario-tarea {
     background: #fff;
     border: 1px solid #999;
-    border-left-width: 3px;
+    border-left-width: 4px;
+    border-left-style: solid;
+  }
+  .calendario-tarea.sin-asignar {
+    border-left-style: dashed;
+  }
+
+  /* La referencia tambien se imprime: la hoja se lee lejos del sistema, y sin
+     ella los colores son siete rayas que no dicen de quien son. */
+  .calendario-referencias {
+    display: flex;
+    gap: 3mm;
+    margin: 0 0 2mm;
+    font-size: 8pt;
+    color: #000;
+  }
+  .calendario-marca {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   /* Impreso no hay hover, asi que el titulo completo importa mas que la
      alineacion: una tarea cortada en el papel no se puede desplegar. */

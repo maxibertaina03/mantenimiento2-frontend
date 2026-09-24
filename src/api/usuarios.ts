@@ -13,12 +13,17 @@ export function useUsuarioActual() {
 }
 
 /** Padrón de usuarios: se usa para asignar equipos IT. */
-export function useUsuarios(pagina = 1, limite = 100) {
+export function useUsuarios(pagina = 1, limite = 100, habilitado = true) {
   return useQuery({
     queryKey: ['usuarios', 'lista', pagina, limite],
     queryFn: () =>
       apiRequest<RespuestaPaginada<Usuario>>('/usuarios', { query: { pagina, limite } }),
     staleTime: 5 * 60_000,
+    enabled: habilitado,
+    // Listar el padron pide permiso de administrar usuarios. El calendario lo
+    // usa solo para repartir colores, asi que si el servidor dice que no, no
+    // se reintenta: se cae al color por id y la pantalla anda igual.
+    retry: false,
   });
 }
 

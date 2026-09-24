@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useAsignarTarea, useCalendario, useCancelarTarea } from '@/api/calendario';
 import { useAsignables } from '@/api/ordenesTrabajo';
+import { colorDeTarea, coloresPorPersona } from '@/lib/coloresUsuario';
+import { useUsuarios } from '@/api/usuarios';
 import { useUsuarioActual } from '@/api/usuarios';
 import { CompletarTarea } from '@/componentes/CompletarTarea';
 import { NuevaTarea } from '@/componentes/NuevaTarea';
@@ -77,6 +79,14 @@ export function CalendarioPage() {
   const cancelar = useCancelarTarea();
   const { data: asignables } = useAsignables(puede(P.TAREAS_ASIGNAR));
 
+  // El padron, solo para repartir los colores sin que se repitan. Quien no
+  // puede listarlo igual ve colores: `colorDeTarea` cae al color por id.
+  const { data: padron } = useUsuarios(1, 100, puede(P.USUARIOS_ADMINISTRAR));
+  const colores = useMemo(
+    () => coloresPorPersona(padron?.datos ?? []),
+    [padron],
+  );
+
   /** Las tareas de cada día, para no recorrer la lista entera por casilla. */
   const porDia = useMemo(() => {
     const mapa = new Map<string, Tarea[]>();
@@ -87,6 +97,19 @@ export function CalendarioPage() {
     }
     return mapa;
   }, [data]);
+
+  /** La referencia lleva solo a quien tenga algo este mes: si no, son nombres sueltos. */
+  const personasConTareas = useMemo(() => {
+    const nombres = new Map<string, string>();
+    for (const t of data?.tareas ?? []) {
+      if (t.asignadoAId) nombres.set(t.asignadoAId, t.asignadoANombre ?? 'sin nombre');
+    }
+    return [...nombres.entries()]
+      .map(([id, nombre]) => ({ id, nombre, color: colorDeTarea(id, colores).color }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }, [data, colores]);
+
+  const hayHuerfanas = (data?.tareas ?? []).some((t) => !t.asignadoAId);
 
   const mover = (meses: number) => {
     const siguiente = new Date(ancla);
@@ -169,6 +192,23 @@ export function CalendarioPage() {
         Tareas de {MESES[ancla.getMonth()]} de {ancla.getFullYear()}
       </h2>
 
+      {personasConTareas.length > 0 && (
+        <div className="calendario-referencias">
+          {personasConTareas.map((p) => (
+            <span className="calendario-referencia" key={p.id}>
+              <span className="calendario-marca" style={{ background: p.color }} />
+              {p.nombre}
+            </span>
+          ))}
+          {hayHuerfanas && (
+            <span className="calendario-referencia">
+              <span className="calendario-marca calendario-marca-sin-asignar" />
+              sin repartir
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="calendario">
         {DIAS.map((d) => (
           <div className="calendario-cabecera" key={d}>
@@ -205,10 +245,19 @@ export function CalendarioPage() {
                 )}
               </div>
 
-              {tareas.map((t) => (
+              {tareas.map((t) => {
+                const { color, sinAsignar } = colorDeTarea(t.asignadoAId, colores);
+                return (
                 <button
                   key={t.id}
-                  className={`calendario-tarea estado-${t.estado.toLowerCase()}`}
+                  className={[
+                    'calendario-tarea',
+                    `estado-${t.estado.toLowerCase()}`,
+                    sinAsignar ? 'sin-asignar' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  style={{ borderLeftColor: color }}
                   onClick={() => setTareaAbierta(t)}
                 >
                   <span className="calendario-tarea-titulo">{t.titulo}</span>
@@ -218,7 +267,8 @@ export function CalendarioPage() {
                     {t.equipoItNombre ? ` · ${t.equipoItNombre}` : ''}
                   </span>
                 </button>
-              ))}
+                );
+              })}
             </div>
           );
         })}
