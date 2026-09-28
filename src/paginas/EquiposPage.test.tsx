@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -44,7 +45,17 @@ function servidor({ existe = true, resumen }: { existe?: boolean; resumen?: unkn
   apiRequestMock.mockImplementation((rutaCruda: string) => {
     const ruta = String(rutaCruda ?? '');
     if (ruta === '/equipos/resumen') {
-      return Promise.resolve(resumen ?? { total: 1, porEstado: { OPERATIVO: 1 }, sinPlan: 0 });
+      return Promise.resolve(
+        resumen ?? {
+          total: 1,
+          porEstado: { OPERATIVO: 1 },
+          porClasificacion: { EQUIPO: 290, HERRAMIENTA: 18 },
+          tipos: [{ id: 't1', nombre: 'Motor', cantidad: 25 }],
+          ubicaciones: [{ id: 'u1', nombre: 'Recibo', cantidad: 61 }],
+          sinTipo: 7,
+          sinPlan: 0,
+        },
+      );
     }
     if (ruta === '/equipos/eq-1') {
       return existe ? Promise.resolve(compresor) : Promise.reject(new Error('404'));
@@ -117,7 +128,9 @@ describe('EquiposPage — resumen y filtros', () => {
 
     // El numero y su etiqueta van en elementos separados, como en informatica.
     // El 326 aparece dos veces, en el total y en los que no tienen plan.
-    expect(await screen.findByText('equipos')).toBeInTheDocument();
+    // Sin pestania elegida la tarjeta dice "en total": estando en
+    // Herramientas, decir "equipos" contradice lo que la persona eligio.
+    expect(await screen.findByText('en total')).toBeInTheDocument();
     expect(screen.getByText('sin plan de mantenimiento')).toBeInTheDocument();
     expect(screen.getAllByText('326')).toHaveLength(3); // total, operativos y sin plan
     // "Operativo" aparece tambien en el desplegable de estados y en la fila.
@@ -130,7 +143,7 @@ describe('EquiposPage — resumen y filtros', () => {
     servidor({ resumen: { total: 5 } });
     mostrar('/equipos');
 
-    expect(await screen.findByRole('heading', { name: 'Equipos' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Equipos y herramientas/ })).toBeInTheDocument();
   });
 
   it('los filtros que se usan todos los dias estan a la vista', async () => {
@@ -140,5 +153,69 @@ describe('EquiposPage — resumen y filtros', () => {
     expect(await screen.findByLabelText('Filtrar por tipo')).toBeInTheDocument();
     expect(screen.getByLabelText('Filtrar por estado')).toBeInTheDocument();
     expect(screen.getByLabelText('Filtrar por ubicación')).toBeInTheDocument();
+  });
+});
+
+/**
+ * Maquinas y herramientas.
+ *
+ * El modulo paso a tener las dos cosas, y se buscan por separado. Lo que mas
+ * importa proteger es el otro cambio: que los desplegables ofrezcan SOLO lo
+ * que tiene algo. El catalogo tiene 49 ubicaciones y 16 con equipos, asi que
+ * antes dos de cada tres opciones no llevaban a ningun lado.
+ */
+describe('EquiposPage — equipos y herramientas', () => {
+  it('las pestanias muestran cuantos hay de cada cosa', async () => {
+    servidor();
+    mostrar('/equipos');
+
+    expect(await screen.findByRole('button', { name: /Equipos\s*290/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Herramientas\s*18/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Todos\s*308/ })).toBeInTheDocument();
+  });
+
+  it('REGRESION: los desplegables solo ofrecen lo que tiene algo, con el numero', async () => {
+    // Elegir una ubicacion vacia y que no salga nada es el defecto que esto
+    // viene a arreglar.
+    servidor();
+    mostrar('/equipos');
+
+    expect(await screen.findByRole('option', { name: 'Recibo (61)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Motor (25)' })).toBeInTheDocument();
+  });
+
+  it('elegir una pestania filtra el listado', async () => {
+    const usuario = userEvent.setup();
+    servidor();
+    mostrar('/equipos');
+
+    await usuario.click(await screen.findByRole('button', { name: /Herramientas\s*18/ }));
+
+    await waitFor(() => {
+      const llamada = apiRequestMock.mock.calls.find(
+        (c) => String(c[0]) === '/equipos' && c[1]?.query?.clasificacion === 'HERRAMIENTA',
+      );
+      expect(llamada).toBeTruthy();
+    });
+  });
+
+  it('REGRESION: cambiar de pestania limpia tipo y ubicacion', async () => {
+    // Los tipos de una maquina no son los de una herramienta: si el filtro
+    // quedara puesto, la pestania nueva apareceria vacia sin motivo visible.
+    const usuario = userEvent.setup();
+    servidor();
+    mostrar('/equipos');
+
+    // Las opciones llegan con el resumen: hay que esperarlas antes de elegir.
+    await screen.findByRole('option', { name: 'Motor (25)' });
+    await usuario.selectOptions(screen.getByLabelText(/Filtrar por tipo/i), 't1');
+    await usuario.click(screen.getByRole('button', { name: /Herramientas\s*18/ }));
+
+    await waitFor(() => {
+      const ultima = [...apiRequestMock.mock.calls]
+        .reverse()
+        .find((c) => String(c[0]) === '/equipos');
+      expect(ultima?.[1]?.query?.tipoId).toBeUndefined();
+    });
   });
 });

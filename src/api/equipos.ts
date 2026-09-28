@@ -37,6 +37,7 @@ export function useEquipos(pagina = 1, limite = 20, filtros: FiltrosEquipos = {}
           marcaId: filtros.marcaId || undefined,
           modeloId: filtros.modeloId || undefined,
           estado: filtros.estado || undefined,
+          clasificacion: filtros.clasificacion || undefined,
           sinQr: filtros.sinQr ? 'true' : undefined,
           garantiaVencida: filtros.garantiaVencida ? 'true' : undefined,
           ordenarPor: filtros.ordenarPor || undefined,
@@ -219,9 +220,29 @@ export function useMarcarQrGenerado() {
 }
 
 /** Cuántos equipos hay, en qué estado, y cuántos no tienen ningún plan. */
+/** Una opcion de filtro con cuantos tiene dentro del filtro actual. */
+export interface OpcionConConteo {
+  id: string;
+  nombre: string;
+  cantidad: number;
+}
+
 export interface ResumenEquipos {
   total: number;
   porEstado: Record<string, number>;
+  /** Cuantos son maquinas y cuantos herramientas. */
+  porClasificacion: Record<string, number>;
+  /**
+   * Los tipos y ubicaciones que TIENEN algo dentro del filtro actual.
+   *
+   * Vienen del servidor ya contados y sin los vacios: el catalogo tiene 49
+   * ubicaciones y solo 16 con equipos, asi que dos de cada tres opciones no
+   * llevaban a ningun lado.
+   */
+  tipos: OpcionConConteo[];
+  ubicaciones: OpcionConConteo[];
+  /** Equipos sin tipo cargado: no se encuentran con ningun filtro. */
+  sinTipo: number;
   /** Equipos que necesitan mantenimiento y no tienen ningún plan activo. */
   sinPlan: number;
 }
@@ -232,10 +253,20 @@ export interface ResumenEquipos {
  * `habilitado` por lo mismo que los planes: el módulo es solo para admins y a
  * un operario el pedido le daría 403.
  */
-export function useResumenEquipos(habilitado = true) {
+export function useResumenEquipos(
+  habilitado = true,
+  filtro: { clasificacion?: string; estado?: string; buscar?: string } = {},
+) {
   return useQuery({
-    queryKey: ['equipos', 'resumen'] as const,
-    queryFn: () => apiRequest<ResumenEquipos>('/equipos/resumen'),
+    queryKey: ['equipos', 'resumen', filtro] as const,
+    queryFn: () =>
+      apiRequest<ResumenEquipos>('/equipos/resumen', {
+        query: {
+          clasificacion: filtro.clasificacion || undefined,
+          estado: filtro.estado || undefined,
+          buscar: filtro.buscar || undefined,
+        },
+      }),
     enabled: habilitado,
   });
 }

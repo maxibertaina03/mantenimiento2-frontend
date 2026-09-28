@@ -1837,6 +1837,58 @@ button {
 }
 
 /* ─── Referencia de colores ─── */
+/* ─────────── Pestanias de clasificacion ───────────
+   Maquinas y herramientas son dos cosas distintas y se buscan por separado.
+   Como pestanias y no como un desplegable mas: es un clic, y de entrada se ve
+   cuantas hay de cada una. */
+.pestanias-clasificacion {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0 0 0.75rem;
+  flex-wrap: wrap;
+}
+.pestania {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--color-borde);
+  background: var(--color-panel);
+  color: var(--color-texto);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pestania:hover {
+  border-color: var(--color-primario);
+}
+.pestania.activa {
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+  color: #fff;
+}
+.pestania-cuenta {
+  background: var(--color-fondo);
+  color: var(--color-texto-suave);
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.78rem;
+}
+.pestania.activa .pestania-cuenta {
+  background: rgb(255 255 255 / 0.25);
+  color: #fff;
+}
+
+/* En el papel las pestanias no dicen nada: lo que se filtro ya se ve en la
+   lista impresa. */
+@media print {
+  .pestanias-clasificacion {
+    display: none;
+  }
+}
+
 .calendario-referencias {
   display: flex;
   flex-wrap: wrap;

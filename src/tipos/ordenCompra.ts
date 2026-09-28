@@ -25,6 +25,12 @@ export const ETIQUETA_CLASIFICACION: Record<ClasificacionEquipo, string> = {
   HERRAMIENTA: 'Herramienta',
 };
 
+/** En plural, para las pestanias y los titulos de listas. */
+export const ETIQUETA_CLASIFICACION_PLURAL: Record<ClasificacionEquipo, string> = {
+  EQUIPO: 'Equipos',
+  HERRAMIENTA: 'Herramientas',
+};
+
 export interface RenglonOrden {
   id: string;
   /** Nulo cuando el renglon es de un equipo y no de un material del paniol. */

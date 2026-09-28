@@ -91,6 +91,8 @@ export interface FiltrosEquipos {
   marcaId?: string;
   modeloId?: string;
   estado?: EstadoEquipo;
+  /** Solo maquinas, o solo herramientas. */
+  clasificacion?: ClasificacionEquipo;
   garantiaVencida?: boolean;
   /** Solo los que todavía no tienen etiqueta QR impresa. */
   sinQr?: boolean;

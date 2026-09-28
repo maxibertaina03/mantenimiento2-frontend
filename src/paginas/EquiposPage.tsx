@@ -28,6 +28,7 @@ import type { CrearEquipoInput, Equipo, EstadoEquipo, FiltrosEquipos } from '@/t
 import {
   CLASIFICACIONES_EQUIPO,
   ETIQUETA_CLASIFICACION,
+  ETIQUETA_CLASIFICACION_PLURAL,
   type ClasificacionEquipo,
 } from '@/tipos/ordenCompra';
 
@@ -86,8 +87,13 @@ export function EquiposPage() {
     ...filtros,
     buscar: busquedaDebounced,
   });
-  const { ubicaciones, tipos } = useCatalogoEquipos();
-  const { data: resumen } = useResumenEquipos();
+  // Con el filtro puesto: de este resumen salen las opciones que ofrecen los
+  // desplegables, y tienen que ser las que existen DENTRO de lo ya filtrado.
+  const { data: resumen } = useResumenEquipos(true, {
+    clasificacion: filtros.clasificacion,
+    estado: filtros.estado,
+    buscar: busquedaDebounced,
+  });
   const eliminar = useEliminarEquipo();
 
   const totalPaginas = data ? Math.max(1, Math.ceil(data.total / LIMITE)) : 1;
@@ -112,10 +118,10 @@ export function EquiposPage() {
     <>
       <div className="cabecera-pagina">
         <div>
-          <h1>Equipos</h1>
+          <h1>Equipos y herramientas</h1>
           <p className="texto-suave">
-            Las máquinas e instalaciones de la planta: sus fichas, sus fotos y sus planes de
-            mantenimiento.
+            Las máquinas e instalaciones de la planta y las herramientas con ficha propia: sus
+            fotos, su historial y sus planes de mantenimiento.
           </p>
         </div>
         <div className="fila-acciones">
@@ -145,7 +151,13 @@ export function EquiposPage() {
         <div className="tarjetas-resumen">
           <div className="tarjeta-resumen">
             <span className="tarjeta-numero">{resumen.total}</span>
-            <span className="texto-suave">equipos</span>
+            {/* La etiqueta sigue a la pestania: estando en Herramientas, decir
+                "18 equipos" es contradecir lo que la persona acaba de elegir. */}
+            <span className="texto-suave">
+              {filtros.clasificacion
+                ? ETIQUETA_CLASIFICACION_PLURAL[filtros.clasificacion].toLowerCase()
+                : 'en total'}
+            </span>
           </div>
           {/* `?? {}`: una pantalla no puede romperse porque una parte del
               resumen no vino. Antes reventaba entera y no se veia ni la tabla. */}
@@ -167,6 +179,32 @@ export function EquiposPage() {
           )}
         </div>
       )}
+
+      {/* Maquinas y herramientas son dos cosas distintas y se buscan por
+          separado. Van como pestanias y no como un desplegable mas: es un
+          clic, y de entrada se ve cuantas hay de cada una. */}
+      <div className="pestanias-clasificacion">
+        {([undefined, 'EQUIPO', 'HERRAMIENTA'] as const).map((c) => {
+          const cantidad =
+            c === undefined
+              ? Object.values(resumen?.porClasificacion ?? {}).reduce((a, b) => a + b, 0)
+              : (resumen?.porClasificacion?.[c] ?? 0);
+          const activa = filtros.clasificacion === c;
+          return (
+            <button
+              key={c ?? 'todos'}
+              className={activa ? 'pestania activa' : 'pestania'}
+              aria-pressed={activa}
+              onClick={() =>
+                cambiarFiltro({ clasificacion: c, tipoId: undefined, ubicacionId: undefined })
+              }
+            >
+              {c === undefined ? 'Todos' : ETIQUETA_CLASIFICACION_PLURAL[c]}
+              <span className="pestania-cuenta">{cantidad}</span>
+            </button>
+          );
+        })}
+      </div>
 
       <div className="buscador">
         <input
@@ -195,9 +233,9 @@ export function EquiposPage() {
           aria-label="Filtrar por tipo"
         >
           <option value="">Todos los tipos</option>
-          {(tipos.data ?? []).map((t) => (
+          {(resumen?.tipos ?? []).map((t) => (
             <option key={t.id} value={t.id}>
-              {t.nombre}
+              {t.nombre} ({t.cantidad})
             </option>
           ))}
         </select>
@@ -219,9 +257,9 @@ export function EquiposPage() {
           aria-label="Filtrar por ubicación"
         >
           <option value="">Todas las ubicaciones</option>
-          {(ubicaciones.data ?? []).map((u) => (
+          {(resumen?.ubicaciones ?? []).map((u) => (
             <option key={u.id} value={u.id}>
-              {u.nombre}
+              {u.nombre} ({u.cantidad})
             </option>
           ))}
         </select>

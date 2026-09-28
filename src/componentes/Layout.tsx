@@ -90,7 +90,7 @@ export function Layout() {
           )}
           {puede(P.EQUIPOS_VER) && (
             <NavLink to="/equipos" className={claseNav}>
-              Equipos
+              Equipos y herramientas
             </NavLink>
           )}
           {puede(P.SERVICIOS_VER) && (
