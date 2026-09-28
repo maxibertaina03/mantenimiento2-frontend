@@ -25,6 +25,11 @@ import { useModelosDeMarca } from '@/api/catalogosEquipo';
 import { formatearFechaSola } from '@/lib/formato';
 import { ESTADOS_EQUIPO, ETIQUETA_ESTADO_EQUIPO, TRANSICIONES_ESTADO } from '@/tipos/equipo';
 import type { CrearEquipoInput, Equipo, EstadoEquipo, FiltrosEquipos } from '@/tipos/equipo';
+import {
+  CLASIFICACIONES_EQUIPO,
+  ETIQUETA_CLASIFICACION,
+  type ClasificacionEquipo,
+} from '@/tipos/ordenCompra';
 
 const LIMITE = 20;
 
@@ -486,6 +491,7 @@ function FormularioEquipo({ equipo, alCerrar }: { equipo?: Equipo; alCerrar: () 
     fechaAlta: equipo?.fechaAlta?.slice(0, 10) ?? '',
     garantiaHasta: equipo?.garantiaHasta?.slice(0, 10) ?? '',
     estado: equipo?.estado,
+    clasificacion: equipo?.clasificacion ?? 'EQUIPO',
   });
 
   const cambiar = (parcial: Partial<typeof form>) => setForm((f) => ({ ...f, ...parcial }));
@@ -547,6 +553,24 @@ function FormularioEquipo({ equipo, alCerrar }: { equipo?: Equipo; alCerrar: () 
               autoFocus
               placeholder="Compresor 1"
             />
+          </div>
+
+          <div className="campo">
+            <label htmlFor="equipo-clasificacion">Qué es</label>
+            {/* Una categoria por encima del tipo: una prensa es un EQUIPO de
+                tipo "Prensa"; una amoladora es una HERRAMIENTA. Las
+                herramientas chicas y de consumo van al paniol como material. */}
+            <select
+              id="equipo-clasificacion"
+              value={form.clasificacion}
+              onChange={(e) => cambiar({ clasificacion: e.target.value as ClasificacionEquipo })}
+            >
+              {CLASIFICACIONES_EQUIPO.map((c) => (
+                <option key={c} value={c}>
+                  {ETIQUETA_CLASIFICACION[c]}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="campo">
             <label>Código interno</label>

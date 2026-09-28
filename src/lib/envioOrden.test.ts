@@ -37,6 +37,8 @@ const orden: OrdenCompra = {
       subtotal: 125050,
       notas: null,
       movimientoId: null,
+    descripcionEquipo: null,
+    clasificacion: null,
     },
   ],
   total: 125050,

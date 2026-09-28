@@ -20,8 +20,13 @@ import { formatearFecha, formatearNumero } from '@/lib/formato';
 import { descargarPdfOrdenCompra } from '@/lib/pdfOrdenCompra';
 import { ComprobantesOrden } from '@/componentes/ComprobantesOrden';
 import { EnviarOrden } from '@/componentes/EnviarOrden';
-import { ETIQUETA_ESTADO_ORDEN } from '@/tipos/ordenCompra';
+import {
+  CLASIFICACIONES_EQUIPO,
+  ETIQUETA_CLASIFICACION,
+  ETIQUETA_ESTADO_ORDEN,
+} from '@/tipos/ordenCompra';
 import type {
+  ClasificacionEquipo,
   EstadoOrdenCompra,
   OrdenCompra,
   RenglonInput,
@@ -236,6 +241,14 @@ export function OrdenesCompraPage() {
 // ─────────────────────── Nueva orden ───────────────────────
 
 interface RenglonBorrador extends Omit<RenglonInput, 'cantidad'> {
+  /**
+   * Identifica al renglón mientras se arma la orden.
+   *
+   * Antes alcanzaba con el material, porque no había otra cosa que comprar.
+   * Ahora un renglón puede ser de un equipo, que todavía no existe y no tiene
+   * id: por eso hace falta una clave propia.
+   */
+  clave: string;
   /** Se guarda para mostrar el nombre sin volver a pedirlo a la API. */
   materialNombre: string;
   unidad: string;
@@ -260,6 +273,12 @@ function ModalNuevaOrden({
   const [proveedorId, setProveedorId] = useState('');
   const [observaciones, setObservaciones] = useState('');
   const [renglones, setRenglones] = useState<RenglonBorrador[]>([]);
+
+  // El alta de un equipo o herramienta, que va por un camino aparte del pañol.
+  const [equipoTexto, setEquipoTexto] = useState('');
+  const [equipoClase, setEquipoClase] = useState<ClasificacionEquipo>('HERRAMIENTA');
+  const [equipoCantidad, setEquipoCantidad] = useState<number | undefined>(undefined);
+  const [equipoPrecio, setEquipoPrecio] = useState<number | undefined>(undefined);
 
   // Renglón que se está armando.
   const [material, setMaterial] = useState<Material | null>(null);
@@ -309,6 +328,7 @@ function ModalNuevaOrden({
     setRenglones((rs) => [
       ...rs,
       {
+        clave: `mat-${m.id}`,
         materialId: m.id,
         materialNombre: m.nombre,
         unidad: m.unidad,
@@ -350,12 +370,45 @@ function ModalNuevaOrden({
     setPrecio(undefined);
   };
 
-  const quitarRenglon = (materialId: string) =>
-    setRenglones((rs) => rs.filter((r) => r.materialId !== materialId));
+  /**
+   * Suma un renglón de equipo o herramienta.
+   *
+   * No lleva stock: al cerrar la compra, cada unidad queda como una ficha
+   * aparte en el módulo de equipos, para completarle serie y demás. Por eso
+   * las unidades tienen que ser enteras —media amoladora no existe— y por eso
+   * no se busca en el pañol: todavía no existe.
+   */
+  const agregarEquipo = () => {
+    const descripcion = equipoTexto.trim();
+    if (descripcion === '') return;
+
+    setRenglones((rs) => [
+      ...rs,
+      {
+        // Una clave por renglón y no por descripción: comprar dos veces la
+        // misma herramienta en la misma orden es válido (dos sectores, dos
+        // precios), al revés que con los materiales.
+        clave: `eq-${Date.now()}-${rs.length}`,
+        descripcionEquipo: descripcion,
+        clasificacion: equipoClase,
+        materialNombre: descripcion,
+        unidad: equipoClase === 'HERRAMIENTA' ? 'herramienta' : 'equipo',
+        cantidad: equipoCantidad,
+        precioUnitario: equipoPrecio,
+      },
+    ]);
+    setAviso({ texto: `Agregado: ${descripcion}`, error: false });
+    setEquipoTexto('');
+    setEquipoCantidad(undefined);
+    setEquipoPrecio(undefined);
+  };
+
+  const quitarRenglon = (clave: string) =>
+    setRenglones((rs) => rs.filter((r) => r.clave !== clave));
 
   /** La cantidad y el precio se editan en la tabla, que es donde se completan. */
-  const cambiarRenglon = (materialId: string, cambio: Partial<RenglonBorrador>) =>
-    setRenglones((rs) => rs.map((r) => (r.materialId === materialId ? { ...r, ...cambio } : r)));
+  const cambiarRenglon = (clave: string, cambio: Partial<RenglonBorrador>) =>
+    setRenglones((rs) => rs.map((r) => (r.clave === clave ? { ...r, ...cambio } : r)));
 
   /** Los que entraron escaneados y todavía esperan que alguien ponga cuánto. */
   const sinCantidad = renglones.filter((r) => r.cantidad === undefined || r.cantidad <= 0);
@@ -410,7 +463,7 @@ function ModalNuevaOrden({
           <ComboProveedor onCambio={(p) => setProveedorId(p?.id ?? '')} />
         </label>
 
-        <h3 className="subtitulo-form">Materiales a comprar</h3>
+        <h3 className="subtitulo-form">Materiales del pañol</h3>
 
         <div className="panel alta-renglon">
           <label className="alta-renglon-material">
@@ -462,6 +515,68 @@ function ModalNuevaOrden({
           </button>
         </div>
 
+        <h3 className="subtitulo-form">Equipos y herramientas</h3>
+        <p className="texto-suave texto-chico">
+          No llevan stock. Al cerrar la compra, cada unidad queda como una ficha aparte en
+          Equipos, para completarle el número de serie y el resto. Las herramientas chicas y
+          de consumo —brocas, llaves— van arriba, como material.
+        </p>
+
+        <div className="panel alta-renglon alta-renglon-equipo">
+          <label className="alta-renglon-material">
+            Qué se compra
+            <input
+              type="text"
+              value={equipoTexto}
+              maxLength={200}
+              placeholder="Amoladora angular 4 1/2"
+              onChange={(e) => setEquipoTexto(e.target.value)}
+            />
+          </label>
+          <label>
+            Qué es
+            <select
+              value={equipoClase}
+              onChange={(e) => setEquipoClase(e.target.value as ClasificacionEquipo)}
+            >
+              {CLASIFICACIONES_EQUIPO.map((c) => (
+                <option key={c} value={c}>
+                  {ETIQUETA_CLASIFICACION[c]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Unidades
+            {/* Enteras: cada una va a ser una ficha, y media amoladora no existe. */}
+            <CampoNumero
+              step="1"
+              min="1"
+              placeholder="1"
+              valor={equipoCantidad}
+              onCambio={setEquipoCantidad}
+            />
+          </label>
+          <label>
+            P. unitario
+            <CampoNumero
+              step="0.01"
+              min="0"
+              placeholder="opcional"
+              valor={equipoPrecio}
+              onCambio={setEquipoPrecio}
+            />
+          </label>
+          <button
+            type="button"
+            className="btn btn-primario alta-renglon-boton"
+            onClick={agregarEquipo}
+            disabled={equipoTexto.trim() === ''}
+          >
+            + Agregar
+          </button>
+        </div>
+
         {aviso && (
           <p className={aviso.error ? 'aviso-escaneo es-error' : 'aviso-escaneo'} role="status">
             {aviso.texto}
@@ -506,7 +621,7 @@ function ModalNuevaOrden({
                         placeholder="0"
                         valor={r.cantidad}
                         aria-label={`Cantidad de ${r.materialNombre}`}
-                        onCambio={(c) => cambiarRenglon(r.materialId, { cantidad: c })}
+                        onCambio={(c) => cambiarRenglon(r.clave, { cantidad: c })}
                       />
                       <span className="texto-suave">{r.unidad}</span>
                     </td>
@@ -519,7 +634,7 @@ function ModalNuevaOrden({
                         placeholder="opcional"
                         valor={r.precioUnitario}
                         aria-label={`Precio unitario de ${r.materialNombre}`}
-                        onCambio={(p) => cambiarRenglon(r.materialId, { precioUnitario: p })}
+                        onCambio={(p) => cambiarRenglon(r.clave, { precioUnitario: p })}
                       />
                     </td>
                     <td data-etiqueta="Subtotal">
@@ -531,7 +646,7 @@ function ModalNuevaOrden({
                       <button
                         type="button"
                         className="btn btn-sm btn-peligro"
-                        onClick={() => quitarRenglon(r.materialId)}
+                        onClick={() => quitarRenglon(r.clave)}
                       >
                         Quitar
                       </button>

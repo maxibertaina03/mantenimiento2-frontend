@@ -251,3 +251,52 @@ describe('OrdenesCompraPage — cargar con la pistola', () => {
     expect(await screen.findByText(/es de un equipo/i)).toBeInTheDocument();
   });
 });
+
+/**
+ * Comprar un equipo o una herramienta.
+ *
+ * No llevan stock: al cerrar la compra, cada unidad queda como una ficha
+ * aparte en Equipos. Lo que se prueba aca es que la pantalla mande el renglon
+ * con la forma correcta, porque el backend rechaza uno que sea las dos cosas.
+ */
+describe('OrdenesCompraPage — comprar equipos y herramientas', () => {
+  const abrirAlta = async (usuario: ReturnType<typeof userEvent.setup>) => {
+    mostrar();
+    await usuario.click(await screen.findByRole('button', { name: /nueva orden/i }));
+    await screen.findByRole('heading', { name: /Nueva orden de compra/i });
+  };
+
+  it('el alta ofrece cargar un equipo aparte del paniol', async () => {
+    const usuario = userEvent.setup();
+    await abrirAlta(usuario);
+
+    expect(screen.getByText(/Equipos y herramientas/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Amoladora/i)).toBeInTheDocument();
+  });
+
+  it('avisa que las herramientas chicas van como material', async () => {
+    // Sin esto, alguien carga 50 brocas como 50 fichas de herramienta.
+    const usuario = userEvent.setup();
+    await abrirAlta(usuario);
+
+    expect(screen.getByText(/brocas, llaves/i)).toBeInTheDocument();
+  });
+
+  it('agrega el equipo al detalle de la orden', async () => {
+    const usuario = userEvent.setup();
+    await abrirAlta(usuario);
+
+    await usuario.type(screen.getByPlaceholderText(/Amoladora/i), 'Amoladora angular');
+    await usuario.click(screen.getAllByRole('button', { name: /\+ Agregar/i })[1]);
+
+    expect(await screen.findByText(/Agregado: Amoladora angular/i)).toBeInTheDocument();
+  });
+
+  it('REGRESION: sin descripcion no se puede agregar', async () => {
+    // Un renglon vacio lo rechaza el backend, pero mejor no dejarlo llegar.
+    const usuario = userEvent.setup();
+    await abrirAlta(usuario);
+
+    expect(screen.getAllByRole('button', { name: /\+ Agregar/i })[1]).toBeDisabled();
+  });
+});

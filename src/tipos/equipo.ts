@@ -1,3 +1,4 @@
+import type { ClasificacionEquipo } from './ordenCompra';
 export const ESTADOS_EQUIPO = [
   'OPERATIVO',
   'EN_REPARACION',
@@ -44,6 +45,13 @@ export interface Equipo {
   tipoId: string | null;
   tipoNombre: string | null;
   estado: EstadoEquipo;
+  /**
+   * Si es una maquina de planta o una herramienta.
+   *
+   * Es una categoria por encima del tipo: una prensa es un EQUIPO de tipo
+   * "Prensa"; una amoladora es una HERRAMIENTA.
+   */
+  clasificacion: ClasificacionEquipo;
   fotoUrl: string | null;
   proveedorId: string | null;
   proveedorNombre: string | null;
@@ -57,6 +65,8 @@ export interface Equipo {
 }
 
 export interface CrearEquipoInput {
+  /** Maquina de planta o herramienta. Por defecto, maquina. */
+  clasificacion?: ClasificacionEquipo;
   nombre: string;
   codigoInterno?: string | null;
   descripcion?: string | null;

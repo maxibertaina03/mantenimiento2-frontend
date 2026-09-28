@@ -16,9 +16,19 @@ export const ETIQUETA_ESTADO_ORDEN: Record<EstadoOrdenCompra, string> = {
   ANULADA: 'Anulada',
 };
 
+/** Una maquina de planta, o una herramienta que merece ficha propia. */
+export const CLASIFICACIONES_EQUIPO = ['EQUIPO', 'HERRAMIENTA'] as const;
+export type ClasificacionEquipo = (typeof CLASIFICACIONES_EQUIPO)[number];
+
+export const ETIQUETA_CLASIFICACION: Record<ClasificacionEquipo, string> = {
+  EQUIPO: 'Equipo',
+  HERRAMIENTA: 'Herramienta',
+};
+
 export interface RenglonOrden {
   id: string;
-  materialId: string;
+  /** Nulo cuando el renglon es de un equipo y no de un material del paniol. */
+  materialId: string | null;
   materialNombre: string | null;
   unidad: string | null;
   cantidad: number;
@@ -26,6 +36,10 @@ export interface RenglonOrden {
   subtotal: number | null;
   notas: string | null;
   movimientoId: string | null;
+
+  /** Que equipo se compra, cuando el renglon no es de material. */
+  descripcionEquipo: string | null;
+  clasificacion: ClasificacionEquipo | null;
 }
 
 export interface OrdenCompra {
@@ -55,7 +69,10 @@ export interface OrdenCompra {
 }
 
 export interface RenglonInput {
-  materialId: string;
+  /** Uno o el otro, nunca los dos: lo hace cumplir el backend. */
+  materialId?: string;
+  descripcionEquipo?: string;
+  clasificacion?: ClasificacionEquipo;
   cantidad: number;
   precioUnitario?: number;
   notas?: string;

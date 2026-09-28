@@ -1043,6 +1043,20 @@ button.combo-item:hover {
   border-radius: 10px;
   background: var(--color-fondo, #f8fafc);
 }
+
+/* El alta de un equipo tiene un campo mas que la de un material —que es, y
+   ademas cuantas unidades—, y con cuatro columnas el boton se caia al
+   renglon siguiente. */
+.alta-renglon-equipo {
+  /* La segunda columna entra "Herramienta" completo; cortado se lee
+     "Herrami..." y no se sabe que dice. */
+  grid-template-columns: minmax(0, 1.9fr) minmax(0, 1.1fr) minmax(0, 0.6fr) minmax(0, 0.9fr) auto;
+}
+@media (max-width: 860px) {
+  .alta-renglon-equipo {
+    grid-template-columns: 1fr;
+  }
+}
 .alta-renglon label {
   display: flex;
   flex-direction: column;
