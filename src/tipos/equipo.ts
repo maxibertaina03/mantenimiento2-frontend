@@ -108,6 +108,8 @@ export interface EquipoDetectado {
   ubicacion: string;
   ruta: string;
   advertencias: Advertencia[];
+  /** Sale de la carpeta: lo que esta en "Taller" son herramientas. */
+  clasificacion: ClasificacionEquipo;
 }
 
 export interface DeteccionImportacion {

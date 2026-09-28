@@ -100,9 +100,8 @@ export function CargarFotosPlanta({ onCerrar }: { onCerrar: () => void }) {
           <>
             <p className="texto-suave texto-chico">
               Elegí la carpeta con las fotos de las máquinas. Cada foto se asigna al equipo cuyo
-              nombre coincide con el del archivo, dentro de su sector. Las carpetas{' '}
-              <strong>Taller</strong> y <strong>manuales</strong> se saltean: no son sectores de la
-              planta.
+              nombre coincide con el del archivo, dentro de su sector. La carpeta{' '}
+              <strong>manuales</strong> se saltea: son PDF, no fotos de equipos.
             </p>
             <p className="texto-suave texto-chico">
               No sale nada de tu equipo hasta que confirmes: primero se muestra qué se encontró.

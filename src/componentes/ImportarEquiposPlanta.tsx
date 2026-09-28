@@ -21,7 +21,7 @@ const EXPLICACION_ADVERTENCIA: Record<Advertencia, string> = {
 
 const ETIQUETA_DESCARTE: Record<string, string> = {
   sin_carpeta: 'Sueltos, sin sector',
-  carpeta_excluida: 'En carpetas excluidas (Taller, manuales)',
+  carpeta_excluida: 'En carpetas excluidas (manuales)',
   no_es_imagen: 'No son imágenes',
   sin_nombre: 'Sin nombre',
 };
@@ -73,7 +73,13 @@ export function ImportarEquiposPlanta({ onCerrar }: { onCerrar: () => void }) {
 
   const confirmar = async () => {
     const r = await importar.mutateAsync({
-      filas: seleccionados.map((eq) => ({ nombre: eq.nombre, ubicacion: eq.ubicacion })),
+      filas: seleccionados.map((eq) => ({
+        nombre: eq.nombre,
+        ubicacion: eq.ubicacion,
+        // Lo que esta en la carpeta "Taller" entra como herramienta: si no se
+        // mandara, habria que recategorizar cien fichas a mano.
+        clasificacion: eq.clasificacion,
+      })),
     });
     setHecho(r);
   };
@@ -123,7 +129,8 @@ export function ImportarEquiposPlanta({ onCerrar }: { onCerrar: () => void }) {
       <div className="formulario-modal">
         <p className="texto-suave">
           Elegí la carpeta con las fotos de la planta. Cada subcarpeta se toma como el sector y
-          cada nombre de archivo como el nombre del equipo.{' '}
+          cada nombre de archivo como el nombre del equipo. Lo que esté en la carpeta{' '}
+          <strong>Taller</strong> entra como herramienta.{' '}
           <strong>Las fotos todavía no se suben</strong>: eso viene en la fase siguiente.
         </p>
 
@@ -172,6 +179,7 @@ export function ImportarEquiposPlanta({ onCerrar }: { onCerrar: () => void }) {
                   <tr>
                     <th>Importar</th>
                     <th>Equipo</th>
+                    <th>Qué es</th>
                     <th>Sector</th>
                     <th>Advertencias</th>
                   </tr>
@@ -191,6 +199,13 @@ export function ImportarEquiposPlanta({ onCerrar }: { onCerrar: () => void }) {
                         />
                       </td>
                       <td data-etiqueta="Equipo">{eq.nombre}</td>
+                      <td data-etiqueta="Qué es">
+                        {eq.clasificacion === 'HERRAMIENTA' ? (
+                          <span className="etiqueta">Herramienta</span>
+                        ) : (
+                          <span className="texto-suave">Equipo</span>
+                        )}
+                      </td>
                       <td data-etiqueta="Sector">{eq.ubicacion}</td>
                       <td data-etiqueta="Advertencias">
                         {eq.advertencias.map((a) => (

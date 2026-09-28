@@ -84,16 +84,23 @@ describe('emparejarFotos', () => {
     expect(r.emparejadas).toHaveLength(1);
   });
 
-  it('REGRESION: saltea las carpetas Taller y manuales', () => {
-    // No son sectores de la planta: son fotos de herramientas y de PDFs.
-    const equipos = [equipo('Amoladora', 'Caldera')];
-    const r = emparejarFotos(
-      [archivo('FOTOS/Taller/Amoladora.jpg'), archivo('FOTOS/manuales/Amoladora.jpg')],
-      equipos,
-    );
+  it('REGRESION: saltea manuales, que son PDF y no fotos de equipos', () => {
+    const r = emparejarFotos([archivo('FOTOS/manuales/Amoladora.jpg')], [
+      equipo('Amoladora', 'Caldera'),
+    ]);
 
     expect(r.emparejadas).toHaveLength(0);
     expect(r.sinEquipo).toHaveLength(0);
+  });
+
+  it('REGRESION: las fotos del Taller si se emparejan', () => {
+    // Taller salio de las excluidas cuando las herramientas pasaron a tener
+    // ficha propia: si sus equipos se importan, sus fotos tambien van.
+    const r = emparejarFotos([archivo('FOTOS/Taller/Amoladora.jpg')], [
+      equipo('Amoladora', 'Taller'),
+    ]);
+
+    expect(r.emparejadas).toHaveLength(1);
   });
 
   it('los archivos que no son imagenes se ignoran', () => {

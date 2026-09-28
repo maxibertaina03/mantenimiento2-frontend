@@ -49,8 +49,14 @@ export interface ResultadoEmparejado {
   equiposSinArchivo: Equipo[];
 }
 
-/** Carpetas que no son sectores de la planta. */
-export const CARPETAS_EXCLUIDAS = ['taller', 'manuales'];
+/**
+ * Carpetas que no son sectores de la planta.
+ *
+ * "Taller" salio de esta lista cuando las herramientas pasaron a tener ficha:
+ * si sus equipos se importan, sus fotos tambien tienen que poder emparejarse.
+ * "manuales" son PDF.
+ */
+export const CARPETAS_EXCLUIDAS = ['manuales'];
 
 const ES_IMAGEN = /\.(jpe?g|png|webp)$/i;
 
