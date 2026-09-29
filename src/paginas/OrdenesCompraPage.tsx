@@ -24,6 +24,7 @@ import {
   CLASIFICACIONES_EQUIPO,
   ETIQUETA_CLASIFICACION,
   ETIQUETA_ESTADO_ORDEN,
+  nombreDelRenglon,
 } from '@/tipos/ordenCompra';
 import type {
   ClasificacionEquipo,
@@ -820,7 +821,7 @@ function ModalDetalleOrden({
             <tbody>
               {orden.renglones.map((r) => (
                 <tr key={r.id}>
-                  <td data-etiqueta="Material">{r.materialNombre ?? '—'}</td>
+                  <td data-etiqueta="Material">{nombreDelRenglon(r) ?? '—'}</td>
                   <td data-etiqueta="Cantidad">
                     {formatearNumero(r.cantidad)} {r.unidad ?? ''}
                   </td>

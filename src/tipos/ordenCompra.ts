@@ -48,6 +48,16 @@ export interface RenglonOrden {
   clasificacion: ClasificacionEquipo | null;
 }
 
+/**
+ * Qué se compra en un renglón: el material del pañol, o el equipo.
+ *
+ * Un renglón de equipo no tiene material, y mostrar solo `materialNombre`
+ * lo dejaba en blanco en la pantalla, el PDF y el mensaje al proveedor.
+ */
+export function nombreDelRenglon(r: Pick<RenglonOrden, 'materialNombre' | 'descripcionEquipo'>) {
+  return r.materialNombre ?? r.descripcionEquipo ?? null;
+}
+
 export interface OrdenCompra {
   id: string;
   numero: string;

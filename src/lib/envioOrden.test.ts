@@ -88,6 +88,26 @@ describe('aNumeroWhatsapp', () => {
 });
 
 describe('armarMensaje', () => {
+  it('REGRESION: un renglón de equipo dice qué equipo se compra', () => {
+    // Antes salía "Material" y el proveedor no sabía qué le pedían.
+    const conEquipo: OrdenCompra = {
+      ...orden,
+      renglones: [
+        {
+          ...orden.renglones[0],
+          id: 'r2',
+          materialId: null,
+          materialNombre: null,
+          unidad: null,
+          cantidad: 2,
+          descripcionEquipo: 'Amoladora 115mm',
+          clasificacion: 'HERRAMIENTA',
+        },
+      ],
+    };
+    expect(armarMensaje(conEquipo).cuerpo).toContain('• Amoladora 115mm — 2');
+  });
+
   it('el asunto lleva el número de orden', () => {
     expect(armarMensaje(orden).asunto).toContain('OC-2026-0007');
   });

@@ -1,6 +1,6 @@
 import { logoComoSvg } from '@/componentes/LogoLasTres';
 import { formatearFechaSola, formatearNumero } from './formato';
-import type { OrdenCompra } from '@/tipos/ordenCompra';
+import { nombreDelRenglon, type OrdenCompra } from '@/tipos/ordenCompra';
 
 /** Rojo institucional de Lácteos Las Tres (RGB). */
 const ROJO: [number, number, number] = [200, 16, 46];
@@ -169,7 +169,7 @@ async function construirPdf(orden: OrdenCompra) {
   const cuerpo = orden.renglones.map((r, i) => {
     const base = [
       String(i + 1),
-      r.materialNombre ?? r.materialId,
+      nombreDelRenglon(r) ?? r.materialId ?? '—',
       formatearNumero(r.cantidad),
       r.unidad ?? '—',
     ];

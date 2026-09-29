@@ -1,4 +1,4 @@
-import type { OrdenCompra } from '@/tipos/ordenCompra';
+import { nombreDelRenglon, type OrdenCompra } from '@/tipos/ordenCompra';
 
 /**
  * Copia interna que recibe todas las órdenes emitidas.
@@ -76,7 +76,7 @@ function detalle(orden: OrdenCompra): string {
   return orden.renglones
     .map((r) => {
       const cantidad = `${r.cantidad}${r.unidad ? ` ${r.unidad}` : ''}`;
-      return `• ${r.materialNombre ?? 'Material'} — ${cantidad}`;
+      return `• ${nombreDelRenglon(r) ?? 'Material'} — ${cantidad}`;
     })
     .join('\n');
 }
