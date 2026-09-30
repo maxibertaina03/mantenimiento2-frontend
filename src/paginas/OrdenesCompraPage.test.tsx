@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { OrdenesCompraPage } from './OrdenesCompraPage';
+import { renglonesParaEnviar } from '@/lib/renglonesOrden';
 
 /**
  * La pantalla de órdenes de compra.
@@ -298,5 +299,45 @@ describe('OrdenesCompraPage — comprar equipos y herramientas', () => {
     await abrirAlta(usuario);
 
     expect(screen.getAllByRole('button', { name: /\+ Agregar/i })[1]).toBeDisabled();
+  });
+});
+
+describe('renglonesParaEnviar', () => {
+  it('REGRESION: un equipo viaja con su descripcion y su clasificacion', () => {
+    // Se mandaba sin descripcion y el servidor rechazaba la orden entera.
+    const enviados = renglonesParaEnviar([
+      {
+        clave: 'eq-1',
+        descripcionEquipo: 'Electrobomba centrifuga trifasica',
+        clasificacion: 'EQUIPO',
+        materialNombre: 'Electrobomba centrifuga trifasica',
+        unidad: 'equipo',
+        cantidad: 1,
+        precioUnitario: 372083.94,
+      },
+    ]);
+    expect(enviados).toEqual([
+      {
+        descripcionEquipo: 'Electrobomba centrifuga trifasica',
+        clasificacion: 'EQUIPO',
+        cantidad: 1,
+        precioUnitario: 372083.94,
+      },
+    ]);
+  });
+
+  it('un material viaja con su id, y sin nada del equipo', () => {
+    const enviados = renglonesParaEnviar([
+      { clave: 'mat-1', materialId: 'm1', materialNombre: 'Reten', unidad: 'u', cantidad: 4 },
+    ]);
+    expect(enviados).toEqual([{ materialId: 'm1', cantidad: 4, precioUnitario: undefined }]);
+  });
+
+  it('los renglones sin cantidad no se mandan', () => {
+    expect(
+      renglonesParaEnviar([
+        { clave: 'mat-1', materialId: 'm1', materialNombre: 'Reten', unidad: 'u', cantidad: undefined },
+      ]),
+    ).toEqual([]);
   });
 });

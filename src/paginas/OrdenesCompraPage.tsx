@@ -30,9 +30,9 @@ import type {
   ClasificacionEquipo,
   EstadoOrdenCompra,
   OrdenCompra,
-  RenglonInput,
 } from '@/tipos/ordenCompra';
 import type { Material } from '@/tipos/material';
+import { renglonesParaEnviar, type RenglonBorrador } from '@/lib/renglonesOrden';
 import { P, usePuede } from '@/lib/permisos';
 
 const LIMITE = 20;
@@ -241,25 +241,6 @@ export function OrdenesCompraPage() {
 
 // ─────────────────────── Nueva orden ───────────────────────
 
-interface RenglonBorrador extends Omit<RenglonInput, 'cantidad'> {
-  /**
-   * Identifica al renglón mientras se arma la orden.
-   *
-   * Antes alcanzaba con el material, porque no había otra cosa que comprar.
-   * Ahora un renglón puede ser de un equipo, que todavía no existe y no tiene
-   * id: por eso hace falta una clave propia.
-   */
-  clave: string;
-  /** Se guarda para mostrar el nombre sin volver a pedirlo a la API. */
-  materialNombre: string;
-  unidad: string;
-  /**
-   * Vacía mientras no se cargó. Los renglones escaneados con la pistola nacen
-   * así: se escanean los diez de corrido y las cantidades se ponen después,
-   * sentado, en la tabla. La orden no se puede crear hasta que estén todas.
-   */
-  cantidad: number | undefined;
-}
 
 function ModalNuevaOrden({
   abierto,
@@ -427,11 +408,7 @@ function ModalNuevaOrden({
     const orden = await crear.mutateAsync({
       proveedorId,
       observaciones: observaciones || undefined,
-      // `flatMap` y no `map`: los renglones sin cantidad no son una orden de
-      // compra válida, y acá ya sabemos que no queda ninguno.
-      renglones: renglones.flatMap(({ materialId, cantidad: c, precioUnitario }) =>
-        c === undefined ? [] : [{ materialId, cantidad: c, precioUnitario }],
-      ),
+      renglones: renglonesParaEnviar(renglones),
     });
     limpiar();
     onCerrar();
