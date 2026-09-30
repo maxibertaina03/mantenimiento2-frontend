@@ -31,6 +31,7 @@ import {
   ETIQUETA_CLASIFICACION_PLURAL,
   type ClasificacionEquipo,
 } from '@/tipos/ordenCompra';
+import { ManualesEquipo } from '@/componentes/ManualesEquipo';
 
 const LIMITE = 20;
 
@@ -482,6 +483,8 @@ function FichaEquipo({ equipo, onCerrar }: { equipo: Equipo; onCerrar: () => voi
         )}
 
         <PlanesEquipo equipo={equipo} />
+
+        <ManualesEquipo equipoId={equipo.id} />
 
         {/* Un solo historial. Antes habia dos —las intervenciones y las
             ordenes de trabajo— que contestaban la misma pregunta, y para saber

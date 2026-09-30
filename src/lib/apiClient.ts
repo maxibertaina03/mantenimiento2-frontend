@@ -120,12 +120,19 @@ export async function apiRequest<T>(path: string, opciones: OpcionesRequest = {}
   // Adjunta el token de Clerk si hay sesión (ver lib/authToken.ts).
   const token = await obtenerTokenAuth();
   const headers: Record<string, string> = {};
-  if (body) headers['Content-Type'] = 'application/json';
+  // Un archivo (FormData) va tal cual: el navegador arma solo el
+  // `Content-Type` con el separador de las partes, y ponerlo a mano lo rompe.
+  const esArchivo = typeof FormData !== 'undefined' && body instanceof FormData;
+  if (body && !esArchivo) headers['Content-Type'] = 'application/json';
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   const respuesta = await fetchConReintentos(
     construirUrl(path, query),
-    { method, headers, body: body ? JSON.stringify(body) : undefined },
+    {
+      method,
+      headers,
+      body: esArchivo ? (body as FormData) : body ? JSON.stringify(body) : undefined,
+    },
     method === 'GET',
   );
 

@@ -83,6 +83,17 @@ describe('apiRequest - método y cuerpo', () => {
     expect((opts.headers as Record<string, string>)['Content-Type']).toBe('application/json');
   });
 
+  it('un archivo (FormData) viaja tal cual, sin Content-Type a mano', async () => {
+    // El navegador arma el Content-Type con el separador de las partes. Si se
+    // pusiera 'application/json', o si se serializara, el PDF llegaria roto.
+    const datos = new FormData();
+    datos.append('nombre', 'Manual.pdf');
+    await apiRequest('/equipos/e1/manuales', { method: 'POST', body: datos });
+    const opciones = opcionesLlamada();
+    expect(opciones.body).toBe(datos);
+    expect((opciones.headers as Record<string, string>)['Content-Type']).toBeUndefined();
+  });
+
   it('no manda Content-Type si no hay body', async () => {
     await apiRequest('/materiales', { method: 'DELETE' });
     expect((opcionesLlamada().headers as Record<string, string>)['Content-Type']).toBeUndefined();
