@@ -252,7 +252,12 @@ export function CalendarioPage() {
               onDoubleClick={() => tareas.length > 0 && setDiaDetalle(iso)}
             >
               <div className="calendario-numero">
-                <span>{dia.getDate()}</span>
+                <span>
+                  {/* Solo se ve en la agenda del celular, donde los días van
+                      uno debajo del otro y no hay encabezado de columnas. */}
+                  <span className="calendario-dia-semana">{DIAS[(dia.getDay() + 6) % 7]}</span>
+                  {dia.getDate()}
+                </span>
                 {puede(P.TAREAS_EDITAR) && delMes && (
                   <button
                     className="calendario-agregar no-imprimir"

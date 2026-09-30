@@ -2026,3 +2026,122 @@ button {
     print-color-adjust: exact;
   }
 }
+
+/* ═══════════ Filtros sueltos: con el mismo estilo que el resto ═══════════ */
+
+/* Los buscadores y desplegables que van sueltos en una fila de filtros —y el
+   rol de cada usuario— no tenían ninguna regla: se veían como el control
+   crudo del navegador, con borde negro, y en el celular medían 18px de alto,
+   imposibles de tocar con el dedo. */
+.grilla-filtros > input,
+.grilla-filtros > select,
+.tabla td > select {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  background-color: var(--color-panel);
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+.grilla-filtros > select,
+.tabla td > select {
+  padding-right: 2rem;
+}
+.grilla-filtros > input:focus,
+.grilla-filtros > select:focus,
+.tabla td > select:focus {
+  outline: none;
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+/* El nombre del día solo hace falta en la agenda del celular (ver abajo). */
+.calendario-dia-semana {
+  display: none;
+}
+
+/* ═══════════ Celular ═══════════ */
+@media screen and (max-width: 640px) {
+  /* 16px en todo lo que se escribe o se elige. Con menos, el iPhone agranda la
+     pantalla sola cada vez que se toca un campo, y no vuelve atrás. */
+  .campo input,
+  .campo select,
+  .campo textarea,
+  .formulario-modal input,
+  .formulario-modal select,
+  .formulario-modal textarea,
+  .grilla-filtros > input,
+  .grilla-filtros > select,
+  .tabla td > select {
+    font-size: 16px;
+  }
+  /* Y altos como para tocarlos con el dedo, con guantes o las manos mojadas. */
+  .grilla-filtros > input,
+  .grilla-filtros > select,
+  .tabla td > select,
+  .campo input:not([type='checkbox']):not([type='radio']),
+  .campo select {
+    min-height: 44px;
+  }
+
+  /* Los botones de la cabecera, de a dos por fila y con el principal arriba y
+     a lo ancho. Apilados de a uno, en Materiales eran siete botones que
+     empujaban la lista casi una pantalla entera hacia abajo. */
+  .cabecera-pagina .fila-acciones {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  .cabecera-pagina .fila-acciones .btn {
+    width: 100%;
+    min-width: 0;
+  }
+  .cabecera-pagina .fila-acciones .btn-primario {
+    grid-column: 1 / -1;
+    order: -1;
+  }
+
+  /* El calendario pasa a ser una agenda: un día debajo del otro, solo los que
+     tienen algo (y hoy). Siete columnas en 360px dejaban cada casilla de
+     menos de 50px, y las tareas se leían «R...», «joseigr». */
+  .calendario {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .calendario-cabecera,
+  .calendario-dia.otro-mes,
+  .calendario-dia:not(.con-tareas):not(.es-hoy) {
+    display: none;
+  }
+  .calendario-dia {
+    min-height: 0;
+    padding: 0.6rem 0.7rem;
+  }
+  .calendario-numero {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-texto);
+  }
+  .calendario-dia-semana {
+    display: inline;
+    margin-right: 0.3rem;
+    font-weight: 600;
+    color: var(--color-texto-suave);
+  }
+  /* En una pantalla táctil no hay "pasar por encima": el + tiene que verse. */
+  .calendario-agregar {
+    opacity: 1;
+    font-size: 1.4rem;
+    min-width: 44px;
+    min-height: 36px;
+  }
+  .calendario-tarea {
+    font-size: 0.92rem;
+    padding: 0.45rem 0.6rem;
+  }
+  /* Con todo el ancho, el título entra entero: nada de puntos suspensivos. */
+  .calendario-tarea-titulo {
+    white-space: normal;
+  }
+}

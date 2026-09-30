@@ -9,6 +9,7 @@ import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { AccionesFila, DatoFicha } from '@/componentes/AccionesFila';
 import { Modal } from '@/componentes/Modal';
 import type { CrearProveedorInput, Proveedor } from '@/tipos/proveedor';
+import { tieneMouse } from '@/lib/dispositivo';
 
 const FORM_VACIO: CrearProveedorInput = { nombre: '', cuit: '', email: '', telefono: '', notas: '' };
 const LIMITE = 20;
@@ -65,7 +66,8 @@ export function ProveedoresPage() {
           placeholder="🔍 Buscar proveedor por nombre o CUIT…"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
-          autoFocus
+          // Solo con mouse: en el celular abriría el teclado apenas se entra.
+          autoFocus={tieneMouse()}
         />
         {isFetching && <span className="texto-suave">buscando…</span>}
       </div>

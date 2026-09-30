@@ -20,6 +20,7 @@ import { descargarCsv, generarCsv, sufijoFechaArchivo } from '@/lib/csv';
 import { exportarPdf } from '@/lib/pdf';
 import { formatearNumero } from '@/lib/formato';
 import type { Material } from '@/tipos/material';
+import { tieneMouse } from '@/lib/dispositivo';
 
 const LIMITE = 20;
 
@@ -142,7 +143,8 @@ export function MaterialesPage() {
           placeholder="🔍 Buscar material por nombre…"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
-          autoFocus
+          // Solo con mouse: en el celular abriría el teclado apenas se entra.
+          autoFocus={tieneMouse()}
         />
         <button
           className={contarFiltros(filtros) > 0 ? 'btn btn-primario' : 'btn'}

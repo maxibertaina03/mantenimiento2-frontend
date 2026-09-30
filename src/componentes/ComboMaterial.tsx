@@ -3,6 +3,7 @@ import { useMaterial, useMateriales, useTraerMaterial } from '@/api/materiales';
 import { formatearNumero } from '@/lib/formato';
 import { leerEscaneo, type Escaneo } from '@/lib/escaneo';
 import type { Material } from '@/tipos/material';
+import { tieneMouse } from '@/lib/dispositivo';
 
 interface Props {
   /** Id del material seleccionado (puede venir preseleccionado por query param). */
@@ -117,7 +118,7 @@ export function ComboMaterial({
     <div className="combo" ref={ref}>
       <input
         type="text"
-        autoFocus={enfocarAlMontar}
+        autoFocus={enfocarAlMontar && tieneMouse()}
         placeholder={seleccionado ? seleccionado.nombre : '🔍 Buscar material por nombre…'}
         value={abierto ? texto : seleccionado?.nombre ?? ''}
         onFocus={() => {
