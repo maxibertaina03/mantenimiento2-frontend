@@ -4,7 +4,9 @@ import type { RespuestaPaginada } from '@/tipos/comunes';
 import { traerTodasLasPaginas } from './paginado';
 import type {
   ActualizarEquipoInput,
+  ComponenteEquipo,
   CrearEquipoInput,
+  MontajeEquipo,
   DeteccionImportacion,
   Equipo,
   CrearPlanInput,
@@ -316,5 +318,56 @@ export function useEliminarPlan(equipoId: string) {
     mutationFn: (planId: string) =>
       apiRequest<void>(`/equipos/planes/${planId}`, { method: 'DELETE' }),
     onSuccess: () => invalidarPlanes(qc, equipoId),
+  });
+}
+
+// ─────────── Equipos montados dentro de otros ───────────
+
+/** Lo que hay que refrescar después de montar o desmontar algo. */
+function refrescarMontajes(qc: ReturnType<typeof useQueryClient>) {
+  // Las fichas, las listas, los componentes y los tramos cuelgan de 'equipos'.
+  void qc.invalidateQueries({ queryKey: clavesEquipos.base });
+  // El historial de trabajos de una máquina suma los de sus componentes.
+  void qc.invalidateQueries({ queryKey: ['ordenes-trabajo'] });
+}
+
+export function useComponentes(equipoId: string) {
+  return useQuery({
+    queryKey: ['equipos', 'componentes', equipoId] as const,
+    queryFn: () => apiRequest<ComponenteEquipo[]>(`/equipos/${equipoId}/componentes`),
+    enabled: equipoId !== '',
+  });
+}
+
+export function useMontajes(equipoId: string, habilitado = true) {
+  return useQuery({
+    queryKey: ['equipos', 'montajes', equipoId] as const,
+    queryFn: () => apiRequest<MontajeEquipo[]>(`/equipos/${equipoId}/montajes`),
+    enabled: equipoId !== '' && habilitado,
+  });
+}
+
+/** Monta `componenteId` en `equipoPadreId`. Si ya estaba en otra máquina, es un traslado. */
+export function useMontarEquipo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (datos: { componenteId: string; equipoPadreId: string; motivo?: string }) =>
+      apiRequest<void>(`/equipos/${datos.componenteId}/montar`, {
+        method: 'POST',
+        body: { equipoPadreId: datos.equipoPadreId, motivo: datos.motivo || undefined },
+      }),
+    onSuccess: () => refrescarMontajes(qc),
+  });
+}
+
+export function useDesmontarEquipo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (datos: { componenteId: string; motivo?: string }) =>
+      apiRequest<void>(`/equipos/${datos.componenteId}/desmontar`, {
+        method: 'POST',
+        body: { motivo: datos.motivo || undefined },
+      }),
+    onSuccess: () => refrescarMontajes(qc),
   });
 }

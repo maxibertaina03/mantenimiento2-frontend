@@ -67,7 +67,9 @@ export function TrabajosDelEquipo({
   const { data, isLoading, error } = useOrdenesTrabajo(
     1,
     20,
-    { equipoId, equipoItId },
+    // Una máquina de planta muestra también lo que se le hizo a sus
+    // componentes mientras estuvieron montados en ella.
+    { equipoId, equipoItId, incluirComponentes: Boolean(equipoId) },
     habilitado,
   );
 
@@ -139,7 +141,14 @@ export function TrabajosDelEquipo({
             </span>
           </div>
 
-          <p>{o.titulo}</p>
+          <p>
+            {o.titulo}
+            {equipoId && o.equipoId && o.equipoId !== equipoId && (
+              <span className="etiqueta etiqueta-aviso" style={{ marginLeft: '0.4rem' }}>
+                en: {o.equipoNombre ?? 'un componente'}
+              </span>
+            )}
+          </p>
           {o.resolucion && (
             <p className="texto-chico">
               <span className="texto-suave">Se hizo: </span>

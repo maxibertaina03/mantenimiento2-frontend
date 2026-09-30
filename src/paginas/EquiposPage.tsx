@@ -32,6 +32,7 @@ import {
   type ClasificacionEquipo,
 } from '@/tipos/ordenCompra';
 import { ManualesEquipo } from '@/componentes/ManualesEquipo';
+import { ComponentesEquipo } from '@/componentes/ComponentesEquipo';
 
 const LIMITE = 20;
 
@@ -66,6 +67,16 @@ export function EquiposPage() {
   useEffect(() => {
     if (equipoPedido.data) setViendo(equipoPedido.data);
   }, [equipoPedido.data]);
+
+  /**
+   * Abre la ficha de otro equipo: de la bomba a la desnatadora donde está
+   * montada. Usa la misma dirección que el QR, así el atrás del navegador
+   * vuelve a la ficha anterior.
+   */
+  const abrirEquipo = (id: string) => {
+    parametros.set('equipo', id);
+    setParametros(parametros);
+  };
 
   /** Cierra la ficha y saca el id de la dirección, para que no vuelva a abrirse. */
   const cerrarFicha = () => {
@@ -342,8 +353,17 @@ export function EquiposPage() {
               {data.datos.map((e) => (
                 <tr key={e.id} onClick={() => setViendo(e)} style={{ cursor: 'pointer' }}>
                   <td data-etiqueta="Equipo">
-                    <strong>{e.nombre}</strong>
-                    {e.codigoInterno && <div className="texto-suave texto-chico">{e.codigoInterno}</div>}
+                    {/* Un solo bloque: en el celular la celda es «etiqueta | valor», y
+                        cada renglón suelto se ponía al lado del nombre y se cortaba. */}
+                    <div>
+                      <strong>{e.nombre}</strong>
+                      {e.codigoInterno && (
+                        <div className="texto-suave texto-chico">{e.codigoInterno}</div>
+                      )}
+                      {e.equipoPadreNombre && (
+                        <div className="texto-suave texto-chico">en {e.equipoPadreNombre}</div>
+                      )}
+                    </div>
                   </td>
                   <td data-etiqueta="Tipo">{e.tipoNombre ?? '—'}</td>
                   <td data-etiqueta="Marca y modelo">
@@ -403,7 +423,7 @@ export function EquiposPage() {
         />
       )}
 
-      {viendo && <FichaEquipo equipo={viendo} onCerrar={cerrarFicha} />}
+      {viendo && <FichaEquipo equipo={viendo} onCerrar={cerrarFicha} onAbrir={abrirEquipo} />}
 
       {/* Un QR viejo, o una máquina borrada después de pegar la etiqueta. */}
       {idPedido !== '' && equipoPedido.isError && (
@@ -431,7 +451,15 @@ export function EquiposPage() {
 }
 
 /** La ficha, al tocar la fila. En el celular es la forma de ver todo el detalle. */
-function FichaEquipo({ equipo, onCerrar }: { equipo: Equipo; onCerrar: () => void }) {
+function FichaEquipo({
+  equipo,
+  onCerrar,
+  onAbrir,
+}: {
+  equipo: Equipo;
+  onCerrar: () => void;
+  onAbrir: (equipoId: string) => void;
+}) {
   // Si el servidor no tiene almacén, no se ofrece cargar fotos: prometer algo
   // que va a fallar es peor que no ofrecerlo.
   const almacen = useAlmacenDisponible();
@@ -481,6 +509,8 @@ function FichaEquipo({ equipo, onCerrar }: { equipo: Equipo; onCerrar: () => voi
             <p>{equipo.descripcion}</p>
           </div>
         )}
+
+        <ComponentesEquipo equipo={equipo} onAbrir={onAbrir} />
 
         <PlanesEquipo equipo={equipo} />
 

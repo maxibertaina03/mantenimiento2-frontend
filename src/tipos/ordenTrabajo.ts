@@ -134,6 +134,8 @@ export interface FiltrosOrdenesTrabajo {
   estado?: EstadoOrdenTrabajo;
   tipo?: TipoTrabajo;
   equipoId?: string;
+  /** Con `equipoId`: suma lo de sus componentes, mientras estuvieron montados ahí. */
+  incluirComponentes?: boolean;
   equipoItId?: string;
   asignadoAId?: string;
 }

@@ -60,6 +60,11 @@ export interface Equipo {
   garantiaHasta: string | null;
   /** Derivado en el servidor: no está guardado en la base. */
   garantiaVencida: boolean;
+  /** En qué máquina está montado hoy (la electrobomba en la desnatadora), o null. */
+  equipoPadreId: string | null;
+  equipoPadreNombre: string | null;
+  /** Cuántos equipos tiene montados, en el primer nivel. */
+  cantidadComponentes: number;
   /** Cuándo se imprimió su etiqueta QR. null = todavía no tiene. */
   qrGeneradoEn: string | null;
 }
@@ -221,4 +226,27 @@ export interface CrearPlanInput {
   tareas?: string | null;
   periodicidadDias: number;
   proximaFecha: string;
+}
+
+/** Un equipo montado dentro de otro, como se lista en la ficha de la máquina. */
+export interface ComponenteEquipo {
+  id: string;
+  nombre: string;
+  estado: EstadoEquipo;
+  tipoNombre: string | null;
+  clasificacion: ClasificacionEquipo;
+  montadoDesde: string | null;
+  cantidadComponentes: number;
+}
+
+/** Un tramo en que un equipo estuvo montado en una máquina. */
+export interface MontajeEquipo {
+  id: string;
+  equipoPadreId: string;
+  equipoPadreNombre: string;
+  desde: string;
+  /** null mientras sigue montado ahí. */
+  hasta: string | null;
+  motivo: string | null;
+  registradoPorNombre: string | null;
 }
