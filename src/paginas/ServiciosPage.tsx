@@ -117,11 +117,14 @@ export function ServiciosPage() {
         service para algo que está desafectado.
       </p>
 
+      {/* APAGADO (2026-09-30): el correo diario está desactivado a pedido. Si se
+          vuelve a prender el aviso, volver a mostrar este texto.
       <p className="texto-suave texto-chico">
         Todos los días sale un correo con lo que vence dentro de la semana y con lo que ya
         venció. No se repite mientras no haya nada nuevo: un mismo aviso todas las mañanas
         termina en una regla de bandeja que lo archiva sin leer.
       </p>
+      */}
     </>
   );
 }

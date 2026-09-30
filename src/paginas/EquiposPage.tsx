@@ -493,10 +493,11 @@ function FichaEquipo({ equipo, onCerrar }: { equipo: Equipo; onCerrar: () => voi
           permiteNuevos={equipo.estado !== 'DADO_DE_BAJA'}
         />
 
-        <p className="texto-suave texto-chico">
-          {almacen.data?.disponible === false && 'La carga de fotos no está configurada. '}
-          Los avisos por correo antes de cada vencimiento llegan en la próxima fase.
-        </p>
+        {/* Los avisos por correo están apagados a pedido (2026-09-30): el texto
+            que los anunciaba se sacó. Queda solo el aviso de las fotos. */}
+        {almacen.data?.disponible === false && (
+          <p className="texto-suave texto-chico">La carga de fotos no está configurada.</p>
+        )}
 
         <div className="acciones">
           <button className="btn" onClick={onCerrar}>
