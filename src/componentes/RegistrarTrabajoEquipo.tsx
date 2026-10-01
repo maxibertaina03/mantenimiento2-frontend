@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useCrearOrdenTrabajo } from '@/api/ordenesTrabajo';
-import { useProveedores } from '@/api/proveedores';
 import { CampoNumero } from './CampoNumero';
 import { ComboMaterial } from './ComboMaterial';
 import { MensajeError } from './Estados';
@@ -14,6 +13,7 @@ import {
 } from '@/tipos/ordenTrabajo';
 import type { Ejecutor, TipoTrabajo } from '@/tipos/ordenTrabajo';
 import type { Material } from '@/tipos/material';
+import { ComboProveedor } from './ComboProveedor';
 
 interface Props {
   /** La máquina de planta... */
@@ -57,7 +57,6 @@ export function RegistrarTrabajoEquipo({
   // qué se espera que escriba.
   const esInformatica = Boolean(equipoItId);
   const crear = useCrearOrdenTrabajo();
-  const proveedores = useProveedores(1, 200, '');
 
   const [titulo, setTitulo] = useState('');
   const [tipo, setTipo] = useState<TipoTrabajo>('CORRECTIVO');
@@ -249,14 +248,10 @@ export function RegistrarTrabajoEquipo({
             {ejecutor === 'EXTERNO' && (
               <label className="campo">
                 Qué proveedor *
-                <select value={proveedorId} onChange={(e) => setProveedorId(e.target.value)}>
-                  <option value="">Elegí el proveedor</option>
-                  {(proveedores.data?.datos ?? []).map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.nombre}
-                    </option>
-                  ))}
-                </select>
+                {/* Un buscador y no un desplegable: son más de mil proveedores. El
+                    desplegable pedía 200 de una vez, el servidor acepta 100 como
+                    máximo, y quedaba vacío sin decir por qué. */}
+                <ComboProveedor onCambio={(p) => setProveedorId(p?.id ?? '')} />
               </label>
             )}
 

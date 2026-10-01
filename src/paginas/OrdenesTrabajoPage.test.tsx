@@ -528,6 +528,23 @@ describe('registrar un trabajo desde la ficha de una maquina', () => {
     });
   });
 
+  it('REGRESION: servicio externo ofrece buscar el proveedor, y nunca pide mas de 100', async () => {
+    // Antes era un desplegable que pedia 200 proveedores de una vez. El
+    // servidor acepta 100 como maximo, rechazaba el pedido y el desplegable
+    // quedaba vacio: no habia forma de elegir quien hizo el trabajo.
+    const usuario = userEvent.setup();
+    await abrirFormulario(usuario);
+
+    await usuario.click(screen.getByRole('button', { name: /Más datos/i }));
+    await usuario.selectOptions(screen.getByLabelText(/Quién lo hizo/i), 'EXTERNO');
+
+    expect(screen.getByPlaceholderText(/Buscar proveedor/i)).toBeInTheDocument();
+    const pedidos = apiRequestMock.mock.calls.filter((c) => c[0] === '/proveedores');
+    for (const [, opciones] of pedidos) {
+      expect(Number(opciones?.query?.limite ?? 0)).toBeLessThanOrEqual(100);
+    }
+  });
+
   it('REGRESION: sin contar que se hizo no se puede registrar', async () => {
     // Sin ese texto queda el mismo vacio que habia antes: se sabe que material
     // salio pero no para que sirvio.
