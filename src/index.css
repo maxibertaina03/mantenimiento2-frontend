@@ -490,6 +490,71 @@ button.combo-item:hover {
 .combo-foto-vacia {
   display: block;
 }
+.combo-item-con-foto {
+  padding: 0.35rem 0.7rem;
+  cursor: default;
+}
+.combo-item-con-foto:hover {
+  background: #eef2ff;
+}
+/* El nombre es el que elige: ocupa todo el resto del renglón. */
+.combo-item-elegir {
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  text-align: left;
+  padding: 0.3rem 0;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.combo-foto-boton {
+  flex: none;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: zoom-in;
+  line-height: 0;
+}
+.combo-foto-boton:focus-visible {
+  outline: 2px solid var(--color-primario);
+  outline-offset: 2px;
+}
+
+/* ─────────── Una foto a pantalla completa ─────────── */
+.visor-foto {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgb(0 0 0 / 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  cursor: zoom-out;
+}
+.visor-foto-cuadro {
+  margin: 0;
+  display: grid;
+  gap: 0.6rem;
+  justify-items: center;
+}
+.visor-foto-cuadro img {
+  max-width: min(92vw, 1100px);
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.45);
+}
+.visor-foto-cuadro figcaption {
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+}
 
 /* ── Badges / estados ── */
 .badge {

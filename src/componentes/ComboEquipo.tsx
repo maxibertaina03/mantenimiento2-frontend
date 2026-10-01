@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useEquipos } from '@/api/equipos';
 import { leerEscaneo } from '@/lib/escaneo';
 import type { ClaseEscaneo } from '@/lib/escaneo';
 import type { Equipo } from '@/tipos/equipo';
+import { VisorFoto } from './VisorFoto';
 
 interface Props {
   /** El equipo ya elegido, para mostrarlo al abrir una orden que lo tenía. */
@@ -14,13 +15,29 @@ type Elegido = { id: string; nombre: string; fotoUrl?: string | null };
 
 /**
  * La foto chica del equipo. Muchos se llaman parecido («Bomba 2», «Bomba de
- * agua saladero»): con la foto se reconoce la máquina sin leer.
+ * agua saladero»): con la foto se reconoce la máquina sin leer. Tocándola se
+ * agranda; para elegir el equipo se toca el nombre.
  */
-function Miniatura({ url }: { url: string | null | undefined }) {
-  return url ? (
-    <img src={url} alt="" className="combo-foto" loading="lazy" />
-  ) : (
-    <span className="combo-foto combo-foto-vacia" aria-hidden="true" />
+function Miniatura({
+  url,
+  nombre,
+  onAmpliar,
+}: {
+  url: string | null | undefined;
+  nombre: string;
+  onAmpliar: (foto: { url: string; nombre: string }) => void;
+}) {
+  if (!url) return <span className="combo-foto combo-foto-vacia" aria-hidden="true" />;
+  return (
+    <button
+      type="button"
+      className="combo-foto-boton"
+      title="Tocá para agrandar la foto"
+      aria-label={`Ver la foto de ${nombre}`}
+      onClick={() => onAmpliar({ url, nombre })}
+    >
+      <img src={url} alt="" className="combo-foto" loading="lazy" />
+    </button>
   );
 }
 
@@ -38,6 +55,8 @@ export function ComboEquipo({ inicial = null, onCambio }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [seleccionado, setSeleccionado] = useState<Elegido | null>(inicial);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [ampliada, setAmpliada] = useState<{ url: string; nombre: string } | null>(null);
+  const cerrarFoto = useCallback(() => setAmpliada(null), []);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -97,7 +116,9 @@ export function ComboEquipo({ inicial = null, onCambio }: Props) {
   return (
     <div className="combo" ref={ref}>
       <div className="combo-entrada">
-        {!abierto && seleccionado?.fotoUrl && <Miniatura url={seleccionado.fotoUrl} />}
+        {!abierto && seleccionado?.fotoUrl && (
+          <Miniatura url={seleccionado.fotoUrl} nombre={seleccionado.nombre} onAmpliar={setAmpliada} />
+        )}
         <input
         type="text"
         placeholder={seleccionado ? seleccionado.nombre : '🔍 Buscar equipo, o escaneá su QR…'}
@@ -123,6 +144,7 @@ export function ComboEquipo({ inicial = null, onCambio }: Props) {
         />
       </div>
       {aviso && <p className="combo-aviso">{aviso}</p>}
+      {ampliada && <VisorFoto url={ampliada.url} titulo={ampliada.nombre} alCerrar={cerrarFoto} />}
       {abierto && (
         <div className="combo-lista">
           <button type="button" className="combo-item texto-suave" onClick={() => elegir(null)}>
@@ -131,18 +153,17 @@ export function ComboEquipo({ inicial = null, onCambio }: Props) {
           {isFetching && <div className="combo-item texto-suave">Buscando…</div>}
           {!isFetching &&
             (data?.datos ?? []).map((e: Equipo) => (
-              <button
-                type="button"
-                key={e.id}
-                className="combo-item combo-item-con-foto"
-                onClick={() => elegir({ id: e.id, nombre: e.nombre, fotoUrl: e.fotoUrl })}
-              >
-                <Miniatura url={e.fotoUrl} />
-                <span>
+              <div key={e.id} className="combo-item combo-item-con-foto">
+                <Miniatura url={e.fotoUrl} nombre={e.nombre} onAmpliar={setAmpliada} />
+                <button
+                  type="button"
+                  className="combo-item-elegir"
+                  onClick={() => elegir({ id: e.id, nombre: e.nombre, fotoUrl: e.fotoUrl })}
+                >
                   {e.nombre}
                   {e.ubicacionNombre && <span className="texto-suave"> — {e.ubicacionNombre}</span>}
-                </span>
-              </button>
+                </button>
+              </div>
             ))}
           {!isFetching && data && data.datos.length === 0 && (
             <div className="combo-item texto-suave">Sin resultados</div>

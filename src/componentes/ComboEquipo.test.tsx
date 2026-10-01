@@ -74,6 +74,37 @@ describe('ComboEquipo (maquinas de planta)', () => {
     expect(fotos()).toEqual(['https://fotos/bomba2.jpg']);
   });
 
+  it('tocar la foto la agranda sin elegir el equipo; Escape la cierra sin cerrar el formulario', async () => {
+    apiRequestMock.mockResolvedValue({
+      datos: [{ id: 'eq-1', nombre: 'Bomba 2', ubicacionNombre: null, fotoUrl: 'https://fotos/bomba2.jpg' }],
+      total: 1,
+      pagina: 1,
+      limite: 20,
+    });
+    // Lo que haría el modal de abajo con Escape: cerrarse.
+    const modalSeCierra = vi.fn();
+    const escuchaDelModal = (e: KeyboardEvent) => e.key === 'Escape' && modalSeCierra();
+    document.addEventListener('keydown', escuchaDelModal);
+
+    const usuario = userEvent.setup();
+    const alCambiar = vi.fn();
+    mostrar(<ComboEquipo onCambio={alCambiar} />);
+    await usuario.click(screen.getByRole('textbox'));
+
+    await usuario.click(await screen.findByRole('button', { name: 'Ver la foto de Bomba 2' }));
+    expect(screen.getByRole('dialog', { name: 'Foto de Bomba 2' })).toBeInTheDocument();
+    expect(alCambiar).not.toHaveBeenCalled();
+
+    await usuario.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(modalSeCierra).not.toHaveBeenCalled();
+    document.removeEventListener('keydown', escuchaDelModal);
+
+    // La lista sigue abierta: se elige tocando el nombre.
+    await usuario.click(screen.getByText('Bomba 2'));
+    expect(alCambiar).toHaveBeenCalledWith({ id: 'eq-1', nombre: 'Bomba 2' });
+  });
+
   it('acepta el QR de una maquina de planta', async () => {
     const usuario = userEvent.setup();
     const alCambiar = vi.fn();
