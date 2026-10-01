@@ -1,16 +1,6 @@
-import { logoComoSvg } from '@/componentes/LogoLasTres';
+import { dibujarMembrete, EMPRESA, GRIS, NEGRO, ROJO } from './pdfMembrete';
 import { formatearFechaSola, formatearNumero } from './formato';
 import { nombreDelRenglon, type OrdenCompra } from '@/tipos/ordenCompra';
-
-/** Rojo institucional de Lácteos Las Tres (RGB). */
-const ROJO: [number, number, number] = [200, 16, 46];
-const GRIS: [number, number, number] = [90, 90, 90];
-const NEGRO: [number, number, number] = [25, 25, 25];
-
-const EMPRESA = {
-  nombre: 'LÁCTEOS LAS TRES S.R.L.',
-  leyenda: 'Est. 1989 · Sistema de Mantenimiento',
-};
 
 function moneda(valor: number | null): string {
   if (valor === null) return '—';
@@ -18,54 +8,6 @@ function moneda(valor: number | null): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
-}
-
-/** Cuánto se espera a que el navegador rasterice el logo antes de seguir sin él. */
-const MS_ESPERA_LOGO = 3000;
-
-/**
- * Convierte el logo (SVG) a PNG, que es lo que jsPDF sabe insertar.
- *
- * Se dibuja en un canvas al doble del tamaño final para que no se vea pixelado
- * al imprimir. Si algo falla (canvas bloqueado, SVG invalido), devuelve null y
- * el PDF sale sin logo en lugar de romperse.
- */
-async function logoComoPng(lado = 512): Promise<string | null> {
-  try {
-    const svg = logoComoSvg();
-    const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-
-    // El plazo es clave: si el navegador nunca dispara onload ni onerror, sin
-    // esto la promesa queda colgada y el PDF no se genera nunca. Preferimos un
-    // PDF sin logo antes que un boton que no responde.
-    const imagen = await new Promise<HTMLImageElement | null>((resolve) => {
-      const img = new Image();
-      const plazo = setTimeout(() => resolve(null), MS_ESPERA_LOGO);
-      img.onload = () => {
-        clearTimeout(plazo);
-        resolve(img);
-      };
-      img.onerror = () => {
-        clearTimeout(plazo);
-        resolve(null);
-      };
-      img.src = url;
-    });
-    if (!imagen) return null;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = lado;
-    canvas.height = lado;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-    // Fondo blanco: el PDF no maneja transparencia de forma consistente.
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, lado, lado);
-    ctx.drawImage(imagen, 0, 0, lado, lado);
-    return canvas.toDataURL('image/png');
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -88,42 +30,7 @@ async function construirPdf(orden: OrdenCompra) {
   const anchoPagina = doc.internal.pageSize.getWidth();
   const margen = 14;
 
-  // ── Encabezado: logo real + datos de la empresa ──
-  const logoPng = await logoComoPng();
-  if (logoPng) {
-    doc.addImage(logoPng, 'PNG', margen, 10, 24, 24);
-  }
-
-  doc.setTextColor(...ROJO);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(15);
-  doc.text(EMPRESA.nombre, margen + 29, 20);
-
-  doc.setTextColor(...GRIS);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.text(EMPRESA.leyenda, margen + 29, 25.5);
-
-  // ── Recuadro del número de orden (arriba a la derecha) ──
-  const anchoCaja = 62;
-  const xCaja = anchoPagina - margen - anchoCaja;
-  doc.setDrawColor(...ROJO);
-  doc.setLineWidth(0.6);
-  doc.roundedRect(xCaja, 12, anchoCaja, 22, 2, 2);
-
-  doc.setTextColor(...ROJO);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text('ORDEN DE COMPRA', xCaja + anchoCaja / 2, 19, { align: 'center' });
-
-  doc.setTextColor(...NEGRO);
-  doc.setFontSize(14);
-  doc.text(orden.numero, xCaja + anchoCaja / 2, 27, { align: 'center' });
-
-  // Línea separadora
-  doc.setDrawColor(...ROJO);
-  doc.setLineWidth(0.8);
-  doc.line(margen, 38, anchoPagina - margen, 38);
+  await dibujarMembrete(doc, 'ORDEN DE COMPRA', orden.numero);
 
   // ── Datos del proveedor y de la orden ──
   let y = 46;

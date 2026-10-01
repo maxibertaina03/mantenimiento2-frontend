@@ -19,6 +19,7 @@ import { ComboEquipo } from '@/componentes/ComboEquipo';
 import { ComboMaterial } from '@/componentes/ComboMaterial';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
+import { ImprimirOrdenTrabajo, MandarATaller } from '@/componentes/OrdenATaller';
 import {
   DATOS_DEL_TRABAJO_VACIOS,
   faltaElProveedor,
@@ -412,6 +413,21 @@ function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () => void 
   const esMia = !!yo && orden?.asignadoAId === yo.id;
   const editable = orden?.estado === 'ABIERTA' && puede(P.TRABAJOS_EDITAR) && esMia;
 
+  // Si ya se dijo a qué taller va, el cierre arranca con eso cargado: que no
+  // haya que elegirlo dos veces, ni que se pierda por cerrar sin abrir «Más datos».
+  const ejecutorGuardado = orden?.ejecutor;
+  const proveedorGuardado = orden?.proveedorId;
+  const nombreProveedorGuardado = orden?.proveedorNombre;
+  useEffect(() => {
+    if (!ejecutorGuardado) return;
+    setMasDatos((d) => ({
+      ...d,
+      ejecutor: ejecutorGuardado,
+      proveedorId: proveedorGuardado ?? '',
+      proveedorNombre: nombreProveedorGuardado ?? undefined,
+    }));
+  }, [ejecutorGuardado, proveedorGuardado, nombreProveedorGuardado]);
+
   const agregar = async (m: Material, cuanto: number) => {
     await usar.mutateAsync({ ordenId: id, materialId: m.id, cantidad: cuanto });
     setMaterial(null);
@@ -435,6 +451,7 @@ function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () => void 
               {ETIQUETA_ESTADO_TRABAJO[orden.estado]}
             </span>
             <span className="texto-suave">{ETIQUETA_TIPO_TRABAJO[orden.tipo]}</span>
+            {orden.estado !== 'ANULADA' && <ImprimirOrdenTrabajo orden={orden} />}
           </div>
 
           <h3 className="subtitulo-form">{orden.titulo}</h3>
@@ -451,6 +468,14 @@ function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () => void 
             <strong>{orden.asignadoANombre ?? '—'}</strong>
             {esMia && <span className="texto-suave"> (vos)</span>}
           </p>
+
+          {editable && <MandarATaller orden={orden} />}
+          {!editable && orden.estado === 'ABIERTA' && orden.ejecutor === 'EXTERNO' && (
+            <p>
+              <span className="texto-suave">Se manda a: </span>
+              <strong>{orden.proveedorNombre}</strong>
+            </p>
+          )}
 
           {/* Dicho de frente, para que nadie se quede buscando el botón. */}
           {!esMia && orden.estado === 'ABIERTA' && (

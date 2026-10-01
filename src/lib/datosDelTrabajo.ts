@@ -4,6 +4,8 @@ import type { Ejecutor } from '@/tipos/ordenTrabajo';
 export interface DatosDelTrabajo {
   ejecutor: Ejecutor;
   proveedorId: string;
+  /** Solo para mostrar el ya elegido en el buscador. */
+  proveedorNombre?: string;
   costo: number | undefined;
   horas: number | undefined;
 }

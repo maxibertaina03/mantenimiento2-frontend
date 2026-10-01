@@ -55,7 +55,14 @@ export function MasDatosTrabajo({
             <label className="campo">
               Qué proveedor *
               {/* Un buscador y no un desplegable: son más de mil proveedores. */}
-              <ComboProveedor onCambio={(p) => cambiar({ proveedorId: p?.id ?? '' })} />
+              <ComboProveedor
+                inicial={
+                  datos.proveedorId
+                    ? { id: datos.proveedorId, nombre: datos.proveedorNombre ?? '' }
+                    : null
+                }
+                onCambio={(p) => cambiar({ proveedorId: p?.id ?? '', proveedorNombre: p?.nombre })}
+              />
             </label>
           )}
 

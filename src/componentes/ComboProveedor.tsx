@@ -4,17 +4,21 @@ import type { Proveedor } from '@/tipos/proveedor';
 
 interface Props {
   onCambio: (proveedor: Proveedor | null) => void;
+  /** El que ya estaba elegido, para mostrarlo al abrir el formulario. */
+  inicial?: { id: string; nombre: string } | null;
 }
 
 /**
  * Buscador con autocompletado de proveedores (por nombre o CUIT).
  * Consulta la API; soporta miles de proveedores sin cargarlos todos.
  */
-export function ComboProveedor({ onCambio }: Props) {
+export function ComboProveedor({ onCambio, inicial = null }: Props) {
   const [texto, setTexto] = useState('');
   const [busq, setBusq] = useState('');
   const [abierto, setAbierto] = useState(false);
-  const [seleccionado, setSeleccionado] = useState<Proveedor | null>(null);
+  const [seleccionado, setSeleccionado] = useState<Pick<Proveedor, 'id' | 'nombre'> | null>(
+    inicial,
+  );
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
