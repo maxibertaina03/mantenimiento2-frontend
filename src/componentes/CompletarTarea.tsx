@@ -7,6 +7,13 @@ import { Modal } from './Modal';
 import { formatearNumero } from '@/lib/formato';
 import type { Tarea } from '@/tipos/tarea';
 import type { Material } from '@/tipos/material';
+import {
+  DATOS_DEL_TRABAJO_VACIOS,
+  faltaElProveedor,
+  paraEnviar,
+  type DatosDelTrabajo,
+} from '@/lib/datosDelTrabajo';
+import { MasDatosTrabajo } from './MasDatosTrabajo';
 
 interface MaterialElegido {
   materialId: string;
@@ -30,9 +37,7 @@ export function CompletarTarea({ tarea, onCerrar }: { tarea: Tarea; onCerrar: ()
   const [materiales, setMateriales] = useState<MaterialElegido[]>([]);
   const [material, setMaterial] = useState<Material | null>(null);
   const [cantidad, setCantidad] = useState<number | undefined>(undefined);
-  const [masDatos, setMasDatos] = useState(false);
-  const [costo, setCosto] = useState<number | undefined>(undefined);
-  const [horas, setHoras] = useState<number | undefined>(undefined);
+  const [masDatos, setMasDatos] = useState<DatosDelTrabajo>(DATOS_DEL_TRABAJO_VACIOS);
 
   const agregar = () => {
     if (!material || cantidad === undefined || cantidad <= 0) return;
@@ -50,8 +55,7 @@ export function CompletarTarea({ tarea, onCerrar }: { tarea: Tarea; onCerrar: ()
       id: tarea.id,
       resolucion,
       materiales: materiales.map((m) => ({ materialId: m.materialId, cantidad: m.cantidad })),
-      costoManoObra: costo,
-      horasParada: horas,
+      ...paraEnviar(masDatos),
     });
     onCerrar();
   };
@@ -126,22 +130,7 @@ export function CompletarTarea({ tarea, onCerrar }: { tarea: Tarea; onCerrar: ()
           </ul>
         )}
 
-        <button type="button" className="btn btn-sm" onClick={() => setMasDatos((v) => !v)}>
-          {masDatos ? '− Menos datos' : '+ Más datos: costo y horas de parada'}
-        </button>
-
-        {masDatos && (
-          <div className="grilla-filtros">
-            <label className="campo">
-              Costo de mano de obra
-              <CampoNumero step="0.01" min="0" placeholder="opcional" valor={costo} onCambio={setCosto} />
-            </label>
-            <label className="campo">
-              Horas de parada
-              <CampoNumero step="0.5" min="0" placeholder="opcional" valor={horas} onCambio={setHoras} />
-            </label>
-          </div>
-        )}
+        <MasDatosTrabajo datos={masDatos} onCambio={setMasDatos} />
 
         {completar.error && <MensajeError error={completar.error} />}
 
@@ -152,7 +141,7 @@ export function CompletarTarea({ tarea, onCerrar }: { tarea: Tarea; onCerrar: ()
           <button
             type="submit"
             className="btn btn-primario"
-            disabled={completar.isPending || resolucion.trim() === ''}
+            disabled={completar.isPending || resolucion.trim() === '' || faltaElProveedor(masDatos)}
           >
             {completar.isPending ? 'Registrando…' : 'Dar por hecha'}
           </button>

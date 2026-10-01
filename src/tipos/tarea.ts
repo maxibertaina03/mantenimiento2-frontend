@@ -86,6 +86,9 @@ export interface CompletarTareaInput {
   materiales?: { materialId: string; cantidad: number }[];
   costoManoObra?: number | null;
   horasParada?: number | null;
+  /** Quién lo hizo; si fue un externo, qué proveedor. */
+  ejecutor?: 'INTERNO' | 'EXTERNO';
+  proveedorId?: string | null;
 }
 
 /** Cada cuánto se repite, en palabras. */

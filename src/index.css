@@ -1760,8 +1760,10 @@ button {
   background: var(--color-fondo);
 }
 
-/* Las que la pantalla resume en "+N más" solo aparecen en el papel. */
-.solo-imprimir-tarea {
+/* Las que la pantalla resume en "+N más" solo aparecen en el papel.
+   Con las dos clases: `.calendario-tarea` viene más abajo y, sola, le ganaba,
+   así que en pantalla aparecían tareas que no se podían abrir. */
+.calendario-tarea.solo-imprimir-tarea {
   display: none;
 }
 
@@ -1966,7 +1968,7 @@ button {
 
   /* En el papel no hay "ver todas", asi que sale todo lo que la pantalla
      resume en el "+N mas". */
-  .solo-imprimir-tarea {
+  .calendario-tarea.solo-imprimir-tarea {
     display: block;
   }
 

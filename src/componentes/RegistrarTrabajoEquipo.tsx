@@ -5,15 +5,16 @@ import { ComboMaterial } from './ComboMaterial';
 import { MensajeError } from './Estados';
 import { Modal } from './Modal';
 import { formatearNumero } from '@/lib/formato';
+import { ETIQUETA_TIPO_TRABAJO, TIPOS_TRABAJO } from '@/tipos/ordenTrabajo';
+import type { TipoTrabajo } from '@/tipos/ordenTrabajo';
 import {
-  EJECUTORES,
-  ETIQUETA_EJECUTOR,
-  ETIQUETA_TIPO_TRABAJO,
-  TIPOS_TRABAJO,
-} from '@/tipos/ordenTrabajo';
-import type { Ejecutor, TipoTrabajo } from '@/tipos/ordenTrabajo';
+  DATOS_DEL_TRABAJO_VACIOS,
+  faltaElProveedor,
+  paraEnviar,
+  type DatosDelTrabajo,
+} from '@/lib/datosDelTrabajo';
+import { MasDatosTrabajo } from './MasDatosTrabajo';
 import type { Material } from '@/tipos/material';
-import { ComboProveedor } from './ComboProveedor';
 
 interface Props {
   /** La máquina de planta... */
@@ -68,11 +69,7 @@ export function RegistrarTrabajoEquipo({
   const [material, setMaterial] = useState<Material | null>(null);
   const [cantidad, setCantidad] = useState<number | undefined>(undefined);
 
-  const [masDatos, setMasDatos] = useState(false);
-  const [ejecutor, setEjecutor] = useState<Ejecutor>('INTERNO');
-  const [proveedorId, setProveedorId] = useState('');
-  const [costo, setCosto] = useState<number | undefined>(undefined);
-  const [horas, setHoras] = useState<number | undefined>(undefined);
+  const [masDatos, setMasDatos] = useState<DatosDelTrabajo>(DATOS_DEL_TRABAJO_VACIOS);
 
   const agregarMaterial = () => {
     if (!material || cantidad === undefined || cantidad <= 0) return;
@@ -95,10 +92,7 @@ export function RegistrarTrabajoEquipo({
       resolucion,
       fecha: fecha || undefined,
       planId: planId || undefined,
-      ejecutor,
-      proveedorId: ejecutor === 'EXTERNO' ? proveedorId : undefined,
-      costoManoObra: costo,
-      horasParada: horas,
+      ...paraEnviar(masDatos),
       materiales: materiales.map((m) => ({ materialId: m.materialId, cantidad: m.cantidad })),
     });
     onCerrar();
@@ -226,61 +220,7 @@ export function RegistrarTrabajoEquipo({
           </ul>
         )}
 
-        {/* Plegado: el que solo anota que cambió un retén no necesita ver esto.
-            El que registra que vino un service externo, sí. */}
-        <button type="button" className="btn btn-sm" onClick={() => setMasDatos((v) => !v)}>
-          {masDatos ? '− Menos datos' : '+ Más datos: quién lo hizo, costo, horas de parada'}
-        </button>
-
-        {masDatos && (
-          <div className="grilla-filtros">
-            <label className="campo">
-              Quién lo hizo
-              <select value={ejecutor} onChange={(e) => setEjecutor(e.target.value as Ejecutor)}>
-                {EJECUTORES.map((e) => (
-                  <option key={e} value={e}>
-                    {ETIQUETA_EJECUTOR[e]}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            {ejecutor === 'EXTERNO' && (
-              <label className="campo">
-                Qué proveedor *
-                {/* Un buscador y no un desplegable: son más de mil proveedores. El
-                    desplegable pedía 200 de una vez, el servidor acepta 100 como
-                    máximo, y quedaba vacío sin decir por qué. */}
-                <ComboProveedor onCambio={(p) => setProveedorId(p?.id ?? '')} />
-              </label>
-            )}
-
-            <label className="campo">
-              Costo de mano de obra
-              <CampoNumero
-                step="0.01"
-                min="0"
-                placeholder="opcional"
-                valor={costo}
-                onCambio={setCosto}
-              />
-            </label>
-
-            <label className="campo">
-              Horas de parada
-              <CampoNumero
-                step="0.5"
-                min="0"
-                placeholder="opcional"
-                valor={horas}
-                onCambio={setHoras}
-              />
-              <span className="texto-suave texto-chico">
-                Lo que más cuesta de una rotura no son los repuestos.
-              </span>
-            </label>
-          </div>
-        )}
+        <MasDatosTrabajo datos={masDatos} onCambio={setMasDatos} />
 
         {crear.error && <MensajeError error={crear.error} />}
 
@@ -292,7 +232,7 @@ export function RegistrarTrabajoEquipo({
             type="submit"
             className="btn btn-primario"
             disabled={
-              crear.isPending || !listo || (ejecutor === 'EXTERNO' && proveedorId === '')
+              crear.isPending || !listo || faltaElProveedor(masDatos)
             }
           >
             {crear.isPending ? 'Registrando…' : 'Registrar trabajo'}

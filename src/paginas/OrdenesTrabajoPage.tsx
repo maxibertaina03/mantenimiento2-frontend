@@ -19,10 +19,18 @@ import { ComboEquipo } from '@/componentes/ComboEquipo';
 import { ComboMaterial } from '@/componentes/ComboMaterial';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
+import {
+  DATOS_DEL_TRABAJO_VACIOS,
+  faltaElProveedor,
+  paraEnviar,
+  type DatosDelTrabajo,
+} from '@/lib/datosDelTrabajo';
+import { MasDatosTrabajo } from '@/componentes/MasDatosTrabajo';
 import { formatearFecha, formatearNumero } from '@/lib/formato';
 import { P, usePuede } from '@/lib/permisos';
 import {
   ESTADOS_ORDEN_TRABAJO,
+  ETIQUETA_EJECUTOR,
   ETIQUETA_ESTADO_TRABAJO,
   ETIQUETA_TIPO_TRABAJO,
   TIPOS_TRABAJO,
@@ -386,6 +394,7 @@ function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () => void 
   const [material, setMaterial] = useState<Material | null>(null);
   const [cantidad, setCantidad] = useState<number | undefined>(undefined);
   const [resolucion, setResolucion] = useState('');
+  const [masDatos, setMasDatos] = useState<DatosDelTrabajo>(DATOS_DEL_TRABAJO_VACIOS);
   const [equipoNuevo, setEquipoNuevo] = useState<{ id: string; nombre: string } | null>(null);
   const [nuevoAsignado, setNuevoAsignado] = useState('');
 
@@ -586,6 +595,19 @@ function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () => void 
             <>
               <h3 className="subtitulo-form">Qué se hizo</h3>
               <p>{orden.resolucion}</p>
+              {(orden.ejecutor === 'EXTERNO' ||
+                orden.costoManoObra !== null ||
+                orden.horasParada !== null) && (
+                <p className="texto-chico">
+                  {orden.ejecutor === 'EXTERNO'
+                    ? `${ETIQUETA_EJECUTOR.EXTERNO}${orden.proveedorNombre ? `: ${orden.proveedorNombre}` : ''}`
+                    : ETIQUETA_EJECUTOR.INTERNO}
+                  {orden.costoManoObra !== null &&
+                    ` · Mano de obra $${formatearNumero(orden.costoManoObra)}`}
+                  {orden.horasParada !== null &&
+                    ` · ${formatearNumero(orden.horasParada)} horas parada`}
+                </p>
+              )}
               <p className="texto-suave texto-chico">
                 Cerrada el {orden.cerradaEn ? formatearFecha(orden.cerradaEn) : '—'}
                 {orden.cerradaPorNombre ? ` por ${orden.cerradaPorNombre}` : ''}
@@ -634,6 +656,8 @@ function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () => void 
                   onChange={(e) => setResolucion(e.target.value)}
                 />
               </label>
+              {/* Si se mandó a reparar afuera, acá se dice a quién. */}
+              <MasDatosTrabajo datos={masDatos} onCambio={setMasDatos} />
               {cerrarOrden.error && <MensajeError error={cerrarOrden.error} />}
               {anular.error && <MensajeError error={anular.error} />}
               <div className="acciones">
@@ -651,8 +675,10 @@ function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () => void 
                 <button
                   type="button"
                   className="btn btn-primario"
-                  disabled={cerrarOrden.isPending || resolucion.trim() === ''}
-                  onClick={() => cerrarOrden.mutate({ id, resolucion })}
+                  disabled={
+                    cerrarOrden.isPending || resolucion.trim() === '' || faltaElProveedor(masDatos)
+                  }
+                  onClick={() => cerrarOrden.mutate({ id, resolucion, ...paraEnviar(masDatos) })}
                 >
                   {cerrarOrden.isPending ? 'Cerrando…' : 'Cerrar orden'}
                 </button>
