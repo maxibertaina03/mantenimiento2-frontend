@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CampoNumero } from './CampoNumero';
 import { ComboProveedor } from './ComboProveedor';
 import { faltaElProveedor, type DatosDelTrabajo } from '@/lib/datosDelTrabajo';
@@ -22,8 +22,13 @@ export function MasDatosTrabajo({
   datos: DatosDelTrabajo;
   onCambio: (datos: DatosDelTrabajo) => void;
 }) {
-  // Si ya se eligió algo (volver a abrir el formulario con datos), se muestra abierto.
+  // Si ya se dijo que lo hace un taller (por ejemplo, al mandarlo con la orden
+  // abierta), se muestra abierto: que se vea a quién quedó asignado.
   const [abierto, setAbierto] = useState(datos.ejecutor === 'EXTERNO');
+  const externo = datos.ejecutor === 'EXTERNO';
+  useEffect(() => {
+    if (externo) setAbierto(true);
+  }, [externo]);
   const cambiar = (cambio: Partial<DatosDelTrabajo>) => onCambio({ ...datos, ...cambio });
 
   return (
