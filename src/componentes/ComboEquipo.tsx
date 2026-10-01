@@ -10,6 +10,20 @@ interface Props {
   onCambio: (equipo: { id: string; nombre: string } | null) => void;
 }
 
+type Elegido = { id: string; nombre: string; fotoUrl?: string | null };
+
+/**
+ * La foto chica del equipo. Muchos se llaman parecido («Bomba 2», «Bomba de
+ * agua saladero»): con la foto se reconoce la máquina sin leer.
+ */
+function Miniatura({ url }: { url: string | null | undefined }) {
+  return url ? (
+    <img src={url} alt="" className="combo-foto" loading="lazy" />
+  ) : (
+    <span className="combo-foto combo-foto-vacia" aria-hidden="true" />
+  );
+}
+
 /**
  * Buscador de equipos de planta.
  *
@@ -22,7 +36,7 @@ export function ComboEquipo({ inicial = null, onCambio }: Props) {
   const [texto, setTexto] = useState('');
   const [busq, setBusq] = useState('');
   const [abierto, setAbierto] = useState(false);
-  const [seleccionado, setSeleccionado] = useState<{ id: string; nombre: string } | null>(inicial);
+  const [seleccionado, setSeleccionado] = useState<Elegido | null>(inicial);
   const [aviso, setAviso] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -41,9 +55,9 @@ export function ComboEquipo({ inicial = null, onCambio }: Props) {
 
   const { data, isFetching } = useEquipos(1, 20, { buscar: abierto ? busq : '' });
 
-  const elegir = (equipo: { id: string; nombre: string } | null) => {
+  const elegir = (equipo: Elegido | null) => {
     setSeleccionado(equipo);
-    onCambio(equipo);
+    onCambio(equipo ? { id: equipo.id, nombre: equipo.nombre } : null);
     setTexto('');
     setAviso(null);
     setAbierto(false);
@@ -71,7 +85,7 @@ export function ComboEquipo({ inicial = null, onCambio }: Props) {
     }
     const encontrado = (data?.datos ?? []).find((e: Equipo) => e.id === id);
     if (encontrado) {
-      elegir({ id: encontrado.id, nombre: encontrado.nombre });
+      elegir({ id: encontrado.id, nombre: encontrado.nombre, fotoUrl: encontrado.fotoUrl });
       return;
     }
     // Se elige igual: el backend valida que exista, y el nombre aparece al
@@ -82,7 +96,9 @@ export function ComboEquipo({ inicial = null, onCambio }: Props) {
 
   return (
     <div className="combo" ref={ref}>
-      <input
+      <div className="combo-entrada">
+        {!abierto && seleccionado?.fotoUrl && <Miniatura url={seleccionado.fotoUrl} />}
+        <input
         type="text"
         placeholder={seleccionado ? seleccionado.nombre : '🔍 Buscar equipo, o escaneá su QR…'}
         value={abierto ? texto : (seleccionado?.nombre ?? '')}
@@ -104,7 +120,8 @@ export function ComboEquipo({ inicial = null, onCambio }: Props) {
           setTexto(e.target.value);
           setAbierto(true);
         }}
-      />
+        />
+      </div>
       {aviso && <p className="combo-aviso">{aviso}</p>}
       {abierto && (
         <div className="combo-lista">
@@ -117,11 +134,14 @@ export function ComboEquipo({ inicial = null, onCambio }: Props) {
               <button
                 type="button"
                 key={e.id}
-                className="combo-item"
-                onClick={() => elegir({ id: e.id, nombre: e.nombre })}
+                className="combo-item combo-item-con-foto"
+                onClick={() => elegir({ id: e.id, nombre: e.nombre, fotoUrl: e.fotoUrl })}
               >
-                {e.nombre}
-                {e.ubicacionNombre && <span className="texto-suave"> — {e.ubicacionNombre}</span>}
+                <Miniatura url={e.fotoUrl} />
+                <span>
+                  {e.nombre}
+                  {e.ubicacionNombre && <span className="texto-suave"> — {e.ubicacionNombre}</span>}
+                </span>
               </button>
             ))}
           {!isFetching && data && data.datos.length === 0 && (

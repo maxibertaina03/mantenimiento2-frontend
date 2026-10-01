@@ -47,6 +47,33 @@ describe('ComboEquipo (maquinas de planta)', () => {
     expect(alCambiar).not.toHaveBeenCalled();
   });
 
+  it('muestra la foto de cada equipo para reconocerlo, y la del elegido junto al campo', async () => {
+    apiRequestMock.mockResolvedValue({
+      datos: [
+        { id: 'eq-1', nombre: 'Bomba 2', ubicacionNombre: 'Suero', fotoUrl: 'https://fotos/bomba2.jpg' },
+        { id: 'eq-2', nombre: 'Bomba 3', ubicacionNombre: null, fotoUrl: null },
+      ],
+      total: 2,
+      pagina: 1,
+      limite: 20,
+    });
+    const usuario = userEvent.setup();
+    const alCambiar = vi.fn();
+    const { container } = mostrar(<ComboEquipo onCambio={alCambiar} />);
+
+    await usuario.click(screen.getByRole('textbox'));
+    await screen.findByText('Bomba 2');
+    const fotos = () => [...container.querySelectorAll('img.combo-foto')].map((i) => i.getAttribute('src'));
+    // El que no tiene foto lleva el hueco, para que los nombres queden alineados.
+    expect(fotos()).toEqual(['https://fotos/bomba2.jpg']);
+    expect(container.querySelectorAll('.combo-foto-vacia')).toHaveLength(1);
+
+    await usuario.click(screen.getByText('Bomba 2'));
+    // Al padre le llega lo de siempre: id y nombre.
+    expect(alCambiar).toHaveBeenCalledWith({ id: 'eq-1', nombre: 'Bomba 2' });
+    expect(fotos()).toEqual(['https://fotos/bomba2.jpg']);
+  });
+
   it('acepta el QR de una maquina de planta', async () => {
     const usuario = userEvent.setup();
     const alCambiar = vi.fn();
