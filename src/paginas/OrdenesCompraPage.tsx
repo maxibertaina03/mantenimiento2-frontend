@@ -7,6 +7,7 @@ import {
   useEmitirOrdenPorId,
   useOrdenes,
   useRecibirOrden,
+  useCorregirPrecios,
 } from '@/api/ordenesCompra';
 import { CampoNumero } from '@/componentes/CampoNumero';
 import { ComboMaterial } from '@/componentes/ComboMaterial';
@@ -703,7 +704,7 @@ function ModalNuevaOrden({
 // ─────────────────────── Detalle de la orden ───────────────────────
 
 function ModalDetalleOrden({
-  orden,
+  orden: ordenDeLaLista,
   onCerrar,
   onEnviar,
 }: {
@@ -711,6 +712,39 @@ function ModalDetalleOrden({
   onCerrar: () => void;
   onEnviar?: (orden: OrdenCompra) => void;
 }) {
+  // La orden llega de la lista. Al corregir precios el servidor devuelve la
+  // nueva, y es la que tienen que usar la tabla, el PDF y el envío: si no, se
+  // le volvería a mandar al proveedor el papel viejo, sin el precio.
+  const [orden, setOrden] = useState(ordenDeLaLista);
+  const puede = usePuede();
+  const corregir = useCorregirPrecios(orden.id);
+  const [editandoPrecios, setEditandoPrecios] = useState(false);
+  const [precios, setPrecios] = useState<Record<string, number | undefined>>({});
+  const [preciosGuardados, setPreciosGuardados] = useState(false);
+  const puedeCorregirPrecios =
+    puede(P.ORDENES_EDITAR) && (orden.estado === 'EMITIDA' || orden.estado === 'RECIBIDA');
+
+  const empezarAEditarPrecios = () => {
+    setPrecios(Object.fromEntries(orden.renglones.map((r) => [r.id, r.precioUnitario ?? undefined])));
+    setPreciosGuardados(false);
+    setEditandoPrecios(true);
+  };
+
+  // Solo los que cambiaron y tienen un precio cargado.
+  const preciosCambiados = orden.renglones
+    .filter((r) => {
+      const nuevo = precios[r.id];
+      return nuevo !== undefined && nuevo > 0 && nuevo !== r.precioUnitario;
+    })
+    .map((r) => ({ renglonId: r.id, precioUnitario: precios[r.id] as number }));
+
+  const guardarPrecios = async () => {
+    const nueva = await corregir.mutateAsync(preciosCambiados);
+    setOrden(nueva);
+    setEditandoPrecios(false);
+    setPreciosGuardados(true);
+  };
+
   const emitir = useEmitirOrden(orden.id);
   const recibir = useRecibirOrden(orden.id);
   const anular = useAnularOrden(orden.id);
@@ -723,7 +757,8 @@ function ModalDetalleOrden({
   const hayComprobante = remito.trim() !== '' || factura.trim() !== '';
   const [mostrarRecepcion, setMostrarRecepcion] = useState(false);
 
-  const errorAccion = emitir.error ?? recibir.error ?? anular.error ?? eliminar.error;
+  const errorAccion =
+    emitir.error ?? recibir.error ?? anular.error ?? eliminar.error ?? corregir.error;
 
   return (
     <Modal titulo={`Orden ${orden.numero}`} abierto tamano="ancho" onCerrar={onCerrar}>
@@ -802,12 +837,39 @@ function ModalDetalleOrden({
                   <td data-etiqueta="Cantidad">
                     {formatearNumero(r.cantidad)} {r.unidad ?? ''}
                   </td>
-                  <td data-etiqueta="P. unitario">{moneda(r.precioUnitario)}</td>
-                  <td data-etiqueta="Subtotal">{moneda(r.subtotal)}</td>
+                  {editandoPrecios ? (
+                    <>
+                      <td data-etiqueta="P. unitario" className="celda-editable">
+                        <CampoNumero
+                          step="0.01"
+                          min="0.01"
+                          placeholder="Sin precio"
+                          aria-label={`Precio de ${nombreDelRenglon(r) ?? 'el renglón'}`}
+                          valor={precios[r.id]}
+                          onCambio={(p) => setPrecios((ps) => ({ ...ps, [r.id]: p }))}
+                        />
+                      </td>
+                      <td data-etiqueta="Subtotal">
+                        {precios[r.id] !== undefined
+                          ? moneda(r.cantidad * (precios[r.id] as number))
+                          : '—'}
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td
+                        data-etiqueta="P. unitario"
+                        className={r.precioUnitario === null ? 'renglon-sin-precio' : undefined}
+                      >
+                        {r.precioUnitario === null ? 'Sin precio' : moneda(r.precioUnitario)}
+                      </td>
+                      <td data-etiqueta="Subtotal">{moneda(r.subtotal)}</td>
+                    </>
+                  )}
                 </tr>
               ))}
             </tbody>
-            {orden.total !== null && (
+            {!editandoPrecios && orden.total !== null && (
               <tfoot>
                 <tr>
                   <td colSpan={3}>
@@ -821,6 +883,35 @@ function ModalDetalleOrden({
             )}
           </table>
         </div>
+
+        {editandoPrecios && (
+          <div className="panel">
+            <p className="texto-suave texto-chico">
+              Solo cambian los precios: las cantidades y los materiales quedan como están
+              {orden.estado === 'RECIBIDA' ? ', y el stock no se mueve' : ''}. Después
+              descargá el PDF de nuevo para mandárselo al proveedor.
+            </p>
+            <div className="acciones">
+              <button className="btn" onClick={() => setEditandoPrecios(false)}>
+                Cancelar
+              </button>
+              <button
+                className="btn btn-primario"
+                disabled={corregir.isPending || preciosCambiados.length === 0}
+                onClick={guardarPrecios}
+              >
+                {corregir.isPending ? 'Guardando…' : 'Guardar precios'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {preciosGuardados && (
+          <div className="alerta alerta-exito">
+            ✔ Precios guardados. Descargá el PDF de nuevo (o enviáselo) para que el proveedor
+            tenga la orden completa.
+          </div>
+        )}
 
         {orden.observaciones && (
           <>
@@ -898,6 +989,11 @@ function ModalDetalleOrden({
           <button className="btn" onClick={() => descargarPdfOrdenCompra(orden)}>
             🖨 Descargar PDF
           </button>
+          {puedeCorregirPrecios && !editandoPrecios && (
+            <button className="btn" onClick={empezarAEditarPrecios}>
+              ✏ Cargar o corregir precios
+            </button>
+          )}
           {onEnviar && orden.estado !== 'BORRADOR' && (
             <button className="btn" onClick={() => onEnviar(orden)}>
               ✉ Enviar al proveedor

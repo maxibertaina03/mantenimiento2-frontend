@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { OrdenesCompraPage } from './OrdenesCompraPage';
 import { renglonesParaEnviar } from '@/lib/renglonesOrden';
+import { descargarPdfOrdenCompra } from '@/lib/pdfOrdenCompra';
 
 /**
  * La pantalla de órdenes de compra.
@@ -174,6 +175,86 @@ describe('OrdenesCompraPage — una sola ventana a la vez', () => {
 
     expect(screen.queryByRole('button', { name: /enviar al proveedor/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /descargar pdf/i })).toBeInTheDocument();
+  });
+});
+
+describe('OrdenesCompraPage — cargar un precio que faltó, con la orden ya recibida', () => {
+  const recibida = {
+    ...orden,
+    id: 'oc-15',
+    numero: 'OC-2026-0015',
+    estado: 'RECIBIDA',
+    recibidaEn: '2026-09-20T10:00:00.000Z',
+    remito: '0008-00006260',
+    renglones: [
+      { ...orden.renglones[0], id: 'r1', materialNombre: 'Bandeja porta cable', cantidad: 3, precioUnitario: 48226.69, subtotal: 144680.07 },
+      { ...orden.renglones[0], id: 'r2', materialNombre: 'Controlador de temperatura', cantidad: 1, precioUnitario: null, subtotal: null },
+    ],
+    total: null,
+  };
+  const completa = {
+    ...recibida,
+    renglones: [recibida.renglones[0], { ...recibida.renglones[1], precioUnitario: 125000, subtotal: 125000 }],
+    total: 269680.07,
+  };
+
+  it('se carga el precio, se guarda solo ese renglón, y el PDF sale con la orden completa', async () => {
+    const pedidos: { ruta: string; opciones: unknown }[] = [];
+    apiRequestMock.mockImplementation((rutaCruda: string, opciones?: unknown) => {
+      const ruta = String(rutaCruda ?? '');
+      pedidos.push({ ruta, opciones });
+      if (ruta.startsWith('/usuarios/me')) return Promise.resolve({ id: 'u1', nombre: 'Máximo', rol: 'ADMIN' });
+      if (ruta.startsWith('/permisos/mios')) {
+        return Promise.resolve({ rol: 'ADMIN', permisos: ['ordenes.ver', 'ordenes.editar', 'ordenes.recibir'] });
+      }
+      if (ruta === '/ordenes-compra/oc-15/precios') return Promise.resolve(completa);
+      if (ruta.endsWith('/comprobantes')) return Promise.resolve([]);
+      if (ruta.startsWith('/ordenes-compra')) {
+        return Promise.resolve({ datos: [recibida], total: 1, pagina: 1, limite: 20 });
+      }
+      return Promise.resolve({ datos: [], total: 0, pagina: 1, limite: 20 });
+    });
+    const usuario = userEvent.setup();
+    mostrar();
+
+    await usuario.click(await screen.findByRole('button', { name: /^ver$/i }));
+    expect(await screen.findByText('Sin precio')).toBeInTheDocument();
+
+    await usuario.click(screen.getByRole('button', { name: /cargar o corregir precios/i }));
+    await usuario.type(screen.getByRole('spinbutton', { name: /precio de controlador/i }), '125000');
+    await usuario.click(screen.getByRole('button', { name: /guardar precios/i }));
+
+    expect(await screen.findByText(/precios guardados/i)).toBeInTheDocument();
+    const guardado = pedidos.find((p) => p.ruta === '/ordenes-compra/oc-15/precios');
+    // Solo el que cambió: el de la bandeja ya tenía su precio.
+    expect(guardado?.opciones).toEqual({
+      method: 'PATCH',
+      body: { precios: [{ renglonId: 'r2', precioUnitario: 125000 }] },
+    });
+
+    await usuario.click(screen.getByRole('button', { name: /descargar pdf/i }));
+    expect(descargarPdfOrdenCompra).toHaveBeenLastCalledWith(
+      expect.objectContaining({ numero: 'OC-2026-0015', total: 269680.07 }),
+    );
+  });
+
+  it('sin el permiso de editar órdenes, no se ofrece', async () => {
+    apiRequestMock.mockImplementation((rutaCruda: string) => {
+      const ruta = String(rutaCruda ?? '');
+      if (ruta.startsWith('/usuarios/me')) return Promise.resolve({ id: 'u2', nombre: 'Operario', rol: 'MANTENIMIENTO' });
+      if (ruta.startsWith('/permisos/mios')) return Promise.resolve({ rol: 'MANTENIMIENTO', permisos: ['ordenes.ver'] });
+      if (ruta.endsWith('/comprobantes')) return Promise.resolve([]);
+      if (ruta.startsWith('/ordenes-compra')) {
+        return Promise.resolve({ datos: [recibida], total: 1, pagina: 1, limite: 20 });
+      }
+      return Promise.resolve({ datos: [], total: 0, pagina: 1, limite: 20 });
+    });
+    const usuario = userEvent.setup();
+    mostrar();
+
+    await usuario.click(await screen.findByRole('button', { name: /^ver$/i }));
+    await screen.findByRole('heading', { name: /Orden OC-2026-0015/ });
+    expect(screen.queryByRole('button', { name: /cargar o corregir precios/i })).not.toBeInTheDocument();
   });
 });
 

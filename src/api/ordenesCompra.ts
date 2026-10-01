@@ -89,6 +89,22 @@ export function useRecibirOrden(id: string) {
   });
 }
 
+/**
+ * Carga o corrige precios en una orden ya emitida o recibida. Solo precios:
+ * cantidades y materiales de una orden que salió no se tocan.
+ */
+export function useCorregirPrecios(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (precios: { renglonId: string; precioUnitario: number }[]) =>
+      apiRequest<OrdenCompra>(`/ordenes-compra/${id}/precios`, {
+        method: 'PATCH',
+        body: { precios },
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesOrdenes.base }),
+  });
+}
+
 export function useAnularOrden(id: string) {
   const qc = useQueryClient();
   return useMutation({

@@ -1739,6 +1739,12 @@ button {
   margin-left: 0.35rem;
   font-size: 0.85rem;
 }
+/* Un renglón de una orden ya emitida que salió sin precio: es lo que hay que
+   completar para volver a mandarle la orden al proveedor. */
+.renglon-sin-precio {
+  color: #92400e;
+  font-weight: 600;
+}
 .renglon-sin-cantidad input {
   border-color: var(--color-peligro);
   background: #fef2f2;
