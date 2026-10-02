@@ -33,6 +33,7 @@ import {
 } from '@/tipos/ordenCompra';
 import { ManualesEquipo } from '@/componentes/ManualesEquipo';
 import { ComponentesEquipo } from '@/componentes/ComponentesEquipo';
+import { RepuestosEquipo } from '@/componentes/RepuestosEquipo';
 
 const LIMITE = 20;
 
@@ -511,6 +512,8 @@ function FichaEquipo({
         )}
 
         <ComponentesEquipo equipo={equipo} onAbrir={onAbrir} />
+
+        <RepuestosEquipo equipo={equipo} />
 
         <PlanesEquipo equipo={equipo} />
 

@@ -1772,6 +1772,130 @@ button {
   color: #92400e;
 }
 
+/* ── Repuestos de un equipo ── */
+.repuestos {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+.repuesto {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  background: var(--color-panel);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+.repuesto-info {
+  flex: 1;
+  min-width: 0;
+}
+.repuesto-nombre {
+  font-weight: 600;
+  color: var(--color-texto);
+  text-decoration: none;
+}
+.repuesto-nombre:hover {
+  color: var(--color-primario);
+  text-decoration: underline;
+}
+.repuesto-editando {
+  background: #f8fafc;
+}
+.repuesto-editando .acciones {
+  margin-top: 0;
+}
+.chip-stock {
+  flex: none;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.chip-stock-ok { background: #dcfce7; color: #166534; }
+.chip-stock-bajo { background: var(--color-alerta-fondo); color: var(--color-alerta-texto); }
+.chip-stock-sin { background: #fee2e2; color: #991b1b; }
+.chip-stock-fuera { background: #f1f5f9; color: var(--color-texto-suave); }
+.aviso-repuestos {
+  margin: 0 0 0.5rem;
+  font-size: 0.82rem;
+  color: var(--color-alerta-texto);
+}
+
+/* En celular: el nombre arriba y el stock con los botones abajo. */
+@media screen and (max-width: 640px) {
+  .repuesto {
+    flex-wrap: wrap;
+  }
+  .repuesto-info {
+    flex-basis: 100%;
+  }
+  .repuesto .acciones-catalogo {
+    margin-left: auto;
+  }
+}
+
+/* Los repuestos como atajos al cargar lo que se usó en un trabajo. */
+.atajos-repuestos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.6rem;
+}
+.atajo-repuesto {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1e40af;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.atajo-repuesto:hover:not(:disabled) {
+  background: #dbeafe;
+}
+.atajo-repuesto:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.atajo-repuesto-cantidad {
+  font-size: 0.75rem;
+  color: var(--color-texto-suave);
+}
+
+/* En la ficha del material: las máquinas que lo llevan, con su foto. */
+.equipos-de-material {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.5rem;
+}
+.equipo-de-material {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  color: var(--color-texto);
+  text-decoration: none;
+}
+.equipo-de-material:hover {
+  border-color: var(--color-primario);
+  background: #f8fafc;
+}
+
 /* Lista corta sin viñetas, para enumerar cosas dentro de una ficha. */
 .lista-simple {
   list-style: none;

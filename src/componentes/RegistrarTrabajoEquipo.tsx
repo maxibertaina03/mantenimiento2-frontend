@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useCrearOrdenTrabajo } from '@/api/ordenesTrabajo';
 import { CampoNumero } from './CampoNumero';
+import { AtajosRepuestos } from './AtajosRepuestos';
 import { ComboMaterial } from './ComboMaterial';
 import { MensajeError } from './Estados';
 import { Modal } from './Modal';
@@ -169,6 +170,11 @@ export function RegistrarTrabajoEquipo({
         </div>
 
         <h3 className="subtitulo-form">Materiales que se usaron</h3>
+        <AtajosRepuestos
+          equipoId={equipoId}
+          yaCargados={materiales.map((m) => m.materialId)}
+          onUsar={(m) => setMateriales((ms) => [...ms, m])}
+        />
         <div className="panel alta-renglon">
           <label className="alta-renglon-material">
             Material

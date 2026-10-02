@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useCompletarTarea } from '@/api/calendario';
 import { CampoNumero } from './CampoNumero';
+import { AtajosRepuestos } from './AtajosRepuestos';
 import { ComboMaterial } from './ComboMaterial';
 import { MensajeError } from './Estados';
 import { Modal } from './Modal';
@@ -79,6 +80,11 @@ export function CompletarTarea({ tarea, onCerrar }: { tarea: Tarea; onCerrar: ()
         </label>
 
         <h3 className="subtitulo-form">Materiales que se usaron</h3>
+        <AtajosRepuestos
+          equipoId={tarea.equipoId}
+          yaCargados={materiales.map((m) => m.materialId)}
+          onUsar={(m) => setMateriales((ms) => [...ms, m])}
+        />
         <div className="panel alta-renglon">
           <label className="alta-renglon-material">
             Material

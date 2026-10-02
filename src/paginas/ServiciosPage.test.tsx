@@ -75,6 +75,8 @@ beforeEach(() => {
     if (ruta.startsWith('/equipos/planes/vencen')) return Promise.resolve([PURGA]);
     if (ruta === '/calendario/planes/plan-1/tarea') return Promise.resolve(tarea);
     if (ruta === '/calendario/mias') return Promise.resolve([tarea]);
+    // El formulario de «Dar por hecha» ofrece los repuestos del equipo.
+    if (ruta.endsWith('/repuestos')) return Promise.resolve([]);
     return Promise.resolve({ datos: [], total: 0, pagina: 1, limite: 20 });
   });
 });

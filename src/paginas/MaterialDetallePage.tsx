@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useActualizarMaterial, useMaterialConHistorial } from '@/api/materiales';
 import { BadgeMovimiento } from '@/componentes/BadgeMovimiento';
+import { EquiposDeMaterial } from '@/componentes/EquiposDeMaterial';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { FormularioMaterial } from '@/componentes/FormularioMaterial';
 import { Modal } from '@/componentes/Modal';
@@ -107,6 +108,8 @@ export function MaterialDetallePage() {
           </p>
         )}
       </div>
+
+      <EquiposDeMaterial materialId={material.id} unidad={material.unidad} />
 
       <h2>Historial de movimientos</h2>
       {material.movimientos.length === 0 ? (

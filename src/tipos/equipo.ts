@@ -250,3 +250,36 @@ export interface MontajeEquipo {
   motivo: string | null;
   registradoPorNombre: string | null;
 }
+
+/** Un material del pañol que lleva un equipo: un repuesto de su lista. */
+export interface RepuestoEquipo {
+  id: string;
+  equipoId: string;
+  materialId: string;
+  materialNombre: string;
+  /** Símbolo de la unidad, o "" si el material no tiene una cargada. */
+  unidad: string;
+  /** Cuántos lleva la máquina, o null si no se dijo. */
+  cantidad: number | null;
+  notas: string | null;
+  stockActual: number;
+  stockMinimo: number;
+  bajoStock: boolean;
+  /** false si el material se sacó de circulación en el pañol. */
+  materialActivo: boolean;
+  /** Dónde está en el depósito: «Estantería A · fila 3», o null. */
+  ubicacion: string | null;
+  creadoEn: string;
+}
+
+/** Un equipo que lleva un material, para la ficha del material. */
+export interface EquipoQueUsaMaterial {
+  repuestoId: string;
+  equipoId: string;
+  equipoNombre: string;
+  equipoEstado: EstadoEquipo;
+  ubicacionNombre: string | null;
+  fotoUrl: string | null;
+  cantidad: number | null;
+  notas: string | null;
+}

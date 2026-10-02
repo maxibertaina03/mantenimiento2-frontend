@@ -6,6 +6,8 @@ import type {
   ActualizarEquipoInput,
   ComponenteEquipo,
   CrearEquipoInput,
+  EquipoQueUsaMaterial,
+  RepuestoEquipo,
   MontajeEquipo,
   DeteccionImportacion,
   Equipo,
@@ -369,5 +371,77 @@ export function useDesmontarEquipo() {
         body: { motivo: datos.motivo || undefined },
       }),
     onSuccess: () => refrescarMontajes(qc),
+  });
+}
+
+// ── Repuestos: los materiales del pañol que lleva cada equipo ──
+
+const claveRepuestos = (equipoId: string) => ['equipos', 'repuestos', equipoId] as const;
+
+/** La lista de repuestos de un equipo, con el stock del pañol. */
+export function useRepuestos(equipoId: string, habilitado = true) {
+  return useQuery({
+    queryKey: claveRepuestos(equipoId),
+    queryFn: () => apiRequest<RepuestoEquipo[]>(`/equipos/${equipoId}/repuestos`),
+    enabled: equipoId !== '' && habilitado,
+  });
+}
+
+/** En qué equipos va un material, para su ficha. */
+export function useEquiposDeMaterial(materialId: string, habilitado = true) {
+  return useQuery({
+    queryKey: ['equipos', 'de-material', materialId] as const,
+    queryFn: () => apiRequest<EquipoQueUsaMaterial[]>(`/equipos/de-material/${materialId}`),
+    enabled: materialId !== '' && habilitado,
+  });
+}
+
+/**
+ * Agregar, cambiar o quitar devuelve la lista nueva: se guarda directo, sin
+ * volver a pedirla. Y se invalida «en qué equipos va» de los materiales.
+ */
+function guardarRepuestos(qc: ReturnType<typeof useQueryClient>, equipoId: string) {
+  return (lista: RepuestoEquipo[]) => {
+    qc.setQueryData(claveRepuestos(equipoId), lista);
+    void qc.invalidateQueries({ queryKey: ['equipos', 'de-material'] });
+  };
+}
+
+export function useAgregarRepuesto(equipoId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (datos: { materialId: string; cantidad?: number | null; notas?: string | null }) =>
+      apiRequest<RepuestoEquipo[]>(`/equipos/${equipoId}/repuestos`, { method: 'POST', body: datos }),
+    onSuccess: guardarRepuestos(qc, equipoId),
+  });
+}
+
+export function useCambiarRepuesto(equipoId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      repuestoId,
+      ...cambios
+    }: {
+      repuestoId: string;
+      cantidad?: number | null;
+      notas?: string | null;
+    }) =>
+      apiRequest<RepuestoEquipo[]>(`/equipos/${equipoId}/repuestos/${repuestoId}`, {
+        method: 'PATCH',
+        body: cambios,
+      }),
+    onSuccess: guardarRepuestos(qc, equipoId),
+  });
+}
+
+export function useQuitarRepuesto(equipoId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (repuestoId: string) =>
+      apiRequest<RepuestoEquipo[]>(`/equipos/${equipoId}/repuestos/${repuestoId}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: guardarRepuestos(qc, equipoId),
   });
 }
