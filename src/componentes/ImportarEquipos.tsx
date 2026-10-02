@@ -3,6 +3,7 @@ import { useImportarEquipos } from '@/api/equiposIt';
 import { leerInventario, type FilaInventario } from '@/lib/csvImportacion';
 import { MensajeError } from './Estados';
 import { Modal } from './Modal';
+import { SelectorArchivo } from './SelectorArchivo';
 import type { ResultadoImportacion } from '@/tipos/equipoIt';
 
 const MAX_VISTA_PREVIA = 8;
@@ -75,14 +76,13 @@ export function ImportarEquipos({ abierto, onCerrar }: { abierto: boolean; onCer
               importar el mismo inventario, los equipos se actualizan en vez de duplicarse.
             </p>
 
-            <label className="campo">
-              Archivo CSV
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                onChange={(e) => elegirArchivo(e.target.files?.[0])}
-              />
-            </label>
+            <SelectorArchivo
+              accept=".csv,text/csv"
+              icono="📄"
+              titulo="Elegí el archivo CSV del inventario"
+              ayuda="El que se exporta de la planilla, con los encabezados en la primera fila"
+              onElegir={(archivos) => elegirArchivo(archivos[0])}
+            />
 
             {errorLectura && <div className="alerta alerta-error">⚠️ {errorLectura}</div>}
 

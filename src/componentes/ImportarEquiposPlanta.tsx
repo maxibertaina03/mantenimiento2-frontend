@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useDetectarImportacion, useImportarEquiposPlanta } from '@/api/equipos';
 import { Cargando, MensajeError } from './Estados';
 import { Modal } from './Modal';
+import { SelectorArchivo } from './SelectorArchivo';
 import type { Advertencia, ResultadoImportacionEquipos } from '@/tipos/equipo';
 
 const ETIQUETA_ADVERTENCIA: Record<Advertencia, string> = {
@@ -44,8 +45,7 @@ export function ImportarEquiposPlanta({ onCerrar }: { onCerrar: () => void }) {
 
   const deteccion = detectar.data;
 
-  const elegirCarpeta = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const archivos = Array.from(e.target.files ?? []);
+  const elegirCarpeta = async (archivos: File[]) => {
     if (archivos.length === 0) return;
 
     // webkitRelativePath trae la ruta con la carpeta adelante, que es
@@ -134,16 +134,14 @@ export function ImportarEquiposPlanta({ onCerrar }: { onCerrar: () => void }) {
           <strong>Las fotos todavía no se suben</strong>: eso viene en la fase siguiente.
         </p>
 
-        <label className="campo">
-          Carpeta
-          <input
-            type="file"
-            onChange={elegirCarpeta}
-            // No están en los tipos de React, pero son los atributos que hacen
-            // que el navegador deje elegir una carpeta entera.
-            {...({ webkitdirectory: '', directory: '' } as Record<string, string>)}
-          />
-        </label>
+        <SelectorArchivo
+          carpeta
+          icono="📁"
+          titulo="Elegí la carpeta con las fotos de la planta"
+          ayuda="Una subcarpeta por sector, una foto por equipo"
+          ocupado={detectar.isPending ? 'Leyendo la carpeta…' : null}
+          onElegir={elegirCarpeta}
+        />
 
         {detectar.isPending && <Cargando />}
         {detectar.error && <MensajeError error={detectar.error} />}

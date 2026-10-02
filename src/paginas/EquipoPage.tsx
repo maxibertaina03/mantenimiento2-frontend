@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useAlmacenDisponible, useEquipo, usePlanesDeEquipo, useRepuestos } from '@/api/equipos';
+import {
+  useAlmacenDisponible,
+  useEquipo,
+  useMarcarQrGenerado,
+  usePlanesDeEquipo,
+  useRepuestos,
+} from '@/api/equipos';
 import { useManuales } from '@/api/manuales';
 import { useOrdenesTrabajo } from '@/api/ordenesTrabajo';
 import { ComponentesEquipo } from '@/componentes/ComponentesEquipo';
@@ -13,6 +19,8 @@ import { RegistrarTrabajoEquipo } from '@/componentes/RegistrarTrabajoEquipo';
 import { RepuestosEquipo } from '@/componentes/RepuestosEquipo';
 import { TrabajosDelEquipo } from '@/componentes/TrabajosDelEquipo';
 import { VisorFoto } from '@/componentes/VisorFoto';
+import { esCelular } from '@/lib/dispositivo';
+import { armarEtiquetas, imprimirEtiquetas } from '@/lib/etiquetaQr';
 import { formatearFecha, formatearFechaSola } from '@/lib/formato';
 import { P, usePuede } from '@/lib/permisos';
 import { stockDeRepuesto } from '@/lib/stockDeRepuesto';
@@ -77,6 +85,28 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
   const [registrando, setRegistrando] = useState(false);
   const [editando, setEditando] = useState(false);
   const [fotoAmpliada, setFotoAmpliada] = useState(false);
+  const [avisoQr, setAvisoQr] = useState<string | null>(null);
+  const marcarQr = useMarcarQrGenerado();
+
+  /**
+   * Entró escaneando la etiqueta pegada en la máquina. En el celular se abre
+   * el modo de botones grandes: el que escanea está parado al lado del equipo
+   * y quiere hacer algo, no leer la ficha. En la computadora no hace falta.
+   */
+  const modoRapido = parametros.get('desde') === 'qr' && esCelular();
+
+  /** La etiqueta de este equipo, sola: para reponer una que se despegó o se rompió. */
+  const imprimirQr = async () => {
+    setAvisoQr(null);
+    const etiquetas = await armarEtiquetas([equipo]);
+    if (!imprimirEtiquetas(etiquetas)) {
+      setAvisoQr(
+        'El navegador bloqueó la ventana de impresión. Permitila para este sitio y probá de nuevo.',
+      );
+      return;
+    }
+    await marcarQr.mutateAsync([equipo.id]);
+  };
 
   const dadoDeBaja = equipo.estado === 'DADO_DE_BAJA';
   const planes = usePlanesDeEquipo(equipo.id);
@@ -111,6 +141,7 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
   };
 
   const irA = (p: Pestana) => {
+    parametros.delete('desde');
     if (p === 'resumen') parametros.delete('pestana');
     else parametros.set('pestana', p);
     setParametros(parametros);
@@ -156,6 +187,8 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
             </div>
           )}
         </div>
+        {/* En el modo rápido las acciones son los botones grandes de abajo. */}
+        {!modoRapido && (
         <div className="cabecera-equipo-acciones">
           {!dadoDeBaja && puede(P.TRABAJOS_EDITAR) && (
             <button type="button" className="btn btn-primario" onClick={() => setRegistrando(true)}>
@@ -167,10 +200,36 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
               ✎ Editar
             </button>
           )}
+          {puede(P.EQUIPOS_EDITAR) && (
+            <button
+              type="button"
+              className="btn"
+              title="Imprimir la etiqueta con el QR de este equipo"
+              disabled={marcarQr.isPending}
+              onClick={imprimirQr}
+            >
+              🏷 Etiqueta QR
+            </button>
+          )}
         </div>
+        )}
       </div>
+      {avisoQr && <p className="aviso-escaneo es-error">{avisoQr}</p>}
+
+      {modoRapido && (
+        <ModoRapido
+          puedeRegistrar={!dadoDeBaja && puede(P.TRABAJOS_EDITAR)}
+          verTrabajos={verTrabajos}
+          vencidos={planesVencidos}
+          faltan={repuestosQueFaltan}
+          onRegistrar={() => setRegistrando(true)}
+          onIr={irA}
+        />
+      )}
 
       {/* ── Pestañas ── */}
+      {!modoRapido && (
+      <>
       <div className="pestanas-equipo" role="tablist" aria-label="Secciones del equipo">
         {PESTANAS.filter((p) => p !== 'trabajos' || verTrabajos).map((p) => {
           const c = contador[p];
@@ -228,6 +287,8 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
         )}
         {pestana === 'manuales' && <ManualesEquipo equipoId={equipo.id} />}
       </div>
+      </>
+      )}
 
       {registrando && (
         <RegistrarTrabajoEquipo
@@ -242,6 +303,84 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
         <VisorFoto url={equipo.fotoUrl} titulo={equipo.nombre} alCerrar={() => setFotoAmpliada(false)} />
       )}
     </>
+  );
+}
+
+/**
+ * «Al pie de la máquina»: lo que ve en el celular quien escanea la etiqueta.
+ *
+ * Cuatro botones grandes con lo que se hace ahí mismo —fáciles con guantes o
+ * con las manos sucias— y abajo lo urgente de esa máquina. La ficha completa
+ * queda a un toque.
+ */
+function ModoRapido({
+  puedeRegistrar,
+  verTrabajos,
+  vencidos,
+  faltan,
+  onRegistrar,
+  onIr,
+}: {
+  puedeRegistrar: boolean;
+  verTrabajos: boolean;
+  vencidos: PlanParaMirar[];
+  faltan: RepuestoEquipo[];
+  onRegistrar: () => void;
+  onIr: (p: Pestana) => void;
+}) {
+  return (
+    <div className="modo-rapido">
+      <div className="acciones-grandes">
+        {puedeRegistrar && (
+          <button type="button" className="accion-grande accion-grande-principal" onClick={onRegistrar}>
+            <span aria-hidden="true">＋</span>
+            Registrar trabajo
+          </button>
+        )}
+        <button type="button" className="accion-grande" onClick={() => onIr('repuestos')}>
+          <span aria-hidden="true">⚙</span>
+          Repuestos
+        </button>
+        {verTrabajos && (
+          <button type="button" className="accion-grande" onClick={() => onIr('trabajos')}>
+            <span aria-hidden="true">☰</span>
+            Historial
+          </button>
+        )}
+        <button type="button" className="accion-grande" onClick={() => onIr('manuales')}>
+          <span aria-hidden="true">▤</span>
+          Manuales
+        </button>
+      </div>
+
+      {(vencidos.length > 0 || faltan.length > 0) && (
+        <ul className="lista-mirar">
+          {vencidos.map((p) => (
+            <li key={p.id}>
+              <button type="button" className="renglon-mirar" onClick={() => onIr('planes')}>
+                <span>Service «{p.nombre}»</span>
+                <span className="chip-stock chip-stock-sin">{textoVencimiento(p.diasParaVencer)}</span>
+              </button>
+            </li>
+          ))}
+          {faltan.map((r) => {
+            const stock = stockDeRepuesto(r);
+            return (
+              <li key={r.id}>
+                <button type="button" className="renglon-mirar" onClick={() => onIr('repuestos')}>
+                  <span>{r.materialNombre}</span>
+                  <span className={`chip-stock chip-stock-${stock.clase}`}>{stock.texto}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <button type="button" className="btn ver-ficha-completa" onClick={() => onIr('resumen')}>
+        Ver ficha completa ›
+      </button>
+    </div>
   );
 }
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCambiarFotoEquipo } from '@/api/equipos';
 import { comprimirImagen, formatearBytes } from '@/lib/comprimirImagen';
 import { MensajeError } from './Estados';
+import { SelectorArchivo } from './SelectorArchivo';
 import type { Equipo } from '@/tipos/equipo';
 
 /**
@@ -18,8 +19,8 @@ export function FotoEquipo({ equipo }: { equipo: Equipo }) {
   const [errorLocal, setErrorLocal] = useState<string | null>(null);
   const [ahorro, setAhorro] = useState<string | null>(null);
 
-  const elegir = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const archivo = e.target.files?.[0];
+  const elegir = async (archivos: File[]) => {
+    const archivo = archivos[0];
     if (!archivo) return;
 
     setErrorLocal(null);
@@ -37,12 +38,8 @@ export function FotoEquipo({ equipo }: { equipo: Equipo }) {
       setErrorLocal(error instanceof Error ? error.message : 'No se pudo procesar la imagen.');
     } finally {
       setComprimiendo(false);
-      // Permite volver a elegir el mismo archivo si algo falló.
-      e.target.value = '';
     }
   };
-
-  const ocupado = comprimiendo || cambiar.isPending;
 
   return (
     <div className="campo">
@@ -55,14 +52,17 @@ export function FotoEquipo({ equipo }: { equipo: Equipo }) {
           className="foto-equipo"
           loading="lazy"
         />
-      ) : (
-        <div className="foto-equipo foto-equipo-vacia">Sin foto</div>
-      )}
+      ) : null}
 
-      <input type="file" accept="image/*" onChange={elegir} disabled={ocupado} />
-
-      {comprimiendo && <span className="texto-suave texto-chico">Achicando la imagen…</span>}
-      {cambiar.isPending && <span className="texto-suave texto-chico">Subiendo…</span>}
+      <SelectorArchivo
+        accept="image/*"
+        icono="📷"
+        compacto={Boolean(equipo.fotoUrl)}
+        titulo={equipo.fotoUrl ? 'Cambiar la foto' : 'Subí una foto de la máquina'}
+        ayuda="Desde el celular o la computadora · JPG o PNG, se achica sola"
+        ocupado={comprimiendo ? 'Achicando la imagen…' : cambiar.isPending ? 'Subiendo…' : null}
+        onElegir={elegir}
+      />
       {ahorro && <span className="texto-suave texto-chico">Subida: {ahorro}</span>}
       {errorLocal && <div className="alerta alerta-error">⚠️ {errorLocal}</div>}
       {cambiar.error && <MensajeError error={cambiar.error} />}

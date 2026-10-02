@@ -80,7 +80,8 @@ export function EquiposPage() {
     await eliminar.mutateAsync(e.id);
   };
 
-  if (idPedido) return <Navigate to={`/equipos/${idPedido}`} replace />;
+  // `desde=qr`: en el celular, la página abre en el modo de botones grandes.
+  if (idPedido) return <Navigate to={`/equipos/${idPedido}?desde=qr`} replace />;
 
   return (
     <>

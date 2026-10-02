@@ -17,6 +17,20 @@ vi.mock('@/lib/apiClient', () => ({
 }));
 vi.mock('@/componentes/FotoEquipo', () => ({ FotoEquipo: () => null }));
 
+// Celular o computadora, según el test.
+let celular = false;
+vi.mock('@/lib/dispositivo', () => ({ esCelular: () => celular, tieneMouse: () => !celular }));
+
+// Imprimir abre una ventana: acá solo se registra qué se mandó.
+const impresas: unknown[] = [];
+vi.mock('@/lib/etiquetaQr', () => ({
+  armarEtiquetas: async (equipos: { nombre: string }[]) => equipos.map((e) => ({ titulo: e.nombre })),
+  imprimirEtiquetas: (etiquetas: unknown[]) => {
+    impresas.push(...etiquetas);
+    return true;
+  },
+}));
+
 const BOMBA = {
   id: 'eq-1',
   nombre: 'Bomba de leche pasteurizador',
@@ -73,14 +87,20 @@ const repuesto = (extra: object) => ({
 let planes: object[] = [];
 let repuestos: object[] = [];
 let existe = true;
+const pedidos: { ruta: string; body?: unknown }[] = [];
 
 beforeEach(() => {
   planes = [];
   repuestos = [];
   existe = true;
+  celular = false;
+  impresas.length = 0;
+  pedidos.length = 0;
   apiRequestMock.mockReset();
-  apiRequestMock.mockImplementation((rutaCruda: string) => {
+  apiRequestMock.mockImplementation((rutaCruda: string, opciones?: { body?: unknown }) => {
     const ruta = String(rutaCruda ?? '');
+    pedidos.push({ ruta, body: opciones?.body });
+    if (ruta === '/equipos/qr/marcar-generados') return Promise.resolve({ marcados: 1 });
     if (ruta.startsWith('/usuarios/me')) return Promise.resolve({ id: 'u1', nombre: 'Facundo' });
     if (ruta.startsWith('/permisos/mios')) {
       return Promise.resolve({
@@ -206,5 +226,60 @@ describe('La página del equipo', () => {
       'href',
       '/equipos',
     );
+  });
+});
+
+describe('La etiqueta QR del equipo', () => {
+  it('imprime la etiqueta de ese equipo y la marca como impresa', async () => {
+    const usuario = userEvent.setup();
+    mostrar();
+
+    await usuario.click(await screen.findByRole('button', { name: '🏷 Etiqueta QR' }));
+
+    expect(impresas).toEqual([{ titulo: 'Bomba de leche pasteurizador' }]);
+    await waitFor(() =>
+      expect(pedidos).toContainEqual({ ruta: '/equipos/qr/marcar-generados', body: { ids: ['eq-1'] } }),
+    );
+  });
+});
+
+describe('Al pie de la máquina: entrar escaneando el QR', () => {
+  it('en el celular: botones grandes y lo urgente, sin pestañas', async () => {
+    celular = true;
+    planes = [plan({})];
+    mostrar('/equipos/eq-1?desde=qr');
+
+    expect(await screen.findByRole('button', { name: /Registrar trabajo/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Repuestos/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Manuales/ })).toBeInTheDocument();
+    expect(await screen.findByText('Service «Cambio de sello»')).toBeInTheDocument();
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+  });
+
+  it('un botón lleva a su pestaña y sale del modo rápido', async () => {
+    celular = true;
+    const usuario = userEvent.setup();
+    mostrar('/equipos/eq-1?desde=qr');
+
+    await usuario.click(await screen.findByRole('button', { name: /Repuestos/ }));
+    expect(screen.getByTestId('direccion')).toHaveTextContent('/equipos/eq-1?pestana=repuestos');
+    expect(screen.getByRole('tablist')).toBeInTheDocument();
+  });
+
+  it('«Ver ficha completa» abre la página normal', async () => {
+    celular = true;
+    const usuario = userEvent.setup();
+    mostrar('/equipos/eq-1?desde=qr');
+
+    await usuario.click(await screen.findByRole('button', { name: /Ver ficha completa/ }));
+    expect(screen.getByTestId('direccion')).toHaveTextContent(/^\/equipos\/eq-1$/);
+    expect(screen.getByRole('tab', { name: /Resumen/ })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('en la computadora, el QR abre la página normal', async () => {
+    celular = false;
+    mostrar('/equipos/eq-1?desde=qr');
+    expect(await screen.findByRole('tablist')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Ver ficha completa/ })).not.toBeInTheDocument();
   });
 });
