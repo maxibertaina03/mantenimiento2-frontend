@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { EquipoPage } from './EquipoPage';
 import { EquiposPage } from './EquiposPage';
 
 /**
@@ -60,6 +61,13 @@ function servidor({ existe = true, resumen }: { existe?: boolean; resumen?: unkn
     if (ruta === '/equipos/eq-1') {
       return existe ? Promise.resolve(compresor) : Promise.reject(new Error('404'));
     }
+    // Lo que pide la página del equipo.
+    if (ruta.endsWith('/repuestos') || ruta.endsWith('/planes')) return Promise.resolve([]);
+    if (ruta.endsWith('/manuales')) return Promise.resolve({ disponible: true, manuales: [] });
+    if (ruta === '/equipos/almacen/estado') return Promise.resolve({ disponible: false });
+    if (ruta.startsWith('/ordenes-trabajo')) {
+      return Promise.resolve({ datos: [], total: 0, pagina: 1, limite: 20 });
+    }
     if (ruta.startsWith('/equipos')) {
       return Promise.resolve({ datos: [compresor], total: 1, pagina: 1, limite: 20 });
     }
@@ -73,7 +81,10 @@ function mostrar(ruta: string) {
   const nodo: ReactNode = (
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={[ruta]}>
-        <EquiposPage />
+        <Routes>
+          <Route path="/equipos" element={<EquiposPage />} />
+          <Route path="/equipos/:id" element={<EquipoPage />} />
+        </Routes>
       </MemoryRouter>
     </QueryClientProvider>
   );
@@ -85,8 +96,10 @@ beforeEach(() => {
 });
 
 describe('EquiposPage abierta desde un QR', () => {
-  it('REGRESION: con ?equipo=<id> abre la ficha de esa maquina', async () => {
+  it('REGRESION: con ?equipo=<id> abre la pagina de esa maquina', async () => {
     // Antes la pantalla ignoraba el parametro y mostraba el listado entero.
+    // Las etiquetas ya pegadas llevan a esta dirección: ahora redirige a
+    // /equipos/<id>, y no hay que reimprimir ninguna.
     servidor();
     mostrar('/equipos?equipo=eq-1');
 

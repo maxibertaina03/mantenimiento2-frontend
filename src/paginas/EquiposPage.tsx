@@ -1,39 +1,16 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import {
-  useActualizarEquipo,
-  useAlmacenDisponible,
-  useCrearEquipo,
-  useEliminarEquipo,
-  useEquipo,
-  useEquipos,
-} from '@/api/equipos';
-import { useCatalogoEquipos } from '@/api/catalogosEquipo';
-import { usePlanesDeEquipo, useResumenEquipos } from '@/api/equipos';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { useEliminarEquipo, useEquipos, useResumenEquipos } from '@/api/equipos';
 import { AccionesFila } from '@/componentes/AccionesFila';
-import { CampoNumero } from '@/componentes/CampoNumero';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
-import { FotoEquipo } from '@/componentes/FotoEquipo';
-import { TrabajosDelEquipo } from '@/componentes/TrabajosDelEquipo';
-import { PlanesEquipo } from '@/componentes/PlanesEquipo';
+import { FormularioEquipo } from '@/componentes/FormularioEquipo';
 import { ImportarEquiposPlanta } from '@/componentes/ImportarEquiposPlanta';
-import { Modal } from '@/componentes/Modal';
 import { CatalogosEquipo } from '@/componentes/CatalogosEquipo';
 import { EtiquetasQr } from '@/componentes/EtiquetasQr';
 import { CargarFotosPlanta } from '@/componentes/CargarFotosPlanta';
-import { useModelosDeMarca } from '@/api/catalogosEquipo';
-import { formatearFechaSola } from '@/lib/formato';
-import { ESTADOS_EQUIPO, ETIQUETA_ESTADO_EQUIPO, TRANSICIONES_ESTADO } from '@/tipos/equipo';
-import type { CrearEquipoInput, Equipo, EstadoEquipo, FiltrosEquipos } from '@/tipos/equipo';
-import {
-  CLASIFICACIONES_EQUIPO,
-  ETIQUETA_CLASIFICACION,
-  ETIQUETA_CLASIFICACION_PLURAL,
-  type ClasificacionEquipo,
-} from '@/tipos/ordenCompra';
-import { ManualesEquipo } from '@/componentes/ManualesEquipo';
-import { ComponentesEquipo } from '@/componentes/ComponentesEquipo';
-import { RepuestosEquipo } from '@/componentes/RepuestosEquipo';
+import { ESTADOS_EQUIPO, ETIQUETA_ESTADO_EQUIPO } from '@/tipos/equipo';
+import type { Equipo, EstadoEquipo, FiltrosEquipos } from '@/tipos/equipo';
+import { ETIQUETA_CLASIFICACION_PLURAL } from '@/tipos/ordenCompra';
 
 const LIMITE = 20;
 
@@ -52,41 +29,17 @@ export function EquiposPage() {
   const [panelFiltros, setPanelFiltros] = useState(false);
   const [editando, setEditando] = useState<Equipo | null>(null);
   const [creando, setCreando] = useState(false);
-  const [viendo, setViendo] = useState<Equipo | null>(null);
   const [importando, setImportando] = useState(false);
   const [catalogos, setCatalogos] = useState(false);
   const [etiquetas, setEtiquetas] = useState(false);
   const [fotos, setFotos] = useState(false);
 
-  // El QR pegado en la máquina y los enlaces de la pantalla Hoy llevan a
-  // /equipos?equipo=<id>. Sin esto la dirección abría el listado y no la ficha,
-  // que es lo que alguien parado frente a la máquina necesita ver.
-  const [parametros, setParametros] = useSearchParams();
+  const navegar = useNavigate();
+  // Las etiquetas QR ya impresas y pegadas en las máquinas llevan a
+  // /equipos?equipo=<id>. La ficha ahora es una página propia: esa dirección
+  // tiene que seguir sirviendo, así que lleva a /equipos/<id>.
+  const [parametros] = useSearchParams();
   const idPedido = parametros.get('equipo') ?? '';
-  const equipoPedido = useEquipo(idPedido);
-
-  useEffect(() => {
-    if (equipoPedido.data) setViendo(equipoPedido.data);
-  }, [equipoPedido.data]);
-
-  /**
-   * Abre la ficha de otro equipo: de la bomba a la desnatadora donde está
-   * montada. Usa la misma dirección que el QR, así el atrás del navegador
-   * vuelve a la ficha anterior.
-   */
-  const abrirEquipo = (id: string) => {
-    parametros.set('equipo', id);
-    setParametros(parametros);
-  };
-
-  /** Cierra la ficha y saca el id de la dirección, para que no vuelva a abrirse. */
-  const cerrarFicha = () => {
-    setViendo(null);
-    if (idPedido) {
-      parametros.delete('equipo');
-      setParametros(parametros, { replace: true });
-    }
-  };
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -126,6 +79,8 @@ export function EquiposPage() {
     if (!confirm(aviso)) return;
     await eliminar.mutateAsync(e.id);
   };
+
+  if (idPedido) return <Navigate to={`/equipos/${idPedido}`} replace />;
 
   return (
     <>
@@ -352,7 +307,7 @@ export function EquiposPage() {
             </thead>
             <tbody>
               {data.datos.map((e) => (
-                <tr key={e.id} onClick={() => setViendo(e)} style={{ cursor: 'pointer' }}>
+                <tr key={e.id} onClick={() => navegar(`/equipos/${e.id}`)} style={{ cursor: 'pointer' }}>
                   <td data-etiqueta="Equipo">
                     {/* Un solo bloque: en el celular la celda es «etiqueta | valor», y
                         cada renglón suelto se ponía al lado del nombre y se cortaba. */}
@@ -424,389 +379,11 @@ export function EquiposPage() {
         />
       )}
 
-      {viendo && <FichaEquipo equipo={viendo} onCerrar={cerrarFicha} onAbrir={abrirEquipo} />}
-
-      {/* Un QR viejo, o una máquina borrada después de pegar la etiqueta. */}
-      {idPedido !== '' && equipoPedido.isError && (
-        <Modal titulo="No se encontró el equipo" abierto onCerrar={cerrarFicha}>
-          <div className="formulario-modal">
-            <p>
-              La etiqueta apunta a un equipo que ya no está en el sistema. Puede que se haya
-              borrado, o que la etiqueta sea de otra base de datos.
-            </p>
-            <div className="acciones">
-              <button className="btn btn-primario" onClick={cerrarFicha}>
-                Ver todos los equipos
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
 
       {importando && <ImportarEquiposPlanta onCerrar={() => setImportando(false)} />}
       <CatalogosEquipo abierto={catalogos} onCerrar={() => setCatalogos(false)} />
       {etiquetas && <EtiquetasQr onCerrar={() => setEtiquetas(false)} />}
       {fotos && <CargarFotosPlanta onCerrar={() => setFotos(false)} />}
     </>
-  );
-}
-
-/** La ficha, al tocar la fila. En el celular es la forma de ver todo el detalle. */
-function FichaEquipo({
-  equipo,
-  onCerrar,
-  onAbrir,
-}: {
-  equipo: Equipo;
-  onCerrar: () => void;
-  onAbrir: (equipoId: string) => void;
-}) {
-  // Si el servidor no tiene almacén, no se ofrece cargar fotos: prometer algo
-  // que va a fallar es peor que no ofrecerlo.
-  const almacen = useAlmacenDisponible();
-  // Los planes se traen acá y se pasan abajo, para que el formulario de un
-  // trabajo pueda decir a cual responde sin volver a pedirlos.
-  const planes = usePlanesDeEquipo(equipo.id);
-
-  const dato = (etiqueta: string, valor: string | null | undefined) => (
-    <div className="dato">
-      <span className="texto-suave texto-chico">{etiqueta}</span>
-      <span>{valor || '—'}</span>
-    </div>
-  );
-
-  return (
-    <Modal titulo={equipo.nombre} abierto tamano="ancho" onCerrar={onCerrar}>
-      <div className="formulario-modal">
-        {almacen.data?.disponible ? (
-          <FotoEquipo equipo={equipo} />
-        ) : (
-          equipo.fotoUrl && <img src={equipo.fotoUrl} alt={equipo.nombre} className="foto-equipo" />
-        )}
-
-        <div className="grilla-datos">
-          {dato('Código', equipo.codigoInterno)}
-          {dato('Estado', ETIQUETA_ESTADO_EQUIPO[equipo.estado])}
-          {dato('Ubicación', equipo.ubicacionNombre)}
-          {dato('Tipo', equipo.tipoNombre)}
-          {dato('Etiqueta QR', equipo.qrGeneradoEn ? 'Impresa' : 'Sin imprimir')}
-          {dato('Marca', equipo.marcaNombre)}
-          {dato('Modelo', equipo.modeloNombre)}
-          {dato('N° de serie', equipo.numeroSerie)}
-          {dato('Proveedor', equipo.proveedorNombre)}
-          {dato('Horas de uso', equipo.horasUso === null ? null : String(equipo.horasUso))}
-          {dato('Alta', equipo.fechaAlta ? formatearFechaSola(equipo.fechaAlta) : null)}
-          {dato(
-            'Garantía',
-            equipo.garantiaHasta
-              ? `${formatearFechaSola(equipo.garantiaHasta)}${equipo.garantiaVencida ? ' · vencida' : ''}`
-              : null,
-          )}
-        </div>
-
-        {equipo.descripcion && (
-          <div>
-            <span className="texto-suave texto-chico">Descripción</span>
-            <p>{equipo.descripcion}</p>
-          </div>
-        )}
-
-        <ComponentesEquipo equipo={equipo} onAbrir={onAbrir} />
-
-        <RepuestosEquipo equipo={equipo} />
-
-        <PlanesEquipo equipo={equipo} />
-
-        <ManualesEquipo equipoId={equipo.id} />
-
-        {/* Un solo historial. Antes habia dos —las intervenciones y las
-            ordenes de trabajo— que contestaban la misma pregunta, y para saber
-            cuanto costo mantener algo habia que sumar dos listas. */}
-        <TrabajosDelEquipo
-          equipoId={equipo.id}
-          equipoNombre={equipo.nombre}
-          planes={(planes.data ?? []).map((p) => ({ id: p.id, nombre: p.nombre }))}
-          permiteNuevos={equipo.estado !== 'DADO_DE_BAJA'}
-        />
-
-        {/* Los avisos por correo están apagados a pedido (2026-09-30): el texto
-            que los anunciaba se sacó. Queda solo el aviso de las fotos. */}
-        {almacen.data?.disponible === false && (
-          <p className="texto-suave texto-chico">La carga de fotos no está configurada.</p>
-        )}
-
-        <div className="acciones">
-          <button className="btn" onClick={onCerrar}>
-            Cerrar
-          </button>
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
-function FormularioEquipo({ equipo, alCerrar }: { equipo?: Equipo; alCerrar: () => void }) {
-  const esEdicion = equipo !== undefined;
-  const { ubicaciones, tipos, marcas } = useCatalogoEquipos();
-  const crear = useCrearEquipo();
-  const actualizar = useActualizarEquipo();
-  const guardando = crear.isPending || actualizar.isPending;
-  const error = crear.error ?? actualizar.error;
-
-  const [form, setForm] = useState<CrearEquipoInput & { estado?: EstadoEquipo }>({
-    nombre: equipo?.nombre ?? '',
-    codigoInterno: equipo?.codigoInterno ?? '',
-    descripcion: equipo?.descripcion ?? '',
-    marcaId: equipo?.marcaId ?? '',
-    modeloId: equipo?.modeloId ?? '',
-    numeroSerie: equipo?.numeroSerie ?? '',
-    ubicacionId: equipo?.ubicacionId ?? '',
-    tipoId: equipo?.tipoId ?? '',
-    horasUso: equipo?.horasUso ?? undefined,
-    fechaAlta: equipo?.fechaAlta?.slice(0, 10) ?? '',
-    garantiaHasta: equipo?.garantiaHasta?.slice(0, 10) ?? '',
-    estado: equipo?.estado,
-    clasificacion: equipo?.clasificacion ?? 'EQUIPO',
-  });
-
-  const cambiar = (parcial: Partial<typeof form>) => setForm((f) => ({ ...f, ...parcial }));
-
-  // Los modelos de la marca elegida. Sin marca no se pide nada: la lista de
-  // todos los modelos de todas las marcas no le sirve a nadie.
-  const modelos = useModelosDeMarca(form.marcaId);
-
-  // Los campos vacíos viajan como null (borrar) y no como "": el backend
-  // normaliza igual, pero mandar "" ensucia el cuerpo de la request.
-  const oNull = (v: string | null | undefined) => (v && v.trim() !== '' ? v.trim() : null);
-
-  const enviar = async (ev: React.FormEvent) => {
-    ev.preventDefault();
-    const datos = {
-      nombre: form.nombre.trim(),
-      codigoInterno: oNull(form.codigoInterno),
-      descripcion: oNull(form.descripcion),
-      marcaId: oNull(form.marcaId),
-      modeloId: oNull(form.modeloId),
-      numeroSerie: oNull(form.numeroSerie),
-      ubicacionId: oNull(form.ubicacionId),
-      tipoId: oNull(form.tipoId),
-      horasUso: form.horasUso ?? null,
-      fechaAlta: oNull(form.fechaAlta),
-      garantiaHasta: oNull(form.garantiaHasta),
-    };
-
-    if (esEdicion) {
-      await actualizar.mutateAsync({ id: equipo.id, ...datos, estado: form.estado });
-    } else {
-      await crear.mutateAsync(datos);
-    }
-    alCerrar();
-  };
-
-  // Solo los estados a los que se puede llegar desde el actual: el backend
-  // rechaza el resto, y ofrecerlos sería prometer algo que no se cumple.
-  const estadosPosibles = equipo
-    ? [equipo.estado, ...TRANSICIONES_ESTADO[equipo.estado]]
-    : ([] as EstadoEquipo[]);
-
-  return (
-    <Modal
-      titulo={esEdicion ? `Editar ${equipo.nombre}` : 'Nuevo equipo'}
-      abierto
-      tamano="ancho"
-      onCerrar={alCerrar}
-    >
-      <form onSubmit={enviar} className="formulario-modal">
-        <div className="fila-campos">
-          <div className="campo">
-            <label>Nombre *</label>
-            <input
-              value={form.nombre}
-              onChange={(e) => cambiar({ nombre: e.target.value })}
-              required
-              maxLength={120}
-              autoFocus
-              placeholder="Compresor 1"
-            />
-          </div>
-
-          <div className="campo">
-            <label htmlFor="equipo-clasificacion">Qué es</label>
-            {/* Una categoria por encima del tipo: una prensa es un EQUIPO de
-                tipo "Prensa"; una amoladora es una HERRAMIENTA. Las
-                herramientas chicas y de consumo van al paniol como material. */}
-            <select
-              id="equipo-clasificacion"
-              value={form.clasificacion}
-              onChange={(e) => cambiar({ clasificacion: e.target.value as ClasificacionEquipo })}
-            >
-              {CLASIFICACIONES_EQUIPO.map((c) => (
-                <option key={c} value={c}>
-                  {ETIQUETA_CLASIFICACION[c]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="campo">
-            <label>Código interno</label>
-            <input
-              value={form.codigoInterno ?? ''}
-              onChange={(e) => cambiar({ codigoInterno: e.target.value })}
-              maxLength={40}
-              placeholder="COMP-01"
-            />
-          </div>
-        </div>
-
-        <div className="fila-campos">
-          <div className="campo">
-            <label>Ubicación</label>
-            <select
-              value={form.ubicacionId ?? ''}
-              onChange={(e) => cambiar({ ubicacionId: e.target.value })}
-            >
-              <option value="">Sin ubicación</option>
-              {(ubicaciones.data ?? []).map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="campo">
-            <label>Tipo</label>
-            <select value={form.tipoId ?? ''} onChange={(e) => cambiar({ tipoId: e.target.value })}>
-              <option value="">Sin tipo</option>
-              {(tipos.data ?? []).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="fila-campos">
-          {esEdicion && (
-            <div className="campo">
-              <label>Estado</label>
-              <select
-                value={form.estado ?? equipo.estado}
-                onChange={(e) => cambiar({ estado: e.target.value as EstadoEquipo })}
-              >
-                {estadosPosibles.map((e) => (
-                  <option key={e} value={e}>
-                    {ETIQUETA_ESTADO_EQUIPO[e]}
-                  </option>
-                ))}
-              </select>
-              {equipo.estado === 'DADO_DE_BAJA' && (
-                <span className="texto-suave texto-chico">
-                  Un equipo dado de baja no vuelve a otro estado.
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="fila-campos">
-          <div className="campo">
-            <label>Marca</label>
-            <select
-              value={form.marcaId ?? ''}
-              onChange={(e) =>
-                // Cambiar de marca vacía el modelo: el que estaba elegido
-                // pertenece a la marca anterior y no existe en la nueva.
-                cambiar({ marcaId: e.target.value, modeloId: '' })
-              }
-            >
-              <option value="">Sin marca</option>
-              {(marcas.data ?? [])
-                .filter((m) => m.activo || m.id === form.marcaId)
-                .map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.nombre}
-                  </option>
-                ))}
-            </select>
-          </div>
-          <div className="campo">
-            <label>Modelo</label>
-            <select
-              value={form.modeloId ?? ''}
-              disabled={!form.marcaId}
-              title={form.marcaId ? undefined : 'Elegí primero la marca'}
-              onChange={(e) => cambiar({ modeloId: e.target.value })}
-            >
-              <option value="">{form.marcaId ? 'Sin modelo' : 'Elegí la marca'}</option>
-              {(modelos.data ?? [])
-                .filter((m) => m.activo || m.id === form.modeloId)
-                .map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.nombre}
-                  </option>
-                ))}
-            </select>
-          </div>
-          <div className="campo">
-            <label>N° de serie</label>
-            <input
-              value={form.numeroSerie ?? ''}
-              onChange={(e) => cambiar({ numeroSerie: e.target.value })}
-            />
-          </div>
-        </div>
-
-        <div className="fila-campos">
-          <div className="campo">
-            <label>Horas de uso</label>
-            <CampoNumero
-              min={0}
-              step="0.1"
-              placeholder="opcional"
-              valor={form.horasUso ?? undefined}
-              onCambio={(v) => cambiar({ horasUso: v })}
-            />
-          </div>
-          <div className="campo">
-            <label>Fecha de alta</label>
-            <input
-              type="date"
-              value={form.fechaAlta ?? ''}
-              onChange={(e) => cambiar({ fechaAlta: e.target.value })}
-            />
-          </div>
-          <div className="campo">
-            <label>Garantía hasta</label>
-            <input
-              type="date"
-              value={form.garantiaHasta ?? ''}
-              onChange={(e) => cambiar({ garantiaHasta: e.target.value })}
-            />
-          </div>
-        </div>
-
-        <div className="campo">
-          <label>Descripción</label>
-          <textarea
-            rows={3}
-            value={form.descripcion ?? ''}
-            onChange={(e) => cambiar({ descripcion: e.target.value })}
-            placeholder="Para qué se usa, particularidades, dónde está exactamente…"
-          />
-        </div>
-
-        {error && <MensajeError error={error} />}
-
-        <div className="acciones">
-          <button type="button" className="btn" onClick={alCerrar}>
-            Cancelar
-          </button>
-          <button type="submit" className="btn btn-primario" disabled={guardando}>
-            {guardando ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Crear equipo'}
-          </button>
-        </div>
-      </form>
-    </Modal>
   );
 }

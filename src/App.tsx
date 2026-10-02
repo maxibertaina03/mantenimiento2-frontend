@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { EquiposPage } from '@/paginas/EquiposPage';
+import { EquipoPage } from '@/paginas/EquipoPage';
 import { InicioPage } from '@/paginas/InicioPage';
 import { ServiciosPage } from '@/paginas/ServiciosPage';
 import { Layout } from './componentes/Layout';
@@ -104,6 +105,14 @@ export function App() {
           element={
             <RutaConPermiso permisos={[P.EQUIPOS_VER]}>
               <EquiposPage />
+            </RutaConPermiso>
+          }
+        />
+        <Route
+          path="/equipos/:id"
+          element={
+            <RutaConPermiso permisos={[P.EQUIPOS_VER]}>
+              <EquipoPage />
             </RutaConPermiso>
           }
         />

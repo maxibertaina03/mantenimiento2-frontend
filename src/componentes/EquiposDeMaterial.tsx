@@ -36,7 +36,7 @@ export function EquiposDeMaterial({ materialId, unidad }: { materialId: string; 
         <ul className="equipos-de-material">
           {lista.map((e) => (
             <li key={e.repuestoId}>
-              <Link to={`/equipos?equipo=${e.equipoId}`} className="equipo-de-material">
+              <Link to={`/equipos/${e.equipoId}`} className="equipo-de-material">
                 {e.fotoUrl ? (
                   <img src={e.fotoUrl} alt="" className="combo-foto" loading="lazy" />
                 ) : (

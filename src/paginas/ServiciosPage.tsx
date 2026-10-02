@@ -117,7 +117,7 @@ export function ServiciosPage() {
               {data.map((p) => (
                 <tr
                   key={p.id}
-                  onClick={() => navegar(`/equipos?equipo=${p.equipoId}`)}
+                  onClick={() => navegar(`/equipos/${p.equipoId}`)}
                   style={{ cursor: 'pointer' }}
                 >
                   <td data-etiqueta="Equipo">

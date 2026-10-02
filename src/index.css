@@ -1896,6 +1896,188 @@ button {
   background: #f8fafc;
 }
 
+/* ═══════════ La página de un equipo (/equipos/:id) ═══════════ */
+.volver {
+  display: inline-block;
+  margin-bottom: 0.6rem;
+}
+.cabecera-equipo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.cabecera-equipo-foto-boton {
+  flex: none;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: zoom-in;
+  line-height: 0;
+  border-radius: 10px;
+}
+.cabecera-equipo-foto {
+  width: 88px;
+  height: 88px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid var(--color-borde);
+  background: #f1f5f9;
+}
+.cabecera-equipo-foto-vacia {
+  display: grid;
+  place-items: center;
+  flex: none;
+  font-size: 0.75rem;
+  color: var(--color-texto-suave);
+}
+.cabecera-equipo-datos {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.3rem;
+}
+.cabecera-equipo-datos h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+.cabecera-equipo-linea {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-texto-suave);
+}
+.cabecera-equipo-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex: none;
+}
+
+/* Las pestañas: en el celular se deslizan de costado en vez de partirse. */
+.pestanas-equipo {
+  display: flex;
+  gap: 0.25rem;
+  margin: 1rem 0 0;
+  border-bottom: 1px solid var(--color-borde);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.pestanas-equipo::-webkit-scrollbar {
+  display: none;
+}
+.pestana-equipo {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.6rem 0.9rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  cursor: pointer;
+}
+.pestana-equipo:hover {
+  color: var(--color-texto);
+}
+.pestana-equipo.activa {
+  color: var(--color-primario);
+  border-bottom-color: var(--color-primario);
+}
+.pestana-equipo:focus-visible {
+  outline: 2px solid var(--color-primario);
+  outline-offset: -2px;
+}
+.contador-pestana {
+  font-size: 0.72rem;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  background: #e6eefc;
+  color: var(--color-primario);
+}
+.contador-pestana-alerta {
+  background: var(--color-alerta-fondo);
+  color: var(--color-alerta-texto);
+}
+.pestanas-equipo + .panel {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* El resumen: lo que hay que mirar al lado de los datos. */
+.resumen-equipo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1.5rem;
+  align-items: start;
+}
+.resumen-equipo > section {
+  min-width: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+.resumen-equipo .subtitulo-form {
+  margin-top: 0;
+}
+.lista-mirar {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.renglon-mirar,
+.ultimo-trabajo {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  background: var(--color-panel);
+  font: inherit;
+  text-align: left;
+  color: var(--color-texto);
+  cursor: pointer;
+}
+.renglon-mirar:hover,
+.ultimo-trabajo:hover {
+  border-color: var(--color-primario);
+}
+.renglon-mirar > span:first-child {
+  min-width: 0;
+}
+.ultimo-trabajo {
+  display: grid;
+  gap: 0.1rem;
+  justify-content: stretch;
+}
+
+@media screen and (max-width: 640px) {
+  .cabecera-equipo {
+    flex-wrap: wrap;
+  }
+  .cabecera-equipo-foto {
+    width: 64px;
+    height: 64px;
+  }
+  .cabecera-equipo-datos h1 {
+    font-size: 1.25rem;
+  }
+  .cabecera-equipo-acciones {
+    flex-basis: 100%;
+  }
+  .cabecera-equipo-acciones .btn {
+    flex: 1;
+  }
+}
+
 /* Lista corta sin viñetas, para enumerar cosas dentro de una ficha. */
 .lista-simple {
   list-style: none;

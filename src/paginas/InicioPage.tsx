@@ -124,7 +124,7 @@ export function InicioPage() {
           <ul className="lista-inicio">
             {vencen.slice(0, MAXIMO_EN_LISTA).map((p) => (
               <li key={p.id}>
-                <Link to={`/equipos?equipo=${p.equipoId}`}>{p.equipoNombre}</Link>
+                <Link to={`/equipos/${p.equipoId}`}>{p.equipoNombre}</Link>
                 <span className="texto-suave">
                   {p.nombre}, {textoVencimiento(p.diasParaVencer)}
                 </span>
