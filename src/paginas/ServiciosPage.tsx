@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTareaDelPlan } from '@/api/calendario';
 import { usePlanesQueVencen } from '@/api/equipos';
+import { useUsuarioActual } from '@/api/usuarios';
+import { CompletarTarea } from '@/componentes/CompletarTarea';
+import { P, usePuede } from '@/lib/permisos';
+import type { Tarea } from '@/tipos/tarea';
 import { textoVencimiento } from '@/componentes/PlanesEquipo';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { formatearFechaSola } from '@/lib/formato';
@@ -25,6 +30,29 @@ export function ServiciosPage() {
   const [dias, setDias] = useState(7);
   const { data, isLoading, error, isFetching } = usePlanesQueVencen(dias);
   const navegar = useNavigate();
+  const puede = usePuede();
+  const puedeHacerlos = puede(P.TAREAS_EDITAR);
+  const { data: yo } = useUsuarioActual();
+  const traerTarea = useTareaDelPlan();
+  const [completando, setCompletando] = useState<Tarea | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+
+  /**
+   * Dar un service por hecho es completar su tarea del calendario: así queda
+   * hecha allá también, con su orden de trabajo, y el plan corre a la próxima
+   * fecha. No hay un camino aparte que pueda contar otra cosa.
+   */
+  const darPorHecho = async (planId: string) => {
+    setAviso(null);
+    const tarea = await traerTarea.mutateAsync(planId);
+    if (tarea.asignadoAId !== null && tarea.asignadoAId !== yo?.id) {
+      setAviso(
+        `«${tarea.titulo}» está asignado a ${tarea.asignadoANombre ?? 'otra persona'}: lo da por hecho esa persona.`,
+      );
+      return;
+    }
+    setCompletando(tarea);
+  };
 
   const vencidos = (data ?? []).filter((p) => p.estado === 'VENCIDO').length;
 
@@ -49,6 +77,8 @@ export function ServiciosPage() {
 
       {isLoading && <Cargando />}
       {error && <MensajeError error={error} />}
+      {traerTarea.error && <MensajeError error={traerTarea.error} />}
+      {aviso && <p className="aviso-escaneo es-error">{aviso}</p>}
 
       {data && data.length > 0 && (
         <div className="resumen-mantenimiento">
@@ -80,6 +110,7 @@ export function ServiciosPage() {
                 <th>Sector</th>
                 <th>Vence</th>
                 <th>Estado</th>
+                {puedeHacerlos && <th />}
               </tr>
             </thead>
             <tbody>
@@ -105,11 +136,31 @@ export function ServiciosPage() {
                       {ETIQUETA_ESTADO_PLAN[p.estado]}
                     </span>
                   </td>
+                  {puedeHacerlos && (
+                    <td className="celda-acciones">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-primario"
+                        disabled={traerTarea.isPending}
+                        onClick={(e) => {
+                          // La fila abre la ficha del equipo; el botón no.
+                          e.stopPropagation();
+                          void darPorHecho(p.id);
+                        }}
+                      >
+                        Dar por hecho
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {completando && (
+        <CompletarTarea tarea={completando} onCerrar={() => setCompletando(null)} />
       )}
 
       <p className="texto-suave texto-chico">

@@ -1750,6 +1750,28 @@ button {
   background: #fef2f2;
 }
 
+/* Una tarea de «Lo que hay que hacer»: el texto y, a la derecha, el botón. */
+.fila-tarea-hoy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.fila-tarea-hoy > span {
+  min-width: 0;
+}
+.fila-tarea-hoy .btn {
+  flex: none;
+}
+.etiqueta.etiqueta-sin-responsable {
+  white-space: normal;
+  display: inline-block;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  background: #fef3c7;
+  color: #92400e;
+}
+
 /* Lista corta sin viñetas, para enumerar cosas dentro de una ficha. */
 .lista-simple {
   list-style: none;

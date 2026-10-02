@@ -1,6 +1,10 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMisTareas } from '@/api/calendario';
+import { vencio } from '@/lib/diaDeTarea';
 import { P, usePuede } from '@/lib/permisos';
+import type { Tarea } from '@/tipos/tarea';
+import { CompletarTarea } from './CompletarTarea';
 import { Cargando, MensajeError } from './Estados';
 
 /** El día, en palabras cortas. */
@@ -31,6 +35,8 @@ export function MisTareasDeHoy() {
   // Un hook no se puede llamar condicionalmente, así que la consulta se apaga.
   const habilitado = puede(P.TAREAS_VER);
   const { data, isLoading, error } = useMisTareas(habilitado);
+  const [completando, setCompletando] = useState<Tarea | null>(null);
+  const puedeHacerlas = puede(P.TAREAS_EDITAR);
 
   if (!habilitado) return null;
 
@@ -39,13 +45,12 @@ export function MisTareasDeHoy() {
   // ocupa lugar para no decir nada.
   if (!isLoading && !error && tareas.length === 0) return null;
 
-  const hoy = new Date();
-  const vencidas = tareas.filter((t) => new Date(t.fecha) < new Date(hoy.toDateString()));
+  const vencidas = tareas.filter((t) => vencio(t.fecha));
 
   return (
     <div className="panel">
       <div className="cabecera-historial">
-        <h2>Lo que tenés que hacer</h2>
+        <h2>Lo que hay que hacer</h2>
         <Link to="/calendario" className="btn btn-chico">
           Ver el calendario
         </Link>
@@ -65,15 +70,35 @@ export function MisTareasDeHoy() {
       <ul className="lista-simple">
         {tareas.map((t) => (
           <li key={t.id}>
-            <strong>{t.titulo}</strong>
-            <div className="texto-suave texto-chico">
-              {cuando(t.fecha)}
-              {t.equipoNombre ? ` · ${t.equipoNombre}` : ''}
-              {t.descripcion ? ` · ${t.descripcion}` : ''}
+            <div className="fila-tarea-hoy">
+              <span>
+                <strong>{t.titulo}</strong>
+                <div className="texto-suave texto-chico">
+                  {cuando(t.fecha)}
+                  {t.equipoNombre ? ` · ${t.equipoNombre}` : ''}
+                  {t.descripcion ? ` · ${t.descripcion}` : ''}
+                </div>
+                {/* Sin responsable la puede hacer cualquiera: se dice, para que
+                    nadie piense que la ve por error. */}
+                {t.asignadoAId === null && (
+                  <span className="etiqueta etiqueta-sin-responsable">
+                    Sin responsable: la puede hacer cualquiera
+                  </span>
+                )}
+              </span>
+              {puedeHacerlas && (
+                <button type="button" className="btn btn-chico" onClick={() => setCompletando(t)}>
+                  Darla por hecha
+                </button>
+              )}
             </div>
           </li>
         ))}
       </ul>
+
+      {completando && (
+        <CompletarTarea tarea={completando} onCerrar={() => setCompletando(null)} />
+      )}
     </div>
   );
 }

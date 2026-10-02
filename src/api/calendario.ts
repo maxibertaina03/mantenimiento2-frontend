@@ -41,7 +41,10 @@ export function useCalendario(desde: string, hasta: string, asignadoAId?: string
   });
 }
 
-/** Lo que tengo que hacer hoy, y lo que quedó pendiente de antes. */
+/**
+ * Lo que tengo que hacer hoy, y lo que quedó pendiente de antes: lo mío y lo
+ * que no es de nadie, que lo puede hacer cualquiera de mantenimiento.
+ */
 export function useMisTareas(habilitado = true) {
   return useQuery({
     enabled: habilitado,
@@ -82,6 +85,20 @@ export function useCompletarTarea() {
     mutationFn: ({ id, ...datos }: { id: string } & CompletarTareaInput) =>
       apiRequest<Tarea>(`/calendario/${id}/completar`, { method: 'POST', body: datos }),
     onSuccess: () => invalidarTodo(qc),
+  });
+}
+
+/**
+ * La tarea del calendario del service vigente de un plan (la crea si hace
+ * falta). Dar un service por hecho es completar esta tarea: así el calendario,
+ * la orden de trabajo y la próxima fecha del plan cuentan lo mismo.
+ */
+export function useTareaDelPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (planId: string) =>
+      apiRequest<Tarea>(`/calendario/planes/${planId}/tarea`, { method: 'POST' }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: clavesCalendario.base }),
   });
 }
 
