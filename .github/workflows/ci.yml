@@ -1,0 +1,41 @@
+# Integración continua: antes de que algo llegue a producción, se revisa, se
+# compila y se corren todos los tests.
+#
+# Vercel despliega solo cuando main recibe un push. Con la protección de la
+# rama main (el check «CI / frontend» requerido), un cambio que rompe los
+# tests no se puede mergear a main.
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Revisar el código (lint)
+        run: npx eslint . --ext ts,tsx
+
+      - name: Tests
+        run: npx vitest run
+
+      - name: Compilar (tsc + vite build)
+        run: npm run build
