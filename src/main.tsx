@@ -9,7 +9,12 @@ import { PantallaLogin } from './componentes/PantallaLogin';
 import { ProveedorToken } from './componentes/ProveedorToken';
 import { clerkEspanol } from './lib/clerkEspanol';
 import { queryClient } from './lib/queryClient';
+import { PantallaConError } from './componentes/PantallaConError';
+import { iniciarMonitoreo } from './lib/monitoreo';
 import './index.css';
+
+// Aviso de errores de pantalla a Sentry. Sin VITE_SENTRY_DSN no hace nada.
+iniciarMonitoreo();
 
 // Publishable key de Clerk. Si NO está configurada, la app corre SIN auth
 // (modo desarrollo): útil mientras no tengas la cuenta de Clerk lista.
@@ -56,6 +61,8 @@ function Raiz() {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <Raiz />
+    <PantallaConError>
+      <Raiz />
+    </PantallaConError>
   </React.StrictMode>,
 );

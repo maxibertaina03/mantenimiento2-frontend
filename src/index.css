@@ -2207,6 +2207,33 @@ button {
   margin-top: 0.6rem;
 }
 
+/* Cuando una pantalla se rompe al dibujarse (PantallaConError). */
+.pantalla-error {
+  max-width: 34rem;
+  margin: 15vh auto 0;
+  padding: 2rem 1.5rem;
+  background: var(--color-panel);
+  border: 1px solid var(--color-borde);
+  border-top: 4px solid var(--color-primario);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  display: grid;
+  gap: 0.8rem;
+}
+.pantalla-error h1 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+.pantalla-error p {
+  margin: 0;
+  color: var(--color-texto-suave);
+}
+.acciones-error {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 /* Lista corta sin viñetas, para enumerar cosas dentro de una ficha. */
 .lista-simple {
   list-style: none;
