@@ -39,3 +39,8 @@ jobs:
 
       - name: Compilar (tsc + vite build)
         run: npm run build
+        env:
+          # El build exige VITE_API_URL (vite.config.ts): sin ella publicaría un
+          # sitio apuntando a localhost. Este build solo se compila, no se
+          # publica, así que la dirección no apunta a ningún lado a propósito.
+          VITE_API_URL: https://ci.invalid/api
