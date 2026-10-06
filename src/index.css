@@ -2234,6 +2234,20 @@ button {
   gap: 0.5rem;
 }
 
+/* Agregar una marca o un modelo sin salir del formulario (SelectConAlta). */
+.alta-en-linea {
+  display: grid;
+  gap: 0.4rem;
+}
+.alta-en-linea-fila {
+  display: flex;
+  gap: 0.4rem;
+}
+.alta-en-linea-fila input {
+  flex: 1;
+  min-width: 0;
+}
+
 /* Lista corta sin viñetas, para enumerar cosas dentro de una ficha. */
 .lista-simple {
   list-style: none;

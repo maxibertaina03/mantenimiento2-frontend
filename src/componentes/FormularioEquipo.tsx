@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { useModelosDeMarca, useCatalogoEquipos } from '@/api/catalogosEquipo';
+import {
+  useCatalogoEquipos,
+  useCrearItemCatalogo,
+  useCrearModelo,
+  useModelosDeMarca,
+} from '@/api/catalogosEquipo';
+import { P, usePuede } from '@/lib/permisos';
 import { useActualizarEquipo, useCrearEquipo } from '@/api/equipos';
 import { ETIQUETA_ESTADO_EQUIPO, TRANSICIONES_ESTADO } from '@/tipos/equipo';
 import type { CrearEquipoInput, Equipo, EstadoEquipo } from '@/tipos/equipo';
@@ -11,6 +17,7 @@ import {
 import { CampoNumero } from './CampoNumero';
 import { MensajeError } from './Estados';
 import { Modal } from './Modal';
+import { SelectConAlta } from './SelectConAlta';
 
 export function FormularioEquipo({ equipo, alCerrar }: { equipo?: Equipo; alCerrar: () => void }) {
   const esEdicion = equipo !== undefined;
@@ -41,6 +48,10 @@ export function FormularioEquipo({ equipo, alCerrar }: { equipo?: Equipo; alCerr
   // Los modelos de la marca elegida. Sin marca no se pide nada: la lista de
   // todos los modelos de todas las marcas no le sirve a nadie.
   const modelos = useModelosDeMarca(form.marcaId);
+  // Marcas y modelos se cargan desde acá mismo, si se tiene el permiso.
+  const puedeCatalogos = usePuede()(P.CATALOGOS_EDITAR);
+  const crearMarca = useCrearItemCatalogo('marcas-equipo');
+  const crearModelo = useCrearModelo();
 
   // Los campos vacíos viajan como null (borrar) y no como "": el backend
   // normaliza igual, pero mandar "" ensucia el cuerpo de la request.
@@ -179,41 +190,35 @@ export function FormularioEquipo({ equipo, alCerrar }: { equipo?: Equipo; alCerr
         <div className="fila-campos">
           <div className="campo">
             <label>Marca</label>
-            <select
-              value={form.marcaId ?? ''}
-              onChange={(e) =>
-                // Cambiar de marca vacía el modelo: el que estaba elegido
-                // pertenece a la marca anterior y no existe en la nueva.
-                cambiar({ marcaId: e.target.value, modeloId: '' })
-              }
-            >
-              <option value="">Sin marca</option>
-              {(marcas.data ?? [])
-                .filter((m) => m.activo || m.id === form.marcaId)
-                .map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.nombre}
-                  </option>
-                ))}
-            </select>
+            <SelectConAlta
+              etiqueta="Marca"
+              valor={form.marcaId ?? ''}
+              vacio="Sin marca"
+              textoAgregar="+ Agregar marca…"
+              puedeAgregar={puedeCatalogos}
+              opciones={(marcas.data ?? []).filter((m) => m.activo || m.id === form.marcaId)}
+              // Cambiar de marca vacía el modelo: el que estaba elegido
+              // pertenece a la marca anterior y no existe en la nueva.
+              onCambio={(id) => cambiar({ marcaId: id, modeloId: '' })}
+              onAgregar={async (nombre) => (await crearMarca.mutateAsync({ nombre })).id}
+            />
           </div>
           <div className="campo">
             <label>Modelo</label>
-            <select
-              value={form.modeloId ?? ''}
+            <SelectConAlta
+              etiqueta="Modelo"
+              valor={form.modeloId ?? ''}
+              vacio={form.marcaId ? 'Sin modelo' : 'Elegí la marca'}
+              textoAgregar="+ Agregar modelo…"
+              puedeAgregar={puedeCatalogos && Boolean(form.marcaId)}
               disabled={!form.marcaId}
               title={form.marcaId ? undefined : 'Elegí primero la marca'}
-              onChange={(e) => cambiar({ modeloId: e.target.value })}
-            >
-              <option value="">{form.marcaId ? 'Sin modelo' : 'Elegí la marca'}</option>
-              {(modelos.data ?? [])
-                .filter((m) => m.activo || m.id === form.modeloId)
-                .map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.nombre}
-                  </option>
-                ))}
-            </select>
+              opciones={(modelos.data ?? []).filter((m) => m.activo || m.id === form.modeloId)}
+              onCambio={(id) => cambiar({ modeloId: id })}
+              onAgregar={async (nombre) =>
+                (await crearModelo.mutateAsync({ marcaId: form.marcaId as string, nombre })).id
+              }
+            />
           </div>
           <div className="campo">
             <label>N° de serie</label>
