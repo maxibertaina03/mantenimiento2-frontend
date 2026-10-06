@@ -1614,6 +1614,84 @@ button {
   border-radius: var(--radio);
   background: var(--color-fondo);
 }
+/* Las otras fotos de un equipo: la chapa, el tablero. */
+.otras-fotos-titulo {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.galeria-fotos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+.galeria-foto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.galeria-foto-ver {
+  display: block;
+  padding: 0;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  background: var(--color-fondo);
+  cursor: zoom-in;
+  overflow: hidden;
+}
+.galeria-foto-ver img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+.galeria-foto-ver:hover,
+.galeria-foto-ver:focus-visible {
+  border-color: var(--color-primario);
+}
+.galeria-foto-nombre {
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+.galeria-foto-acciones,
+.galeria-foto-editar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.galeria-foto-acciones {
+  flex-wrap: nowrap;
+}
+.galeria-foto-acciones .btn {
+  padding-inline: 0.55rem;
+}
+/* En el celular, una por fila: más grandes, que la chapa se tiene que leer. */
+@media (max-width: 480px) {
+  .galeria-fotos {
+    grid-template-columns: 1fr;
+  }
+}
+.galeria-foto-editar .input {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.otras-fotos-alta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.otras-fotos-alta > .input {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.otras-fotos-alta > :not(.input) {
+  flex: 1 1 220px;
+}
+
 .foto-equipo-vacia {
   display: grid;
   place-items: center;

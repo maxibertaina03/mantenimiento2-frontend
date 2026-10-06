@@ -13,6 +13,7 @@ import { ComponentesEquipo } from '@/componentes/ComponentesEquipo';
 import { Cargando, MensajeError } from '@/componentes/Estados';
 import { FormularioEquipo } from '@/componentes/FormularioEquipo';
 import { FotoEquipo } from '@/componentes/FotoEquipo';
+import { OtrasFotosEquipo } from '@/componentes/OtrasFotosEquipo';
 import { ManualesEquipo } from '@/componentes/ManualesEquipo';
 import { PlanesEquipo, textoVencimiento } from '@/componentes/PlanesEquipo';
 import { RegistrarTrabajoEquipo } from '@/componentes/RegistrarTrabajoEquipo';
@@ -503,6 +504,11 @@ function Resumen({
           </div>
         )}
         {almacen.data?.disponible && <FotoEquipo equipo={equipo} />}
+        <OtrasFotosEquipo
+          equipoId={equipo.id}
+          nombreEquipo={equipo.nombre}
+          almacenDisponible={almacen.data?.disponible ?? false}
+        />
       </section>
     </div>
   );
