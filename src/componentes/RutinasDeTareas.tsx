@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { describirDias, LUNES_A_VIERNES } from '@/lib/diasDeTrabajo';
+import { SelectorDias } from './SelectorDias';
 import { useCambiarRutina, useCrearRutina, useRutinas } from '@/api/calendario';
 import { useAsignables } from '@/api/ordenesTrabajo';
 import { Cargando, MensajeError } from './Estados';
@@ -21,6 +23,7 @@ export function RutinasDeTareas({ onCerrar }: { onCerrar: () => void }) {
 
   const [titulo, setTitulo] = useState('');
   const [cadaDias, setCadaDias] = useState('1');
+  const [diasSemana, setDiasSemana] = useState<number[]>([...LUNES_A_VIERNES]);
   const [desde, setDesde] = useState(() => new Date().toISOString().slice(0, 10));
   const [asignadoA, setAsignadoA] = useState('');
 
@@ -29,6 +32,7 @@ export function RutinasDeTareas({ onCerrar }: { onCerrar: () => void }) {
     await crear.mutateAsync({
       titulo,
       cadaDias: Number(cadaDias),
+      diasSemana,
       desde,
       asignadoAId: asignadoA || undefined,
     });
@@ -81,6 +85,9 @@ export function RutinasDeTareas({ onCerrar }: { onCerrar: () => void }) {
           >
             + Agregar
           </button>
+          <div className="alta-renglon-dias">
+            <SelectorDias dias={diasSemana} onCambio={setDiasSemana} />
+          </div>
         </form>
 
         {crear.error && <MensajeError error={crear.error} />}
@@ -108,7 +115,7 @@ export function RutinasDeTareas({ onCerrar }: { onCerrar: () => void }) {
             <li key={r.id}>
               <strong>{r.titulo}</strong>
               <div className="texto-suave texto-chico">
-                {comoSeRepite(r.cadaDias)}
+                {comoSeRepite(r.cadaDias)} · {describirDias(r.diasSemana).toLowerCase()}
                 {r.asignadoANombre ? ` · ${r.asignadoANombre}` : ' · sin repartir'}
                 {r.equipoNombre ? ` · ${r.equipoNombre}` : ''}
                 {!r.activa && ' · apagada'}

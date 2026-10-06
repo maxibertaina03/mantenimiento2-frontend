@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { describirDias, LUNES_A_VIERNES } from '@/lib/diasDeTrabajo';
+import { SelectorDias } from './SelectorDias';
 import {
   useActualizarPlan,
   useCrearPlan,
@@ -79,7 +81,9 @@ export function PlanesEquipo({ equipo }: { equipo: Equipo }) {
                 </div>
 
                 <p className="texto-suave texto-chico">
-                  Cada {p.periodicidadDias} días · próximo {formatearFechaSola(p.proximaFecha)}
+                  Cada {p.periodicidadDias} {p.periodicidadDias === 1 ? 'día' : 'días'} ·{' '}
+                  {describirDias(p.diasSemana).toLowerCase()} · próximo{' '}
+                  {formatearFechaSola(p.proximaFecha)}
                   {p.activo && ` · ${textoVencimiento(p.diasParaVencer)}`}
                 </p>
 
@@ -122,6 +126,9 @@ export function PlanesEquipo({ equipo }: { equipo: Equipo }) {
 
 /** Periodicidades habituales, para no hacer la cuenta a mano. */
 const SUGERENCIAS = [
+  { dias: 1, texto: 'Diario' },
+  { dias: 7, texto: 'Semanal' },
+  { dias: 15, texto: 'Quincenal' },
   { dias: 30, texto: 'Mensual' },
   { dias: 90, texto: 'Trimestral' },
   { dias: 180, texto: 'Semestral' },
@@ -147,6 +154,7 @@ function FormularioPlan({
     nombre: plan?.nombre ?? '',
     tareas: plan?.tareas ?? '',
     periodicidadDias: plan?.periodicidadDias ?? 90,
+    diasSemana: plan?.diasSemana ?? [...LUNES_A_VIERNES],
     proximaFecha: plan?.proximaFecha?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
   });
 
@@ -158,6 +166,7 @@ function FormularioPlan({
       nombre: form.nombre.trim(),
       tareas: form.tareas?.trim() || null,
       periodicidadDias: form.periodicidadDias,
+      diasSemana: form.diasSemana,
       proximaFecha: form.proximaFecha,
     };
     if (esEdicion) await actualizar.mutateAsync({ planId: plan.id, ...datos });
@@ -221,6 +230,11 @@ function FormularioPlan({
             </span>
           </div>
         </div>
+
+        <SelectorDias
+          dias={form.diasSemana ?? [...LUNES_A_VIERNES]}
+          onCambio={(diasSemana) => cambiar({ diasSemana })}
+        />
 
         <div className="campo">
           <label>Tareas</label>

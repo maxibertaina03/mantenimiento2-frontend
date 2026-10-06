@@ -2248,6 +2248,50 @@ button {
   min-width: 0;
 }
 
+/* Qué días de la semana se hace un plan o una rutina (SelectorDias). */
+.selector-dias {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 0.9rem;
+}
+.selector-dias-titulo {
+  font-weight: 600;
+}
+.selector-dias-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+.dia-semana {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-borde);
+  background: var(--color-panel);
+  font: inherit;
+  font-weight: 700;
+  color: var(--color-texto-suave);
+  cursor: pointer;
+}
+.dia-semana.activo {
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+  color: #fff;
+}
+.dia-semana:focus-visible {
+  outline: 2px solid var(--color-primario);
+  outline-offset: 2px;
+}
+.selector-dias-atajos {
+  display: inline-flex;
+  gap: 0.35rem;
+  margin-left: 0.4rem;
+}
+.alta-renglon-dias {
+  flex-basis: 100%;
+}
+
 /* Lista corta sin viñetas, para enumerar cosas dentro de una ficha. */
 .lista-simple {
   list-style: none;

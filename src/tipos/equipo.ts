@@ -207,6 +207,8 @@ export interface PlanMantenimiento {
   nombre: string;
   tareas: string | null;
   periodicidadDias: number;
+  /** Los días que se trabaja: 0 domingo … 6 sábado. */
+  diasSemana: number[];
   proximaFecha: string;
   activo: boolean;
   estado: EstadoPlan;
@@ -225,6 +227,7 @@ export interface CrearPlanInput {
   nombre: string;
   tareas?: string | null;
   periodicidadDias: number;
+  diasSemana?: number[];
   proximaFecha: string;
 }
 

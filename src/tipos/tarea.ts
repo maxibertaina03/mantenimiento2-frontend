@@ -48,6 +48,8 @@ export interface Rutina {
   titulo: string;
   descripcion: string | null;
   cadaDias: number;
+  /** Los días en que sale: 0 domingo … 6 sábado. */
+  diasSemana: number[];
   desde: string;
   hasta: string | null;
   equipoId: string | null;
@@ -74,6 +76,7 @@ export interface CrearRutinaInput {
   titulo: string;
   descripcion?: string | null;
   cadaDias: number;
+  diasSemana?: number[];
   desde: string;
   hasta?: string | null;
   equipoId?: string | null;
