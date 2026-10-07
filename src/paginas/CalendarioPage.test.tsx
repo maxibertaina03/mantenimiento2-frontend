@@ -106,9 +106,7 @@ describe('CalendarioPage', () => {
     mostrar();
 
     expect(await screen.findByText('Revisar presion de caldera')).toBeInTheDocument();
-    // getAllByText: el mes esta en la barra y otra vez en el titulo que solo
-    // se ve al imprimir.
-    expect(screen.getAllByText(/septiembre de 2026/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/septiembre de 2026/)).toBeInTheDocument();
   });
 
   it('pide el rango del mes que se esta mirando', async () => {
@@ -285,5 +283,33 @@ describe('CalendarioPage', () => {
     await usuario.click(await screen.findByText('Revisar presion de caldera'));
 
     expect(await screen.findByText(/OT-2026-0007/)).toBeInTheDocument();
+  });
+
+  it('imprimir deja elegir la semana: arma esa hoja y recién ahí llama a la impresora', async () => {
+    const imprimir = vi.spyOn(window, 'print').mockImplementation(() => {});
+    const usuario = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    mostrar();
+    await screen.findByText('Revisar presion de caldera');
+
+    await usuario.click(screen.getByRole('button', { name: /Imprimir/ }));
+    // La de hoy viene elegida.
+    expect(screen.getByRole('combobox', { name: 'Semana' })).toHaveDisplayValue(
+      'Semana del 21 al 27 de septiembre',
+    );
+    await usuario.click(within(screen.getByRole('dialog')).getByRole('button', { name: /Imprimir/ }));
+
+    await waitFor(() => expect(imprimir).toHaveBeenCalledTimes(1));
+    const hoja = screen.getByRole('region', { name: 'Calendario impreso' });
+    expect(
+      within(hoja).getByRole('heading', { name: 'Semana del 21 al 27 de septiembre de 2026' }),
+    ).toBeInTheDocument();
+    expect(within(hoja).getByText('Revisar presion de caldera')).toBeInTheDocument();
+
+    // Al cerrar el diálogo de la impresora, la hoja se va.
+    window.dispatchEvent(new Event('afterprint'));
+    await waitFor(() =>
+      expect(screen.queryByRole('region', { name: 'Calendario impreso' })).not.toBeInTheDocument(),
+    );
+    imprimir.mockRestore();
   });
 });

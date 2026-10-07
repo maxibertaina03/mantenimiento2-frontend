@@ -1,19 +1,21 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useAsignarTarea, useCalendario, useCancelarTarea } from '@/api/calendario';
 import { useAsignables } from '@/api/ordenesTrabajo';
 import { colorDeTarea, coloresPorPersona } from '@/lib/coloresUsuario';
 import { useUsuarios } from '@/api/usuarios';
 import { useUsuarioActual } from '@/api/usuarios';
+import { CalendarioImpreso, type ModoImpresion } from '@/componentes/CalendarioImpreso';
 import { CompletarTarea } from '@/componentes/CompletarTarea';
+import { ElegirImpresion } from '@/componentes/ElegirImpresion';
 import { NuevaTarea } from '@/componentes/NuevaTarea';
 import { RutinasDeTareas } from '@/componentes/RutinasDeTareas';
 import { Cargando, MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
+import { DIAS, MESES, aIso, diasDelMes, semanasDe } from '@/lib/fechasCalendario';
 import { P, usePuede } from '@/lib/permisos';
 import { ETIQUETA_ESTADO_TAREA } from '@/tipos/tarea';
 import type { Tarea } from '@/tipos/tarea';
-
-const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
 /**
  * Cuántas tareas se muestran en la casilla antes de resumir el resto.
@@ -22,45 +24,9 @@ const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
  * seis días como huecos enormes. Con tope, las casillas quedan parejas y el
  * calendario se lee de un vistazo, que es para lo que sirve.
  *
- * **Al imprimir no hay tope**: en el papel no se puede hacer clic en "ver
- * todas", así que salen todas (ver `@media print` en index.css).
+ * El papel tiene su propia vista, con todas las tareas: `CalendarioImpreso`.
  */
 const TAREAS_VISIBLES = 3;
-const MESES = [
-  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
-];
-
-/** El día en ISO, sin hora y sin que el huso lo corra un día. */
-function aIso(fecha: Date): string {
-  return new Date(Date.UTC(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()))
-    .toISOString()
-    .slice(0, 10);
-}
-
-/**
- * Los días que se dibujan en la grilla de un mes.
- *
- * Siempre semanas completas de lunes a domingo, aunque el mes empiece un
- * jueves: una grilla con huecos al principio se lee mal y se imprime peor.
- */
-function diasDelMes(ancla: Date): Date[] {
-  const primero = new Date(ancla.getFullYear(), ancla.getMonth(), 1);
-  // getDay() da 0 para domingo; acá la semana arranca el lunes.
-  const corrimiento = (primero.getDay() + 6) % 7;
-  const inicio = new Date(primero);
-  inicio.setDate(primero.getDate() - corrimiento);
-
-  const dias: Date[] = [];
-  for (let i = 0; i < 42; i += 1) {
-    const d = new Date(inicio);
-    d.setDate(inicio.getDate() + i);
-    dias.push(d);
-  }
-  // Se recortan las semanas enteras que ya quedaron fuera del mes.
-  while (dias.length > 35 && dias[35].getMonth() !== ancla.getMonth()) dias.length = 35;
-  return dias;
-}
 
 /**
  * El calendario: qué hay que hacer, cuándo y quién.
@@ -80,8 +46,47 @@ export function CalendarioPage() {
   /** El día cuyo detalle se está mirando, con todas sus tareas. */
   const [diaDetalle, setDiaDetalle] = useState<string | null>(null);
   const [verRutinas, setVerRutinas] = useState(false);
+  const [eligiendoImpresion, setEligiendoImpresion] = useState(false);
+  /**
+   * Lo que se está imprimiendo. La hoja de papel solo existe mientras tanto:
+   * dibujada siempre, duplicaría cada tarea en la página.
+   */
+  const [impresion, setImpresion] = useState<{
+    modo: ModoImpresion;
+    soloPendientes: boolean;
+    /** Elegido desde el botón: hay que abrir el diálogo de la impresora. */
+    abrirDialogo: boolean;
+  } | null>(null);
 
   const dias = useMemo(() => diasDelMes(ancla), [ancla]);
+  const semanas = useMemo(() => semanasDe(dias), [dias]);
+
+  // Ctrl+P sin pasar por el botón: sale el mes. Se dibuja en el acto
+  // (flushSync), antes de que el navegador arme la hoja. Al terminar de
+  // imprimir, por donde se haya entrado, la hoja de papel se va.
+  useEffect(() => {
+    const antes = () =>
+      flushSync(() =>
+        setImpresion(
+          (actual) => actual ?? { modo: { tipo: 'mes' }, soloPendientes: false, abrirDialogo: false },
+        ),
+      );
+    const despues = () => setImpresion(null);
+    window.addEventListener('beforeprint', antes);
+    window.addEventListener('afterprint', despues);
+    return () => {
+      window.removeEventListener('beforeprint', antes);
+      window.removeEventListener('afterprint', despues);
+    };
+  }, []);
+
+  // Elegido desde el botón: se espera a que React dibuje la hoja y recién ahí
+  // se abre el diálogo de la impresora.
+  useEffect(() => {
+    if (!impresion?.abrirDialogo) return;
+    const cuadro = requestAnimationFrame(() => window.print());
+    return () => cancelAnimationFrame(cuadro);
+  }, [impresion]);
   const desde = aIso(dias[0]);
   const hasta = aIso(dias[dias.length - 1]);
 
@@ -156,7 +161,7 @@ export function CalendarioPage() {
               </button>
             </>
           )}
-          <button className="btn" onClick={() => window.print()}>
+          <button className="btn" onClick={() => setEligiendoImpresion(true)}>
             🖨 Imprimir
           </button>
         </div>
@@ -201,13 +206,8 @@ export function CalendarioPage() {
         </p>
       )}
 
-      {/* El encabezado del mes para el papel: en pantalla ya está arriba. */}
-      <h2 className="solo-imprimir">
-        Tareas de {MESES[ancla.getMonth()]} de {ancla.getFullYear()}
-      </h2>
-
       {personasConTareas.length > 0 && (
-        <div className="calendario-referencias">
+        <div className="calendario-referencias no-imprimir">
           {personasConTareas.map((p) => (
             <span className="calendario-referencia" key={p.id}>
               <span className="calendario-marca" style={{ background: p.color }} />
@@ -223,7 +223,8 @@ export function CalendarioPage() {
         </div>
       )}
 
-      <div className="calendario">
+      {/* La pantalla. El papel tiene su propia vista, más abajo. */}
+      <div className="calendario no-imprimir">
         {DIAS.map((d) => (
           <div className="calendario-cabecera" key={d}>
             {d}
@@ -303,36 +304,33 @@ export function CalendarioPage() {
                 </button>
               )}
 
-              {/* Al imprimir no hay "ver todas", así que las que la pantalla
-                  resume salen igual en el papel. */}
-              {tareas.slice(TAREAS_VISIBLES).map((t) => {
-                const { color, sinAsignar } = colorDeTarea(t.asignadoAId, colores);
-                return (
-                  <div
-                    key={t.id}
-                    className={[
-                      'calendario-tarea',
-                      'solo-imprimir-tarea',
-                      `estado-${t.estado.toLowerCase()}`,
-                      sinAsignar ? 'sin-asignar' : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                    style={{ borderLeftColor: color }}
-                  >
-                    <span className="calendario-tarea-titulo">{t.titulo}</span>
-                    <span className="texto-suave texto-chico">
-                      {t.asignadoANombre ?? 'sin repartir'}
-                      {t.equipoNombre ? ` · ${t.equipoNombre}` : ''}
-                      {t.equipoItNombre ? ` · ${t.equipoItNombre}` : ''}
-                    </span>
-                  </div>
-                );
-              })}
             </div>
           );
         })}
       </div>
+
+      {impresion && (
+        <CalendarioImpreso
+          modo={impresion.modo}
+          soloPendientes={impresion.soloPendientes}
+          ancla={ancla}
+          dias={dias}
+          porDia={porDia}
+          colores={colores}
+          personas={personasConTareas}
+        />
+      )}
+
+      {eligiendoImpresion && (
+        <ElegirImpresion
+          semanas={semanas}
+          onCerrar={() => setEligiendoImpresion(false)}
+          onImprimir={(modo, soloPendientes) => {
+            setEligiendoImpresion(false);
+            setImpresion({ modo, soloPendientes, abrirDialogo: true });
+          }}
+        />
+      )}
 
       {tareaAbierta && (
         <DetalleTarea
