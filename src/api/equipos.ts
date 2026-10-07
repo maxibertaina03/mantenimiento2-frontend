@@ -12,11 +12,9 @@ import type {
   DeteccionImportacion,
   Equipo,
   CrearPlanInput,
-  HistorialEquipo,
   PlanMantenimiento,
   PlanQueVence,
   FiltrosEquipos,
-  RegistrarIntervencionInput,
   ResultadoImportacionEquipos,
 } from '@/tipos/equipo';
 
@@ -172,27 +170,6 @@ export function useCambiarFotoEquipo() {
         body: { imagenBase64, nombreArchivo },
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: clavesEquipos.base }),
-  });
-}
-
-export function useHistorialEquipo(equipoId: string) {
-  return useQuery({
-    queryKey: ['equipos', 'historial', equipoId],
-    queryFn: () => apiRequest<HistorialEquipo>(`/equipos/${equipoId}/historial`),
-    enabled: equipoId !== '',
-  });
-}
-
-export function useRegistrarIntervencion(equipoId: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (datos: RegistrarIntervencionInput) =>
-      apiRequest(`/equipos/${equipoId}/intervenciones`, { method: 'POST', body: datos }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['equipos', 'historial', equipoId] });
-      // El resumen de la ficha cambia con cada intervención.
-      qc.invalidateQueries({ queryKey: clavesEquipos.base });
-    },
   });
 }
 
