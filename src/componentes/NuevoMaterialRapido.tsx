@@ -97,12 +97,18 @@ export function NuevoMaterialRapido({
 
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
-    const material = await crear.mutateAsync({
-      nombre: nombre.trim(),
-      categoriaId,
-      unidadId,
-    });
-    onCreado(material);
+    try {
+      const material = await crear.mutateAsync({
+        nombre: nombre.trim(),
+        categoriaId,
+        unidadId,
+      });
+      onCreado(material);
+    } catch {
+      // El rechazo ya se muestra desde `crear.error` (y si es un nombre
+      // repetido, con la opción de usar el que existe). Sin este catch quedaba
+      // una excepción suelta en el navegador.
+    }
   };
 
   return (
