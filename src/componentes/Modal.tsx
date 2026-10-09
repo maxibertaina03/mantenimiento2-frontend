@@ -29,10 +29,13 @@ const abiertos: symbol[] = [];
 /**
  * Modal genérico con fondo oscuro, cabecera fija y cuerpo con scroll propio.
  *
- * **Solo se sale a propósito:** con la ✕ o con el «Cancelar» de cada
- * formulario. Tocar afuera y Escape no lo cierran nunca: los usuarios perdían
- * órdenes a medio cargar por un clic de más, y se enojaban con razón. Con algo
- * cargado, la ✕ pregunta antes de cerrar.
+ * **Solo se sale a propósito.** Tocar afuera y Escape no lo cierran nunca: los
+ * usuarios perdían órdenes a medio cargar por un clic de más, y se enojaban
+ * con razón. En vez de cerrar, preguntan: con algo cargado, «¿Salir sin
+ * guardar?»; sin nada, «¿Cerrar?». Así nadie queda sin saber cómo salir.
+ *
+ * La ✕ cierra directo si no hay nada cargado, y si hay, pregunta. El
+ * «Cancelar» de cada formulario cierra directo: ahí la intención es clara.
  */
 export function Modal({
   titulo,
@@ -47,17 +50,19 @@ export function Modal({
   const [tocado, setTocado] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
 
+  /** Dónde empezó el clic: soltar afuera después de seleccionar texto no es «tocar afuera». */
+  const empezoEnElFondo = useRef(false);
+
+  /** La ✕: con algo cargado pregunta; sin nada, cierra. */
   const intentarCerrar = () => {
     if (avisarSiHayCambios && tocado) setConfirmando(true);
     else onCerrar();
   };
 
-  // Escape no cierra: solo saca la pregunta y vuelve al formulario. Lee el
+  // Escape pregunta, y con la pregunta abierta vuelve al formulario. Lee el
   // estado de este render, no el del momento en que se abrió.
   const alEscape = useRef(() => {});
-  alEscape.current = () => {
-    if (confirmando) setConfirmando(false);
-  };
+  alEscape.current = () => setConfirmando(!confirmando);
 
   // Bloquear el scroll del fondo mientras está abierto: sin esto, en celular
   // se scrollea la página de atrás en vez del formulario.
@@ -93,7 +98,16 @@ export function Modal({
   };
 
   return (
-    <div className="modal-fondo">
+    <div
+      className="modal-fondo"
+      onMouseDown={(e) => {
+        empezoEnElFondo.current = e.target === e.currentTarget;
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && empezoEnElFondo.current) setConfirmando(true);
+        empezoEnElFondo.current = false;
+      }}
+    >
       <div
         className={`modal ${tamano === 'ancho' ? 'modal-ancho' : ''}`}
         role="dialog"
@@ -112,15 +126,28 @@ export function Modal({
         </div>
 
         {confirmando && (
-          <div className="modal-confirmar" role="alertdialog" aria-label="¿Salir sin guardar?">
+          <div
+            className="modal-confirmar"
+            role="alertdialog"
+            aria-label={tocado ? '¿Salir sin guardar?' : `¿Cerrar «${titulo}»?`}
+          >
             <div className="modal-confirmar-caja">
-              <strong>¿Salir sin guardar?</strong>
-              <p className="texto-suave">
-                Lo que cargaste en «{titulo}» se pierde. Si querés terminarlo, seguí cargando.
-              </p>
+              {tocado ? (
+                <>
+                  <strong>¿Salir sin guardar?</strong>
+                  <p className="texto-suave">
+                    Lo que cargaste en «{titulo}» se pierde. Si querés terminarlo, seguí cargando.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <strong>¿Cerrar «{titulo}»?</strong>
+                  <p className="texto-suave">Todavía no cargaste nada.</p>
+                </>
+              )}
               <div className="acciones">
                 <button type="button" className="btn btn-peligro" onClick={onCerrar}>
-                  Salir sin guardar
+                  {tocado ? 'Salir sin guardar' : 'Cerrar'}
                 </button>
                 <button
                   type="button"
@@ -128,7 +155,7 @@ export function Modal({
                   autoFocus
                   onClick={() => setConfirmando(false)}
                 >
-                  Seguir cargando
+                  {tocado ? 'Seguir cargando' : 'Seguir acá'}
                 </button>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { Modal } from './Modal';
@@ -27,18 +27,52 @@ function mostrar(props: Partial<Parameters<typeof Modal>[0]> = {}) {
 }
 
 describe('Modal', () => {
-  it('REGRESION: tocar afuera no lo cierra, aunque no se haya cargado nada', () => {
+  it('REGRESION: tocar afuera no lo cierra: pregunta, aunque no se haya cargado nada', async () => {
+    const usuario = userEvent.setup();
     const { onCerrar, tocarAfuera } = mostrar();
     tocarAfuera();
+
     expect(onCerrar).not.toHaveBeenCalled();
-    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('alertdialog', { name: '¿Cerrar «Nueva orden de compra»?' }),
+    ).toBeInTheDocument();
+    // Y desde ahí se puede cerrar, para que nadie quede sin saber cómo salir.
+    await usuario.click(
+      within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Cerrar' }),
+    );
+    expect(onCerrar).toHaveBeenCalledTimes(1);
   });
 
-  it('REGRESION: Escape no lo cierra, aunque no se haya cargado nada', async () => {
+  it('con algo cargado, tocar afuera pregunta «¿Salir sin guardar?»', async () => {
+    const usuario = userEvent.setup();
+    const { onCerrar, tocarAfuera } = mostrar();
+    await usuario.type(screen.getByLabelText('Cantidad'), '4');
+
+    tocarAfuera();
+
+    expect(screen.getByRole('alertdialog', { name: '¿Salir sin guardar?' })).toBeInTheDocument();
+    expect(onCerrar).not.toHaveBeenCalled();
+  });
+
+  it('REGRESION: Escape no lo cierra: pregunta, y otro Escape vuelve al formulario', async () => {
     const usuario = userEvent.setup();
     const { onCerrar } = mostrar();
+
     await usuario.keyboard('{Escape}');
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    await usuario.keyboard('{Escape}');
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+
     expect(onCerrar).not.toHaveBeenCalled();
+  });
+
+  it('REGRESION: seleccionar texto y soltar el mouse afuera no pregunta ni cierra', () => {
+    const { onCerrar } = mostrar();
+    const fondo = document.querySelector('.modal-fondo') as HTMLElement;
+    fireEvent.mouseDown(screen.getByLabelText('Cantidad'));
+    fireEvent.click(fondo);
+    expect(onCerrar).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 
   it('sin nada cargado, la ✕ cierra directo', async () => {
