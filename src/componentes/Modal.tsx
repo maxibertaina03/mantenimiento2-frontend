@@ -11,22 +11,29 @@ interface Props {
    */
   tamano?: 'normal' | 'ancho';
   /**
-   * Si se cargó algo, preguntar antes de cerrar por un clic afuera, la ✕ o
-   * Escape. Por defecto sí. Los botones «Cancelar» del propio formulario
-   * cierran directo: ahí la intención es clara.
+   * Si se cargó algo, preguntar antes de cerrar con la ✕. Por defecto sí. Los
+   * botones «Cancelar» del propio formulario cierran directo: ahí la intención
+   * es clara.
    */
   avisarSiHayCambios?: boolean;
   children: ReactNode;
 }
 
 /**
- * Los modales abiertos, del de más abajo al de más arriba. Escape y el aviso
- * son solo del de arriba: con un modal abierto sobre otro (el material nuevo
- * sobre la orden de compra), Escape no tiene que cerrar los dos.
+ * Los modales abiertos, del de más abajo al de más arriba. Escape es solo del
+ * de arriba: con un modal sobre otro (el material nuevo sobre la orden de
+ * compra), no tiene que tocar los dos.
  */
 const abiertos: symbol[] = [];
 
-/** Modal genérico con fondo oscuro, cabecera fija y cuerpo con scroll propio. */
+/**
+ * Modal genérico con fondo oscuro, cabecera fija y cuerpo con scroll propio.
+ *
+ * **Solo se sale a propósito:** con la ✕ o con el «Cancelar» de cada
+ * formulario. Tocar afuera y Escape no lo cierran nunca: los usuarios perdían
+ * órdenes a medio cargar por un clic de más, y se enojaban con razón. Con algo
+ * cargado, la ✕ pregunta antes de cerrar.
+ */
 export function Modal({
   titulo,
   abierto,
@@ -39,23 +46,21 @@ export function Modal({
   /** Si se escribió o eligió algo adentro: ahí cerrar sin querer pierde trabajo. */
   const [tocado, setTocado] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
-  /** Dónde empezó el clic: soltar afuera después de seleccionar texto no es «tocar afuera». */
-  const empezoEnElFondo = useRef(false);
 
   const intentarCerrar = () => {
     if (avisarSiHayCambios && tocado) setConfirmando(true);
     else onCerrar();
   };
 
-  // Escape lee el estado de este render, no el del momento en que se abrió.
+  // Escape no cierra: solo saca la pregunta y vuelve al formulario. Lee el
+  // estado de este render, no el del momento en que se abrió.
   const alEscape = useRef(() => {});
   alEscape.current = () => {
     if (confirmando) setConfirmando(false);
-    else intentarCerrar();
   };
 
-  // Cerrar con Escape y bloquear el scroll del fondo mientras está abierto:
-  // sin esto, en celular se scrollea la página de atrás en vez del formulario.
+  // Bloquear el scroll del fondo mientras está abierto: sin esto, en celular
+  // se scrollea la página de atrás en vez del formulario.
   useEffect(() => {
     if (!abierto) return;
     const id = yo.current;
@@ -88,16 +93,7 @@ export function Modal({
   };
 
   return (
-    <div
-      className="modal-fondo"
-      onMouseDown={(e) => {
-        empezoEnElFondo.current = e.target === e.currentTarget;
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget && empezoEnElFondo.current) intentarCerrar();
-        empezoEnElFondo.current = false;
-      }}
-    >
+    <div className="modal-fondo">
       <div
         className={`modal ${tamano === 'ancho' ? 'modal-ancho' : ''}`}
         role="dialog"
