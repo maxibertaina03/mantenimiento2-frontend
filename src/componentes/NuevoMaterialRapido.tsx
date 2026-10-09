@@ -2,9 +2,22 @@ import { useState } from 'react';
 import { useCategorias, useCrearCategoria } from '@/api/categorias';
 import { useCrearMaterial } from '@/api/materiales';
 import { useUnidadesMedida } from '@/api/unidadesMedida';
+import { apiRequest } from '@/lib/apiClient';
+import type { RespuestaPaginada } from '@/tipos/comunes';
 import { MensajeError } from './Estados';
 import { Modal } from './Modal';
 import type { Material } from '@/tipos/material';
+
+/**
+ * El nombre que trae el rechazo «Ya existe un material llamado "X". Usá ese…».
+ *
+ * Hasta el `". Usá` y no hasta la primera comilla: medio catálogo va en
+ * pulgadas («Union doble 1"») y el nombre corta mal.
+ */
+function nombreRepetido(error: unknown): string | null {
+  if (!(error instanceof Error)) return null;
+  return /Ya existe un material llamado "(.+)"\. Usá ese/.exec(error.message)?.[1] ?? null;
+}
 
 /**
  * Alta rápida de un material desde donde haga falta elegir uno.
@@ -37,6 +50,38 @@ export function NuevoMaterialRapido({
   const [unidadId, setUnidadId] = useState('');
   const [modoNuevaCat, setModoNuevaCat] = useState(false);
   const [nombreCat, setNombreCat] = useState('');
+  const [usandoExistente, setUsandoExistente] = useState(false);
+  const [errorExistente, setErrorExistente] = useState<string | null>(null);
+
+  /**
+   * El material ya existe: casi siempre porque se creó en un intento anterior
+   * que la persona no vio terminar. En vez de mandarla a buscarlo, se le
+   * ofrece usarlo ahí mismo, igual que si lo acabara de crear.
+   */
+  const repetido = nombreRepetido(crear.error);
+  const usarExistente = async (nombreExistente: string) => {
+    setUsandoExistente(true);
+    setErrorExistente(null);
+    try {
+      const encontrados = await apiRequest<RespuestaPaginada<Material>>('/materiales', {
+        query: { buscar: nombreExistente, limite: 20, mostrar: 'todos' },
+      });
+      const existente = encontrados.datos.find((m) => m.nombre === nombreExistente);
+      if (!existente) {
+        setErrorExistente('No se encontró ese material. Buscalo por nombre en el combo.');
+      } else if (!existente.activo) {
+        setErrorExistente(
+          `«${existente.nombre}» está desactivado. Reactivalo desde Materiales para poder usarlo.`,
+        );
+      } else {
+        onCreado(existente);
+      }
+    } catch (error) {
+      setErrorExistente(error instanceof Error ? error.message : 'No se pudo traer el material.');
+    } finally {
+      setUsandoExistente(false);
+    }
+  };
 
   const crearNuevaCategoria = () => {
     const limpio = nombreCat.trim();
@@ -143,7 +188,25 @@ export function NuevoMaterialRapido({
           </select>
         </label>
 
-        {crear.error && <MensajeError error={crear.error} />}
+        {repetido ? (
+          <div className="aviso-repetido" role="alert">
+            <p>
+              ⚠️ Ya existe un material llamado <strong>«{repetido}»</strong>. Es el mismo: usá ese,
+              así el stock queda en una sola ficha.
+            </p>
+            <button
+              type="button"
+              className="btn btn-primario"
+              disabled={usandoExistente}
+              onClick={() => usarExistente(repetido)}
+            >
+              {usandoExistente ? 'Trayéndolo…' : `Usar «${repetido}»`}
+            </button>
+            {errorExistente && <div className="alerta alerta-error">⚠️ {errorExistente}</div>}
+          </div>
+        ) : (
+          crear.error && <MensajeError error={crear.error} />
+        )}
 
         <div className="acciones">
           <button type="button" className="btn" onClick={onCerrar}>

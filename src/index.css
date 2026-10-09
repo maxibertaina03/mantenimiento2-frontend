@@ -639,6 +639,23 @@ button.combo-item:hover {
 .modal-ancho {
   max-width: 760px;
 }
+/* El material ya existía: se ofrece usarlo en vez de solo decir que no. */
+.aviso-repetido {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  background: #fffbeb;
+  color: #78350f;
+  font-size: 0.9rem;
+}
+.aviso-repetido p {
+  margin: 0;
+}
+
 /* «¿Salir sin guardar?»: tapa el formulario, que queda intacto debajo. */
 .modal {
   position: relative;

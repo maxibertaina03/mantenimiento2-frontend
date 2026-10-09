@@ -139,4 +139,69 @@ describe('NuevoMaterialRapido', () => {
     abrir();
     expect(screen.getByText(/stock 0/i)).toBeInTheDocument();
   });
+
+  it('REGRESION: si ya existe, ofrece usar ese y lo deja elegido', async () => {
+    // Pasó con «Unión doble danesa ø63»: el primer intento lo había creado,
+    // y el segundo solo decía que ya existía, sin salida.
+    const EXISTENTE = { id: 'm-63', nombre: 'Unión doble danesa ø63', activo: true };
+    apiRequestMock.mockImplementation((ruta: string, opciones?: { method?: string }) => {
+      if (ruta.startsWith('/categorias-material')) return Promise.resolve(CATEGORIAS);
+      if (ruta.startsWith('/unidades-medida')) return Promise.resolve(UNIDADES);
+      if (ruta === '/materiales' && opciones?.method === 'POST')
+        return Promise.reject(
+          new Error(
+            'Ya existe un material llamado "Unión doble danesa ø63". Usá ese en vez de crear otro: ' +
+              'dos fichas para lo mismo parten el stock en dos y ninguna queda bien.',
+          ),
+        );
+      if (ruta === '/materiales')
+        return Promise.resolve({ datos: [EXISTENTE], total: 1, pagina: 1, limite: 20 });
+      return Promise.resolve([]);
+    });
+    const usuario = userEvent.setup();
+    abrir('Union doble danesa ø63');
+    await screen.findByRole('option', { name: 'Bulonería' });
+    await usuario.selectOptions(screen.getByLabelText(/categoría/i), 'c1');
+    await usuario.selectOptions(screen.getByLabelText(/unidad/i), 'u1');
+    await usuario.click(screen.getByRole('button', { name: /crear y usar/i }));
+
+    await usuario.click(
+      await screen.findByRole('button', { name: 'Usar «Unión doble danesa ø63»' }),
+    );
+
+    await waitFor(() => expect(alCreado).toHaveBeenCalledWith(EXISTENTE));
+    expect(apiRequestMock).toHaveBeenCalledWith('/materiales', {
+      query: { buscar: 'Unión doble danesa ø63', limite: 20, mostrar: 'todos' },
+    });
+  });
+
+  it('si el que existe está desactivado, lo dice en vez de usarlo (y entiende las pulgadas)', async () => {
+    apiRequestMock.mockImplementation((ruta: string, opciones?: { method?: string }) => {
+      if (ruta.startsWith('/categorias-material')) return Promise.resolve(CATEGORIAS);
+      if (ruta.startsWith('/unidades-medida')) return Promise.resolve(UNIDADES);
+      if (ruta === '/materiales' && opciones?.method === 'POST')
+        return Promise.reject(
+          new Error('Ya existe un material llamado "Codo 90 2"". Usá ese en vez de crear otro.'),
+        );
+      if (ruta === '/materiales')
+        return Promise.resolve({
+          datos: [{ id: 'm1', nombre: 'Codo 90 2"', activo: false }],
+          total: 1,
+          pagina: 1,
+          limite: 20,
+        });
+      return Promise.resolve([]);
+    });
+    const usuario = userEvent.setup();
+    abrir('Codo 90 2"');
+    await screen.findByRole('option', { name: 'Bulonería' });
+    await usuario.selectOptions(screen.getByLabelText(/categoría/i), 'c1');
+    await usuario.selectOptions(screen.getByLabelText(/unidad/i), 'u1');
+    await usuario.click(screen.getByRole('button', { name: /crear y usar/i }));
+    // Con comillas en el nombre (pulgadas), que es lo común en el pañol.
+    await usuario.click(await screen.findByRole('button', { name: 'Usar «Codo 90 2"»' }));
+
+    expect(await screen.findByText(/está desactivado/)).toBeInTheDocument();
+    expect(alCreado).not.toHaveBeenCalled();
+  });
 });
