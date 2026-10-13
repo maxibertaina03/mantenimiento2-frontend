@@ -81,6 +81,44 @@ function detalle(orden: OrdenCompra): string {
     .join('\n');
 }
 
+/**
+ * El reclamo de lo que falta entregar: solo lo pendiente, con lo que falta.
+ * Es el mismo texto que manda el servidor por correo.
+ */
+export function armarReclamo(orden: OrdenCompra): MensajeOrden {
+  const faltan = orden.renglones
+    .filter((r) => (r.pendiente ?? r.cantidad) > 0)
+    .map(
+      (r) =>
+        `• ${nombreDelRenglon(r) ?? 'Material'} — ${r.pendiente ?? r.cantidad}${r.unidad ? ` ${r.unidad}` : ''}`,
+    )
+    .join('\n');
+  return {
+    asunto: `Pendiente de la orden de compra ${orden.numero} - Lácteos Las Tres S.R.L.`,
+    cuerpo: [
+      `Estimados de ${orden.proveedorNombre ?? 'la empresa'}:`,
+      '',
+      `De la orden de compra ${orden.numero} todavía no recibimos:`,
+      faltan,
+      '',
+      '¿Nos pueden confirmar cuándo lo entregan?',
+      '',
+      'Saludos,',
+      'Lácteos Las Tres S.R.L.',
+    ].join('\n'),
+  };
+}
+
+/** WhatsApp con el reclamo escrito, o null si el teléfono no sirve. */
+export function enlaceWhatsappReclamo(
+  orden: OrdenCompra,
+  telefono: string | null | undefined,
+): string | null {
+  const numero = aNumeroWhatsapp(telefono);
+  if (!numero) return null;
+  return `https://wa.me/${numero}?text=${encodeURIComponent(armarReclamo(orden).cuerpo)}`;
+}
+
 export interface MensajeOrden {
   asunto: string;
   cuerpo: string;

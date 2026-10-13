@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { useAnularOrden, useEliminarOrden, useEmitirOrden, useRecibirOrden, useCorregirPrecios } from '@/api/ordenesCompra';
+import {
+  useAnularOrden,
+  useCerrarConFaltante,
+  useCorregirPrecios,
+  useEliminarOrden,
+  useEmitirOrden,
+} from '@/api/ordenesCompra';
 import { CampoNumero } from '@/componentes/CampoNumero';
 import { MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
@@ -10,6 +16,8 @@ import { ETIQUETA_ESTADO_ORDEN, nombreDelRenglon } from '@/tipos/ordenCompra';
 import type { OrdenCompra } from '@/tipos/ordenCompra';
 import { P, usePuede } from '@/lib/permisos';
 import { CLASE_ESTADO, moneda } from './formato';
+import { ReclamarFaltante } from './ReclamarFaltante';
+import { RecibirMercaderia } from './RecibirMercaderia';
 
 export function ModalDetalleOrden({
   orden: ordenDeLaLista,
@@ -30,7 +38,10 @@ export function ModalDetalleOrden({
   const [precios, setPrecios] = useState<Record<string, number | undefined>>({});
   const [preciosGuardados, setPreciosGuardados] = useState(false);
   const puedeCorregirPrecios =
-    puede(P.ORDENES_EDITAR) && (orden.estado === 'EMITIDA' || orden.estado === 'RECIBIDA');
+    puede(P.ORDENES_EDITAR) &&
+    (orden.estado === 'EMITIDA' ||
+      orden.estado === 'RECIBIDA_PARCIAL' ||
+      orden.estado === 'RECIBIDA');
 
   const empezarAEditarPrecios = () => {
     setPrecios(Object.fromEntries(orden.renglones.map((r) => [r.id, r.precioUnitario ?? undefined])));
@@ -54,19 +65,28 @@ export function ModalDetalleOrden({
   };
 
   const emitir = useEmitirOrden(orden.id);
-  const recibir = useRecibirOrden(orden.id);
   const anular = useAnularOrden(orden.id);
   const eliminar = useEliminarOrden();
+  const cerrarConFaltante = useCerrarConFaltante(orden.id);
 
-  const [remito, setRemito] = useState('');
-  const [factura, setFactura] = useState('');
-  // Sin comprobante no se cierra la orden: es lo unico que ata la entrada de
-  // stock al papel. El servidor lo rechaza igual; esto evita el viaje.
-  const hayComprobante = remito.trim() !== '' || factura.trim() !== '';
   const [mostrarRecepcion, setMostrarRecepcion] = useState(false);
+  const [recienRecibida, setRecienRecibida] = useState(false);
+  const [reclamando, setReclamando] = useState(false);
+  const [cerrandoConFaltante, setCerrandoConFaltante] = useState(false);
+  const [motivoFaltante, setMotivoFaltante] = useState('');
+
+  // Las órdenes de antes de las entregas pueden no traerlas.
+  const recepciones = orden.recepciones ?? [];
+  /** Lo que todavía falta entregar. */
+  const pendientes = orden.renglones.filter((r) => r.pendiente > 0);
+  const esperaMercaderia = orden.estado === 'EMITIDA' || orden.estado === 'RECIBIDA_PARCIAL';
+  // La columna de lo recibido se muestra cuando hay algo que contar: una orden
+  // que llegó en partes, o que se cerró con faltante.
+  const mostrarRecibido =
+    orden.estado === 'RECIBIDA_PARCIAL' || orden.cerradaConFaltante || recepciones.length > 1;
 
   const errorAccion =
-    emitir.error ?? recibir.error ?? anular.error ?? eliminar.error ?? corregir.error;
+    emitir.error ?? anular.error ?? eliminar.error ?? corregir.error ?? cerrarConFaltante.error;
 
   return (
     <Modal titulo={`Orden ${orden.numero}`} abierto tamano="ancho" onCerrar={onCerrar}>
@@ -134,6 +154,7 @@ export function ModalDetalleOrden({
               <tr>
                 <th>Material</th>
                 <th>Cantidad</th>
+                {mostrarRecibido && <th>Recibido</th>}
                 <th>P. unitario</th>
                 <th>Subtotal</th>
               </tr>
@@ -145,6 +166,15 @@ export function ModalDetalleOrden({
                   <td data-etiqueta="Cantidad">
                     {formatearNumero(r.cantidad)} {r.unidad ?? ''}
                   </td>
+                  {mostrarRecibido && (
+                    <td
+                      data-etiqueta="Recibido"
+                      className={r.pendiente > 0 ? 'renglon-falta' : 'renglon-completo'}
+                    >
+                      {formatearNumero(r.cantidadRecibida)} de {formatearNumero(r.cantidad)}
+                      {r.pendiente > 0 ? ` · falta ${formatearNumero(r.pendiente)}` : ' ✔'}
+                    </td>
+                  )}
                   {editandoPrecios ? (
                     <>
                       <td data-etiqueta="P. unitario" className="celda-editable">
@@ -180,7 +210,7 @@ export function ModalDetalleOrden({
             {!editandoPrecios && orden.total !== null && (
               <tfoot>
                 <tr>
-                  <td colSpan={3}>
+                  <td colSpan={mostrarRecibido ? 4 : 3}>
                     <strong>Total</strong>
                   </td>
                   <td>
@@ -228,11 +258,59 @@ export function ModalDetalleOrden({
           </>
         )}
 
-        {orden.estado === 'RECIBIDA' && (
+        {orden.estado === 'RECIBIDA' && !orden.cerradaConFaltante && (
           <div className="alerta alerta-exito">
             ✔ Orden finalizada: la mercadería ya ingresó al stock. Cada renglón generó su
             movimiento de ENTRADA, que podés ver en el Historial.
           </div>
+        )}
+
+        {orden.estado === 'RECIBIDA' && orden.cerradaConFaltante && (
+          <div className="alerta alerta-aviso">
+            Cerrada con lo que llegó: el proveedor no entregó todo. Lo que llegó ingresó al stock;
+            lo que faltó quedó sin recibir.
+            {orden.motivoFaltante && (
+              <>
+                {' '}
+                Motivo: <strong>{orden.motivoFaltante}</strong>.
+              </>
+            )}
+          </div>
+        )}
+
+        {orden.estado === 'RECIBIDA_PARCIAL' && (
+          <div className="alerta alerta-aviso">
+            {recienRecibida ? '✔ Entrega registrada. ' : ''}
+            Llegó una parte: lo que llegó ya sumó al stock. Falta{' '}
+            {pendientes.length === 1 ? 'un renglón' : `${pendientes.length} renglones`}: se puede
+            reclamar al proveedor, recibir cuando llegue, o cerrar la orden con lo que llegó.
+          </div>
+        )}
+
+        {recepciones.length > 0 && (recepciones.length > 1 || mostrarRecibido) && (
+          <>
+            <h3 className="subtitulo-form">Entregas</h3>
+            <ul className="entregas-lista">
+              {recepciones.map((e) => (
+                <li key={e.id}>
+                  <strong>{formatearFecha(e.fecha)}</strong>
+                  {e.remito ? ` · Remito ${e.remito}` : ''}
+                  {e.factura ? ` · Factura ${e.factura}` : ''}
+                  {e.recibidaPorNombre ? ` · ${e.recibidaPorNombre}` : ''}
+                  <div className="texto-suave texto-chico">
+                    {e.renglones
+                      .map((x) => {
+                        const renglon = orden.renglones.find((r) => r.id === x.renglonId);
+                        return `${formatearNumero(x.cantidad)} ${renglon?.unidad ?? ''} ${
+                          renglon ? (nombreDelRenglon(renglon) ?? '') : ''
+                        }`.trim();
+                      })
+                      .join(' · ')}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
 
         {/* El papel del remito o la factura. Se muestra desde que la orden se
@@ -241,51 +319,52 @@ export function ModalDetalleOrden({
         {orden.estado !== 'BORRADOR' && <ComprobantesOrden ordenId={orden.id} />}
 
         {mostrarRecepcion && (
+          <RecibirMercaderia
+            orden={orden}
+            onCancelar={() => setMostrarRecepcion(false)}
+            onListo={(actualizada) => {
+              // Queda abierta con la orden nueva: si llegó una parte, desde acá
+              // mismo se reclama lo que falta.
+              setOrden(actualizada);
+              setMostrarRecepcion(false);
+              setRecienRecibida(true);
+            }}
+          />
+        )}
+
+        {cerrandoConFaltante && (
           <div className="panel">
-            <div className="grilla-2">
-              <label className="campo">
-                Nº de remito
-                <input
-                  value={remito}
-                  onChange={(e) => setRemito(e.target.value)}
-                  placeholder="R-0001-00012345"
-                />
-              </label>
-              <label className="campo">
-                Nº de factura
-                <input
-                  value={factura}
-                  onChange={(e) => setFactura(e.target.value)}
-                  placeholder="A-0001-00098765"
-                />
-              </label>
-            </div>
+            <h3 className="subtitulo-form">Cerrar con lo que llegó</h3>
             <p className="texto-suave texto-chico">
-              Hace falta <strong>uno de los dos</strong>. Es lo que después permite cruzar el
-              stock con el papel que quedó en la empresa.
+              El proveedor no va a entregar el resto. La orden queda finalizada con lo que llegó, y
+              lo que falta deja de esperarse. Si después igual hace falta, se hace una orden nueva.
             </p>
-            <p className="texto-suave texto-chico">
-              Al confirmar, la orden queda <strong>finalizada</strong> y cada material de la
-              orden suma su cantidad al stock.
-            </p>
+            <label className="campo">
+              ¿Por qué? *
+              <input
+                value={motivoFaltante}
+                onChange={(e) => setMotivoFaltante(e.target.value)}
+                placeholder="Ej: el proveedor no tiene stock del acrílico"
+                maxLength={300}
+              />
+            </label>
             <div className="acciones">
-              <button className="btn" onClick={() => setMostrarRecepcion(false)}>
+              <button className="btn" onClick={() => setCerrandoConFaltante(false)}>
                 Cancelar
               </button>
               <button
                 className="btn btn-primario"
-                disabled={recibir.isPending || !hayComprobante}
-                title={hayComprobante ? undefined : 'Cargá el número de remito o el de factura'}
+                disabled={cerrarConFaltante.isPending || motivoFaltante.trim().length < 3}
                 onClick={async () => {
-                  await recibir.mutateAsync({
-                    remito: remito.trim() || undefined,
-                    factura: factura.trim() || undefined,
-                  });
-                  setMostrarRecepcion(false);
-                  onCerrar();
+                  try {
+                    setOrden(await cerrarConFaltante.mutateAsync(motivoFaltante.trim()));
+                    setCerrandoConFaltante(false);
+                  } catch {
+                    // El rechazo se muestra abajo.
+                  }
                 }}
               >
-                {recibir.isPending ? 'Registrando…' : 'Confirmar y sumar al stock'}
+                {cerrarConFaltante.isPending ? 'Cerrando…' : 'Cerrar la orden'}
               </button>
             </div>
           </div>
@@ -326,10 +405,29 @@ export function ModalDetalleOrden({
             </button>
           )}
 
-          {orden.estado === 'EMITIDA' && !mostrarRecepcion && (
-            <button className="btn btn-primario" onClick={() => setMostrarRecepcion(true)}>
-              ✔ Marcar como recibida
+          {esperaMercaderia && !mostrarRecepcion && !cerrandoConFaltante && (
+            <button
+              className="btn btn-primario"
+              onClick={() => {
+                setRecienRecibida(false);
+                setMostrarRecepcion(true);
+              }}
+            >
+              {orden.estado === 'EMITIDA' ? '📦 Recibir mercadería' : '📦 Recibir otra entrega'}
             </button>
+          )}
+
+          {orden.estado === 'RECIBIDA_PARCIAL' && !mostrarRecepcion && (
+            <>
+              <button className="btn" onClick={() => setReclamando(true)}>
+                ✉ Reclamar lo que falta
+              </button>
+              {!cerrandoConFaltante && (
+                <button className="btn" onClick={() => setCerrandoConFaltante(true)}>
+                  Cerrar con lo que llegó
+                </button>
+              )}
+            </>
           )}
 
           {(orden.estado === 'BORRADOR' || orden.estado === 'EMITIDA') && (
@@ -351,6 +449,8 @@ export function ModalDetalleOrden({
           </button>
         </div>
       </div>
+
+      {reclamando && <ReclamarFaltante orden={orden} onCerrar={() => setReclamando(false)} />}
     </Modal>
   );
 }

@@ -41,6 +41,8 @@ export function InicioPage() {
   const bajoStock = useMaterialesBajoStock();
   const cobertura = useCoberturaAlertas();
   const emitidas = useOrdenes(1, MAXIMO_EN_LISTA, '', 'EMITIDA');
+  // Una orden recibida en parte también espera mercadería: lo que falta.
+  const enParte = useOrdenes(1, MAXIMO_EN_LISTA, '', 'RECIBIDA_PARCIAL');
   const borradores = useOrdenes(1, MAXIMO_EN_LISTA, '', 'BORRADOR');
   // Equipos es solo para admins: a un operario el pedido le daría 403.
   const servicios = usePlanesQueVencen(7, veServicios);
@@ -49,7 +51,8 @@ export function InicioPage() {
   if (bajoStock.isLoading || emitidas.isLoading) return <Cargando />;
 
   const faltantes = bajoStock.data ?? [];
-  const porRecibir = emitidas.data?.datos ?? [];
+  const porRecibir = [...(enParte.data?.datos ?? []), ...(emitidas.data?.datos ?? [])];
+  const totalPorRecibir = (emitidas.data?.total ?? 0) + (enParte.data?.total ?? 0);
   const sinEnviar = borradores.data?.datos ?? [];
   const vencen = servicios.data ?? [];
   const vencidos = vencen.filter((p) => p.estado === 'VENCIDO').length;
@@ -162,13 +165,16 @@ export function InicioPage() {
         <div className="panel">
           <div className="cabecera-bloque">
             <h2>Mercadería por llegar</h2>
-            <span className="badge">{emitidas.data?.total ?? porRecibir.length}</span>
+            <span className="badge">{totalPorRecibir || porRecibir.length}</span>
           </div>
           <ul className="lista-inicio">
             {porRecibir.map((o) => (
               <li key={o.id}>
                 <Link to="/ordenes-compra">{o.numero}</Link>
-                <span className="texto-suave">{o.proveedorNombre ?? 'sin proveedor'}</span>
+                <span className="texto-suave">
+                  {o.proveedorNombre ?? 'sin proveedor'}
+                  {o.estado === 'RECIBIDA_PARCIAL' && ' · llegó una parte'}
+                </span>
               </li>
             ))}
           </ul>

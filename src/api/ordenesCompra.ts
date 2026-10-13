@@ -166,10 +166,50 @@ export function useConfiguracionEnvio() {
   });
 }
 
+/**
+ * El proveedor no va a entregar el resto: la orden se cierra con lo que llegó.
+ */
+export function useCerrarConFaltante(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (motivo: string) =>
+      apiRequest<OrdenCompra>(`/ordenes-compra/${id}/cerrar-con-faltante`, {
+        method: 'POST',
+        body: { motivo },
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesOrdenes.base }),
+  });
+}
+
+/** Le reclama al proveedor, por correo y desde el servidor, lo que falta entregar. */
+export function useReclamarPorCorreo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiRequest<ResultadoEnvio>(`/ordenes-compra/${id}/reclamar-correo`, { method: 'POST' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesOrdenes.base }),
+  });
+}
+
+/** Deja constancia del reclamo por WhatsApp (el chat lo abre la persona). */
+export function useRegistrarReclamoWhatsapp() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, numero }: { id: string; numero: string }) =>
+      apiRequest<OrdenCompra>(`/ordenes-compra/${id}/reclamar-whatsapp`, {
+        method: 'POST',
+        body: { numero },
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesOrdenes.base }),
+  });
+}
+
 /** Por dónde y cuándo salió una orden. */
 export interface EnvioDeOrden {
   id: string;
   via: 'CORREO' | 'WHATSAPP';
+  /** Un reclamo de lo que falta, y no el envío de la orden. */
+  esReclamo?: boolean;
   destinatarios: string;
   /** false en WhatsApp: el sistema abre el chat, pero quien manda es la persona. */
   automatico: boolean;

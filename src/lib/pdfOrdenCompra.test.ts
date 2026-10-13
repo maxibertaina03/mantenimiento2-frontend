@@ -97,10 +97,15 @@ const orden: OrdenCompra = {
       movimientoId: null,
     descripcionEquipo: null,
     clasificacion: null,
+    cantidadRecibida: 0,
+    pendiente: 100,
     },
   ],
   total: 125050,
   editable: false,
+  recepciones: [],
+  cerradaConFaltante: false,
+  motivoFaltante: null,
   creadoEn: '2026-08-25T10:00:00.000Z',
 };
 

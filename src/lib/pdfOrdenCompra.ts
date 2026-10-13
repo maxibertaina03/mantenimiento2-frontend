@@ -69,19 +69,30 @@ async function construirPdf(orden: OrdenCompra) {
   // ── Detalle ──
   const hayPrecios = orden.renglones.some((r) => r.precioUnitario !== null);
 
-  const cabecera = hayPrecios
-    ? ['#', 'Material', 'Cantidad', 'Unidad', 'P. unitario', 'Subtotal']
-    : ['#', 'Material', 'Cantidad', 'Unidad'];
+  // Una orden que llegó en partes, o que se cerró con faltante, dice cuánto
+  // llegó de cada renglón: es lo que se le muestra al proveedor al reclamar.
+  const conEntregas = orden.estado === 'RECIBIDA_PARCIAL' || orden.cerradaConFaltante === true;
 
-  const cuerpo = orden.renglones.map((r, i) => {
-    const base = [
-      String(i + 1),
-      nombreDelRenglon(r) ?? r.materialId ?? '—',
-      formatearNumero(r.cantidad),
-      r.unidad ?? '—',
-    ];
-    return hayPrecios ? [...base, moneda(r.precioUnitario), moneda(r.subtotal)] : base;
-  });
+  const cabecera = [
+    '#',
+    'Material',
+    'Cantidad',
+    'Unidad',
+    ...(conEntregas ? ['Recibido'] : []),
+    ...(hayPrecios ? ['P. unitario', 'Subtotal'] : []),
+  ];
+
+  const cuerpo = orden.renglones.map((r, i) => [
+    String(i + 1),
+    nombreDelRenglon(r) ?? r.materialId ?? '—',
+    formatearNumero(r.cantidad),
+    r.unidad ?? '—',
+    ...(conEntregas
+      ? [`${formatearNumero(r.cantidadRecibida ?? 0)} de ${formatearNumero(r.cantidad)}`]
+      : []),
+    ...(hayPrecios ? [moneda(r.precioUnitario), moneda(r.subtotal)] : []),
+  ]);
+  const colPrecio = conEntregas ? 5 : 4;
 
   autoTable(doc, {
     startY: y,
@@ -95,7 +106,10 @@ async function construirPdf(orden: OrdenCompra) {
       0: { cellWidth: 9, halign: 'center' },
       2: { halign: 'right' },
       3: { halign: 'center' },
-      ...(hayPrecios ? { 4: { halign: 'right' }, 5: { halign: 'right' } } : {}),
+      ...(conEntregas ? { 4: { halign: 'center' } } : {}),
+      ...(hayPrecios
+        ? { [colPrecio]: { halign: 'right' }, [colPrecio + 1]: { halign: 'right' } }
+        : {}),
     },
     margin: { left: margen, right: margen },
   });
@@ -125,6 +139,23 @@ async function construirPdf(orden: OrdenCompra) {
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...GRIS);
     const lineas = doc.splitTextToSize(orden.observaciones, anchoPagina - margen * 2);
+    doc.text(lineas, margen, y);
+    y += lineas.length * 4.4 + 6;
+  }
+
+  // ── Cerrada con faltante ──
+  if (orden.cerradaConFaltante) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...NEGRO);
+    doc.text('Cerrada con lo que llegó', margen, y);
+    y += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...GRIS);
+    const lineas = doc.splitTextToSize(
+      orden.motivoFaltante ?? 'El proveedor no entregó todo lo pedido.',
+      anchoPagina - margen * 2,
+    );
     doc.text(lineas, margen, y);
     y += lineas.length * 4.4 + 6;
   }

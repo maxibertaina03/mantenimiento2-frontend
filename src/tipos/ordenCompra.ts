@@ -1,4 +1,9 @@
-export type EstadoOrdenCompra = 'BORRADOR' | 'EMITIDA' | 'RECIBIDA' | 'ANULADA';
+export type EstadoOrdenCompra =
+  | 'BORRADOR'
+  | 'EMITIDA'
+  | 'RECIBIDA_PARCIAL'
+  | 'RECIBIDA'
+  | 'ANULADA';
 
 /**
  * Etiquetas del ciclo de la orden, en el lenguaje del depósito:
@@ -12,6 +17,7 @@ export type EstadoOrdenCompra = 'BORRADOR' | 'EMITIDA' | 'RECIBIDA' | 'ANULADA';
 export const ETIQUETA_ESTADO_ORDEN: Record<EstadoOrdenCompra, string> = {
   BORRADOR: 'Orden creada',
   EMITIDA: 'Pendiente de recibo',
+  RECIBIDA_PARCIAL: 'Recibida en parte',
   RECIBIDA: 'Finalizada',
   ANULADA: 'Anulada',
 };
@@ -46,6 +52,21 @@ export interface RenglonOrden {
   /** Que equipo se compra, cuando el renglon no es de material. */
   descripcionEquipo: string | null;
   clasificacion: ClasificacionEquipo | null;
+  /** Lo que ya llegó, sumando las entregas. */
+  cantidadRecibida: number;
+  /** Lo que falta entregar. */
+  pendiente: number;
+}
+
+/** Una entrega del proveedor: lo que llegó en un remito. */
+export interface RecepcionOrden {
+  id: string;
+  fecha: string;
+  remito: string | null;
+  factura: string | null;
+  notas: string | null;
+  recibidaPorNombre: string | null;
+  renglones: { renglonId: string; cantidad: number }[];
 }
 
 /**
@@ -81,6 +102,11 @@ export interface OrdenCompra {
   renglones: RenglonOrden[];
   total: number | null;
   editable: boolean;
+  /** Las entregas, de la primera a la última. */
+  recepciones: RecepcionOrden[];
+  /** Se cerró con lo que llegó: el proveedor no entregó todo. */
+  cerradaConFaltante: boolean;
+  motivoFaltante: string | null;
   creadoEn: string;
 }
 
@@ -108,4 +134,6 @@ export interface RecibirOrdenInput {
   remito?: string;
   factura?: string;
   notas?: string;
+  /** Lo que llegó de cada renglón. Sin esto, llegó todo lo que faltaba. */
+  renglones?: { renglonId: string; cantidad: number }[];
 }

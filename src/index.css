@@ -1057,6 +1057,12 @@ button.combo-item:hover {
   background: var(--color-alerta-fondo);
   color: var(--color-alerta-texto);
 }
+/* Recibida en parte: llegó algo, falta algo. Ni el amarillo de «esperando»
+   ni el verde de «finalizada». */
+.badge-parcial {
+  background: #e0e7ff;
+  color: #3730a3;
+}
 .badge-error {
   background: #fee2e2;
   color: #991b1b;
@@ -3113,4 +3119,35 @@ button {
   .calendario-tarea-titulo {
     white-space: normal;
   }
+}
+
+/* ─────────── Recepción en varias entregas (órdenes de compra) ─────────── */
+
+.recibir-tabla td {
+  vertical-align: middle;
+}
+.recibir-tabla .celda-llega {
+  min-width: 7.5rem;
+}
+.renglon-falta {
+  color: #b45309;
+  font-weight: 600;
+}
+.renglon-completo {
+  color: #166534;
+}
+.entregas-lista {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.texto-reclamo {
+  white-space: pre-wrap;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--color-fondo);
+  border-radius: 8px;
 }

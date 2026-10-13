@@ -63,6 +63,8 @@ function servidor(opciones: {
   ordenes?: unknown[];
   /** Órdenes en BORRADOR: armadas y sin mandar. */
   borradores?: unknown[];
+  /** Órdenes RECIBIDA_PARCIAL: llegó una parte, falta el resto. */
+  enParte?: unknown[];
   equipos?: { total: number; porEstado: Record<string, number>; sinPlan: number };
   cobertura?: { enUso: number; conMinimo: number; sinMinimo: number; bajoStock: number };
 }) {
@@ -98,11 +100,14 @@ function servidor(opciones: {
       );
     }
     if (ruta.startsWith('/ordenes-compra')) {
-      // El mismo endpoint sirve las dos listas: se distinguen por el estado.
+      // El mismo endpoint sirve las listas: se distinguen por el estado.
+      const estado = config?.query?.estado;
       const datos =
-        config?.query?.estado === 'BORRADOR'
+        estado === 'BORRADOR'
           ? (opciones.borradores ?? [])
-          : (opciones.ordenes ?? []);
+          : estado === 'RECIBIDA_PARCIAL'
+            ? (opciones.enParte ?? [])
+            : (opciones.ordenes ?? []);
       return Promise.resolve({ datos, total: datos.length, pagina: 1, limite: 6 });
     }
     return Promise.resolve(null);
@@ -174,6 +179,20 @@ describe('InicioPage', () => {
 
     expect(await screen.findByText('OC-0007')).toBeInTheDocument();
     expect(screen.getByText('Fraluga')).toBeInTheDocument();
+  });
+
+  it('una orden recibida en parte también figura por llegar, y lo dice', async () => {
+    servidor({
+      ordenes: [{ id: 'o1', numero: 'OC-0007', proveedorNombre: 'Fraluga', estado: 'EMITIDA' }],
+      enParte: [
+        { id: 'o2', numero: 'OC-0028', proveedorNombre: 'Ferrero', estado: 'RECIBIDA_PARCIAL' },
+      ],
+    });
+    mostrar();
+
+    expect(await screen.findByText('OC-0028')).toBeInTheDocument();
+    expect(screen.getByText(/Ferrero · llegó una parte/)).toBeInTheDocument();
+    expect(screen.getByText('OC-0007')).toBeInTheDocument();
   });
 
   it('una orden sin proveedor no deja el renglon a medias', async () => {

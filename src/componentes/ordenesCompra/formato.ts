@@ -4,6 +4,7 @@ import type { EstadoOrdenCompra } from '@/tipos/ordenCompra';
 export const CLASE_ESTADO: Record<EstadoOrdenCompra, string> = {
   BORRADOR: 'badge',
   EMITIDA: 'badge badge-aviso',
+  RECIBIDA_PARCIAL: 'badge badge-parcial',
   RECIBIDA: 'badge badge-ok',
   ANULADA: 'badge badge-error',
 };
