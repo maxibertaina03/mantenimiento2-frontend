@@ -13,6 +13,7 @@ import { ComponentesEquipo } from '@/componentes/ComponentesEquipo';
 import { Cargando, MensajeError } from '@/componentes/Estados';
 import { FormularioEquipo } from '@/componentes/FormularioEquipo';
 import { FotoEquipo } from '@/componentes/FotoEquipo';
+import { MandarAServicioExterno } from '@/componentes/MandarAServicioExterno';
 import { OtrasFotosEquipo } from '@/componentes/OtrasFotosEquipo';
 import { ManualesEquipo } from '@/componentes/ManualesEquipo';
 import { PlanesEquipo, textoVencimiento } from '@/componentes/PlanesEquipo';
@@ -84,6 +85,7 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
   const pestana: Pestana = PESTANAS.includes(pedida as Pestana) ? (pedida as Pestana) : 'resumen';
 
   const [registrando, setRegistrando] = useState(false);
+  const [mandandoAfuera, setMandandoAfuera] = useState(false);
   const [editando, setEditando] = useState(false);
   const [fotoAmpliada, setFotoAmpliada] = useState(false);
   const [avisoQr, setAvisoQr] = useState<string | null>(null);
@@ -131,6 +133,12 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
     return clase === 'sin' || clase === 'bajo';
   });
   const ultimoTrabajo = trabajos.data?.datos[0];
+  // Lo que está en un taller de afuera: una orden abierta con proveedor.
+  const enTallerExterno = (trabajos.data?.datos ?? []).filter(
+    (o) => o.equipoId === equipo.id && o.estado === 'ABIERTA' && o.ejecutor === 'EXTERNO',
+  );
+  const puedeMandarAfuera =
+    !dadoDeBaja && puede(P.TRABAJOS_EDITAR) && puede(P.PROVEEDORES_VER);
 
   /** Lo que se cuenta en cada pestaña, y si hay algo para mirar. */
   const contador: Partial<Record<Pestana, { n: number; alerta: boolean }>> = {
@@ -196,6 +204,16 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
               + Registrar trabajo
             </button>
           )}
+          {puedeMandarAfuera && (
+            <button
+              type="button"
+              className="btn"
+              title="Abrir una orden para un taller o proveedor de afuera e imprimirla"
+              onClick={() => setMandandoAfuera(true)}
+            >
+              🚚 Mandar a servicio externo
+            </button>
+          )}
           {puede(P.EQUIPOS_EDITAR) && (
             <button type="button" className="btn" onClick={() => setEditando(true)}>
               ✎ Editar
@@ -216,6 +234,13 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
         )}
       </div>
       {avisoQr && <p className="aviso-escaneo es-error">{avisoQr}</p>}
+      {enTallerExterno.map((o) => (
+        <div key={o.id} className="alerta alerta-aviso">
+          🚚 Está en <strong>{o.proveedorNombre ?? 'un servicio externo'}</strong> desde el{' '}
+          {formatearFechaSola(o.abiertaEn)}: {o.titulo} ({o.numero}). Cuando vuelva, cerrá la orden
+          en <Link to="/ordenes-trabajo">Órdenes de trabajo</Link>.
+        </div>
+      ))}
 
       {modoRapido && (
         <ModoRapido
@@ -224,6 +249,7 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
           vencidos={planesVencidos}
           faltan={repuestosQueFaltan}
           onRegistrar={() => setRegistrando(true)}
+          onMandarAfuera={puedeMandarAfuera ? () => setMandandoAfuera(true) : undefined}
           onIr={irA}
         />
       )}
@@ -299,6 +325,9 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
           onCerrar={() => setRegistrando(false)}
         />
       )}
+      {mandandoAfuera && (
+        <MandarAServicioExterno equipo={equipo} onCerrar={() => setMandandoAfuera(false)} />
+      )}
       {editando && <FormularioEquipo equipo={equipo} alCerrar={() => setEditando(false)} />}
       {fotoAmpliada && equipo.fotoUrl && (
         <VisorFoto url={equipo.fotoUrl} titulo={equipo.nombre} alCerrar={() => setFotoAmpliada(false)} />
@@ -320,6 +349,7 @@ function ModoRapido({
   vencidos,
   faltan,
   onRegistrar,
+  onMandarAfuera,
   onIr,
 }: {
   puedeRegistrar: boolean;
@@ -327,6 +357,7 @@ function ModoRapido({
   vencidos: PlanParaMirar[];
   faltan: RepuestoEquipo[];
   onRegistrar: () => void;
+  onMandarAfuera?: () => void;
   onIr: (p: Pestana) => void;
 }) {
   return (
@@ -336,6 +367,12 @@ function ModoRapido({
           <button type="button" className="accion-grande accion-grande-principal" onClick={onRegistrar}>
             <span aria-hidden="true">＋</span>
             Registrar trabajo
+          </button>
+        )}
+        {onMandarAfuera && (
+          <button type="button" className="accion-grande" onClick={onMandarAfuera}>
+            <span aria-hidden="true">🚚</span>
+            Mandar a servicio externo
           </button>
         )}
         <button type="button" className="accion-grande" onClick={() => onIr('repuestos')}>
