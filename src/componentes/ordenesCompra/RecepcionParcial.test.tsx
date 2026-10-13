@@ -103,9 +103,8 @@ describe('RecibirMercaderia', () => {
     const onListo = vi.fn();
     render(envolver(<RecibirMercaderia orden={OC28} onListo={onListo} onCancelar={() => {}} />));
 
-    const acrilico = screen.getByLabelText('Cuánto llegó de Repuesto acrilico p/marea 2x36w');
-    await usuario.clear(acrilico);
-    await usuario.type(acrilico, '0');
+    // Arranca en 0: se carga solo lo que vino.
+    await usuario.type(screen.getByLabelText('Cuánto llegó de Artefacto marea vacio para led 2x20'), '10');
     await usuario.type(screen.getByLabelText('Nº de remito'), '0001-00045');
 
     expect(screen.getByText(/la orden queda «Recibida en parte»/)).toBeInTheDocument();
@@ -127,11 +126,17 @@ describe('RecibirMercaderia', () => {
     await waitFor(() => expect(onListo).toHaveBeenCalled());
   });
 
-  it('viene cargado lo que falta: si llega todo, la orden queda finalizada', () => {
+  it('arranca en 0, sin nada precargado; si se carga todo, la orden queda finalizada', async () => {
+    const usuario = userEvent.setup();
     render(envolver(<RecibirMercaderia orden={OC28} onListo={() => {}} onCancelar={() => {}} />));
-    expect(
-      screen.getByLabelText('Cuánto llegó de Artefacto marea vacio para led 2x20'),
-    ).toHaveValue(10);
+    const artefacto = screen.getByLabelText('Cuánto llegó de Artefacto marea vacio para led 2x20');
+    const acrilico = screen.getByLabelText('Cuánto llegó de Repuesto acrilico p/marea 2x36w');
+    expect(artefacto).toHaveValue(null);
+    expect(acrilico).toHaveValue(null);
+    expect(screen.getByText(/Indicá qué llegó/)).toBeInTheDocument();
+
+    await usuario.type(artefacto, '10');
+    await usuario.type(acrilico, '10');
     expect(screen.getByText(/Llega todo: la orden queda finalizada/)).toBeInTheDocument();
   });
 
@@ -140,12 +145,16 @@ describe('RecibirMercaderia', () => {
     render(envolver(<RecibirMercaderia orden={OC28} onListo={() => {}} onCancelar={() => {}} />));
     const confirmar = screen.getByRole('button', { name: 'Confirmar y sumar al stock' });
 
-    expect(confirmar).toBeDisabled(); // sin remito ni factura
+    expect(confirmar).toBeDisabled(); // sin nada cargado ni comprobante
     await usuario.type(screen.getByLabelText('Nº de factura'), 'A-1');
+    expect(confirmar).toBeDisabled(); // con comprobante, pero no llegó nada
+    await usuario.type(
+      screen.getByLabelText('Cuánto llegó de Repuesto acrilico p/marea 2x36w'),
+      '3',
+    );
     expect(confirmar).toBeEnabled();
 
     const artefacto = screen.getByLabelText('Cuánto llegó de Artefacto marea vacio para led 2x20');
-    await usuario.clear(artefacto);
     await usuario.type(artefacto, '12');
     expect(screen.getByText(/no se puede recibir más de lo que se pidió/)).toBeInTheDocument();
     expect(confirmar).toBeDisabled();

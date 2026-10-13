@@ -9,9 +9,10 @@ import type { OrdenCompra } from '@/tipos/ordenCompra';
 /**
  * Recibir la mercadería de una orden: toda, o lo que llegó.
  *
- * Cada renglón viene con lo que falta precargado, que es lo más común: llegó
- * todo. Si un proveedor entregó una parte —llegaron los artefactos y no los
- * acrílicos— se pone 0, o la cantidad que vino, y lo demás queda pendiente:
+ * Cada renglón arranca en 0: se carga, mirando el remito, lo que vino de cada
+ * uno. Precargar lo pedido hacía fácil confirmar de más sin mirar. Si un
+ * proveedor entregó una parte —llegaron los artefactos y no los acrílicos—
+ * lo que no se carga queda pendiente:
  * la orden pasa a «Recibida en parte» y se puede volver a recibir con el
  * remito de la próxima entrega.
  */
@@ -26,9 +27,8 @@ export function RecibirMercaderia({
 }) {
   const recibir = useRecibirOrden(orden.id);
   const pendientes = orden.renglones.filter((r) => r.pendiente > 0);
-  const [llega, setLlega] = useState<Record<string, number | undefined>>(() =>
-    Object.fromEntries(pendientes.map((r) => [r.id, r.pendiente])),
-  );
+  // Vacío cuenta como 0: así se escribe la cantidad sin borrar un 0 antes.
+  const [llega, setLlega] = useState<Record<string, number | undefined>>({});
   const [remito, setRemito] = useState('');
   const [factura, setFactura] = useState('');
 
@@ -58,8 +58,8 @@ export function RecibirMercaderia({
     <div className="panel">
       <h3 className="subtitulo-form">¿Qué llegó?</h3>
       <p className="texto-suave texto-chico">
-        Viene cargado lo que falta. Si algo no llegó, poné 0; si llegó una parte, la cantidad que
-        vino. Lo que no llegue queda pendiente para la próxima entrega.
+        Mirando el remito, cargá cuánto llegó de cada material. Lo que quede en 0 sigue pendiente
+        para la próxima entrega.
       </p>
 
       <div className="tabla-scroll tabla-cards-contenedor">
@@ -83,6 +83,7 @@ export function RecibirMercaderia({
                 <td data-etiqueta="Llegó ahora" className="celda-llega">
                   <CampoNumero
                     min="0"
+                    placeholder="0"
                     step={r.materialId ? '0.001' : '1'}
                     aria-label={`Cuánto llegó de ${nombreDelRenglon(r) ?? 'el renglón'}`}
                     valor={llega[r.id]}
