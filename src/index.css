@@ -3151,3 +3151,60 @@ button {
   background: var(--color-fondo);
   border-radius: 8px;
 }
+
+/* ─────────── Detalle de una orden de compra ───────────
+   Arriba lo que se mira siempre (quién, estado, total, la acción de ahora);
+   abajo, pestañas. Así no hay que bajar hasta el final para recibir. */
+.detalle-oc-cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-borde);
+}
+.detalle-oc-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+.detalle-oc-proveedor {
+  font-size: 1.05rem;
+}
+.detalle-oc-total {
+  margin-left: auto;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.detalle-oc-datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.9rem;
+}
+.detalle-oc-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+}
+.detalle-oc .pestanas-equipo {
+  margin-top: 0;
+}
+.detalle-oc-panel {
+  padding-top: 0.5rem;
+}
+.detalle-oc-observaciones {
+  margin: 0.75rem 0 0;
+}
+/* En el celular: la acción principal ocupa todo el ancho, las demás de a dos. */
+@media (max-width: 600px) {
+  .detalle-oc-acciones > .btn {
+    flex: 1 1 calc(50% - 0.45rem);
+  }
+  .detalle-oc-acciones > .btn-primario {
+    flex-basis: 100%;
+  }
+  .detalle-oc-total {
+    margin-left: 0;
+  }
+}
