@@ -7,6 +7,7 @@ import { ETIQUETA_TIPO_TRABAJO, TIPOS_TRABAJO } from '@/tipos/ordenTrabajo';
 import type { OrdenTrabajo, TipoTrabajo } from '@/tipos/ordenTrabajo';
 import type { Proveedor } from '@/tipos/proveedor';
 import { ComboProveedor } from './ComboProveedor';
+import { EnviarOrdenTrabajo } from './EnviarOrdenTrabajo';
 import { MensajeError } from './Estados';
 import { Modal } from './Modal';
 
@@ -33,6 +34,7 @@ export function MandarAServicioExterno({
   const [tipo, setTipo] = useState<TipoTrabajo>('CORRECTIVO');
   const [creada, setCreada] = useState<OrdenTrabajo | null>(null);
   const [errorPdf, setErrorPdf] = useState(false);
+  const [enviando, setEnviando] = useState(false);
 
   const imprimir = async (orden: OrdenTrabajo) => {
     setErrorPdf(false);
@@ -67,6 +69,10 @@ export function MandarAServicioExterno({
     }
   };
 
+  if (creada && enviando) {
+    return <EnviarOrdenTrabajo orden={creada} onCerrar={onCerrar} />;
+  }
+
   if (creada) {
     return (
       <Modal titulo="Mandar a servicio externo" abierto onCerrar={onCerrar}>
@@ -82,12 +88,15 @@ export function MandarAServicioExterno({
             </div>
           )}
           <p className="texto-suave texto-chico">
-            Cuando el equipo vuelva, cerrá la orden desde «Órdenes de trabajo» con lo que hizo el
-            taller: queda en el historial del equipo.
+            El equipo figura «En reparación» mientras esté afuera. Cuando vuelva, tocá «Volvió del
+            taller» en su ficha: se cierra la orden y queda en el historial.
           </p>
           <div className="acciones">
             <button type="button" className="btn" onClick={() => imprimir(creada)}>
               🖨 Descargar el PDF de nuevo
+            </button>
+            <button type="button" className="btn" onClick={() => setEnviando(true)}>
+              ✉ Mandársela al taller
             </button>
             <button type="button" className="btn btn-primario" onClick={onCerrar}>
               Listo

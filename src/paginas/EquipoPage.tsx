@@ -9,7 +9,9 @@ import {
 } from '@/api/equipos';
 import { useManuales } from '@/api/manuales';
 import { useOrdenesTrabajo } from '@/api/ordenesTrabajo';
+import { useUsuarioActual } from '@/api/usuarios';
 import { ComponentesEquipo } from '@/componentes/ComponentesEquipo';
+import { EnviarOrdenTrabajo } from '@/componentes/EnviarOrdenTrabajo';
 import { Cargando, MensajeError } from '@/componentes/Estados';
 import { FormularioEquipo } from '@/componentes/FormularioEquipo';
 import { FotoEquipo } from '@/componentes/FotoEquipo';
@@ -21,12 +23,14 @@ import { RegistrarTrabajoEquipo } from '@/componentes/RegistrarTrabajoEquipo';
 import { RepuestosEquipo } from '@/componentes/RepuestosEquipo';
 import { TrabajosDelEquipo } from '@/componentes/TrabajosDelEquipo';
 import { VisorFoto } from '@/componentes/VisorFoto';
+import { VolvioDelTaller } from '@/componentes/VolvioDelTaller';
 import { esCelular } from '@/lib/dispositivo';
 import { armarEtiquetas, imprimirEtiquetas } from '@/lib/etiquetaQr';
 import { formatearFecha, formatearFechaSola } from '@/lib/formato';
 import { P, usePuede } from '@/lib/permisos';
 import { stockDeRepuesto } from '@/lib/stockDeRepuesto';
 import { ETIQUETA_ESTADO_EQUIPO, type Equipo, type RepuestoEquipo } from '@/tipos/equipo';
+import type { OrdenTrabajo } from '@/tipos/ordenTrabajo';
 
 /** Las pestañas de la página, en el orden en que se muestran. */
 const PESTANAS = ['resumen', 'repuestos', 'trabajos', 'planes', 'componentes', 'manuales'] as const;
@@ -86,6 +90,9 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
 
   const [registrando, setRegistrando] = useState(false);
   const [mandandoAfuera, setMandandoAfuera] = useState(false);
+  const [enviandoAlTaller, setEnviandoAlTaller] = useState<OrdenTrabajo | null>(null);
+  const [volviendo, setVolviendo] = useState<OrdenTrabajo | null>(null);
+  const { data: yo } = useUsuarioActual();
   const [editando, setEditando] = useState(false);
   const [fotoAmpliada, setFotoAmpliada] = useState(false);
   const [avisoQr, setAvisoQr] = useState<string | null>(null);
@@ -134,9 +141,13 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
   });
   const ultimoTrabajo = trabajos.data?.datos[0];
   // Lo que está en un taller de afuera: una orden abierta con proveedor.
-  const enTallerExterno = (trabajos.data?.datos ?? []).filter(
-    (o) => o.equipoId === equipo.id && o.estado === 'ABIERTA' && o.ejecutor === 'EXTERNO',
+  const afuera = useOrdenesTrabajo(
+    1,
+    10,
+    { equipoId: equipo.id, estado: 'ABIERTA', ejecutor: 'EXTERNO' },
+    verTrabajos,
   );
+  const enTallerExterno = afuera.data?.datos ?? [];
   const puedeMandarAfuera =
     !dadoDeBaja && puede(P.TRABAJOS_EDITAR) && puede(P.PROVEEDORES_VER);
 
@@ -235,10 +246,32 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
       </div>
       {avisoQr && <p className="aviso-escaneo es-error">{avisoQr}</p>}
       {enTallerExterno.map((o) => (
-        <div key={o.id} className="alerta alerta-aviso">
-          🚚 Está en <strong>{o.proveedorNombre ?? 'un servicio externo'}</strong> desde el{' '}
-          {formatearFechaSola(o.abiertaEn)}: {o.titulo} ({o.numero}). Cuando vuelva, cerrá la orden
-          en <Link to="/ordenes-trabajo">Órdenes de trabajo</Link>.
+        <div key={o.id} className="alerta alerta-aviso aviso-taller">
+          <span>
+            🚚 Está en <strong>{o.proveedorNombre ?? 'un servicio externo'}</strong> desde el{' '}
+            {formatearFechaSola(o.abiertaEn)}: {o.titulo} ({o.numero}).
+          </span>
+          {puede(P.TRABAJOS_EDITAR) && (
+            <span className="aviso-taller-acciones">
+              <button type="button" className="btn btn-sm" onClick={() => setEnviandoAlTaller(o)}>
+                ✉ Mandarle la orden
+              </button>
+              {/* Lo cierra quien tiene el trabajo: es la regla de las órdenes. */}
+              {yo?.id === o.asignadoAId ? (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-primario"
+                  onClick={() => setVolviendo(o)}
+                >
+                  ✔ Volvió del taller
+                </button>
+              ) : (
+                <span className="texto-chico">
+                  Cuando vuelva, la cierra {o.asignadoANombre ?? 'quien la tiene a cargo'}.
+                </span>
+              )}
+            </span>
+          )}
         </div>
       ))}
 
@@ -325,6 +358,10 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
           onCerrar={() => setRegistrando(false)}
         />
       )}
+      {enviandoAlTaller && (
+        <EnviarOrdenTrabajo orden={enviandoAlTaller} onCerrar={() => setEnviandoAlTaller(null)} />
+      )}
+      {volviendo && <VolvioDelTaller orden={volviendo} onCerrar={() => setVolviendo(null)} />}
       {mandandoAfuera && (
         <MandarAServicioExterno equipo={equipo} onCerrar={() => setMandandoAfuera(false)} />
       )}

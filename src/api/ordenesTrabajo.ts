@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/apiClient';
+import { clavesEquipos } from './equipos';
 import { clavesMateriales } from './materiales';
 import type { RespuestaPaginada } from '@/tipos/comunes';
 import type {
   UsuarioAsignable,
   CerrarOrdenTrabajoInput,
   CrearOrdenTrabajoInput,
+  EnvioDeTrabajo,
   FiltrosOrdenesTrabajo,
   OrdenTrabajo,
   OrdenTrabajoConResumen,
@@ -26,6 +28,8 @@ export const clavesTrabajos = {
 function invalidarTodo(qc: ReturnType<typeof useQueryClient>) {
   void qc.invalidateQueries({ queryKey: clavesTrabajos.base });
   void qc.invalidateQueries({ queryKey: clavesMateriales.base });
+  // Mandar una máquina a un taller de afuera, o traerla, le cambia el estado.
+  void qc.invalidateQueries({ queryKey: clavesEquipos.base });
 }
 
 /**
@@ -54,6 +58,7 @@ export function useOrdenesTrabajo(
           incluirComponentes: filtros.incluirComponentes ? 'true' : undefined,
           equipoItId: filtros.equipoItId || undefined,
           asignadoAId: filtros.asignadoAId || undefined,
+          ejecutor: filtros.ejecutor || undefined,
         },
       }),
   });
@@ -182,5 +187,41 @@ export function useAnularOrdenTrabajo() {
         body: { motivo },
       }),
     onSuccess: () => invalidarTodo(qc),
+  });
+}
+
+// ─────────────────── Mandarle la orden al taller ───────────────────
+
+export function useEnviosDeTrabajo(id: string, habilitado = true) {
+  return useQuery({
+    enabled: habilitado,
+    queryKey: [...clavesTrabajos.detalle(id), 'envios'] as const,
+    queryFn: () => apiRequest<EnvioDeTrabajo[]>(`/ordenes-trabajo/${id}/envios`),
+  });
+}
+
+/** El correo lo arma y lo manda el servidor; acá va solo el PDF. */
+export function useEnviarTrabajoPorCorreo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, pdfBase64 }: { id: string; pdfBase64: string }) =>
+      apiRequest<{ para: string[]; responderA: string | null }>(
+        `/ordenes-trabajo/${id}/enviar-correo`,
+        { method: 'POST', body: { pdfBase64 } },
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesTrabajos.base }),
+  });
+}
+
+/** El chat lo abre la pantalla; esto deja la constancia. */
+export function useRegistrarTrabajoWhatsapp() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, numero }: { id: string; numero: string }) =>
+      apiRequest<EnvioDeTrabajo>(`/ordenes-trabajo/${id}/registrar-whatsapp`, {
+        method: 'POST',
+        body: { numero },
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesTrabajos.base }),
   });
 }

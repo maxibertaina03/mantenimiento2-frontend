@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useCoberturaAlertas, useMaterialesBajoStock } from '@/api/materiales';
 import { useOrdenes } from '@/api/ordenesCompra';
+import { useOrdenesTrabajo } from '@/api/ordenesTrabajo';
 import { usePlanesQueVencen, useResumenEquipos } from '@/api/equipos';
 import { Cargando } from '@/componentes/Estados';
 import { textoVencimiento } from '@/componentes/PlanesEquipo';
-import { formatearNumero } from '@/lib/formato';
+import { formatearFechaSola, formatearNumero } from '@/lib/formato';
 import { ETIQUETA_ESTADO_EQUIPO } from '@/tipos/equipo';
 import { MisTareasDeHoy } from '@/componentes/MisTareasDeHoy';
 import { P, usePuede } from '@/lib/permisos';
@@ -37,6 +38,7 @@ export function InicioPage() {
   const puede = usePuede();
   const veServicios = puede(P.SERVICIOS_VER);
   const veEquipos = puede(P.EQUIPOS_VER);
+  const veTrabajos = puede(P.TRABAJOS_VER);
 
   const bajoStock = useMaterialesBajoStock();
   const cobertura = useCoberturaAlertas();
@@ -47,6 +49,13 @@ export function InicioPage() {
   // Equipos es solo para admins: a un operario el pedido le daría 403.
   const servicios = usePlanesQueVencen(7, veServicios);
   const equipos = useResumenEquipos(veEquipos);
+  // Lo que está en un taller de afuera: hay que acordarse de ir a buscarlo.
+  const talleres = useOrdenesTrabajo(
+    1,
+    MAXIMO_EN_LISTA,
+    { estado: 'ABIERTA', ejecutor: 'EXTERNO' },
+    veTrabajos,
+  );
 
   if (bajoStock.isLoading || emitidas.isLoading) return <Cargando />;
 
@@ -56,6 +65,7 @@ export function InicioPage() {
   const sinEnviar = borradores.data?.datos ?? [];
   const vencen = servicios.data ?? [];
   const vencidos = vencen.filter((p) => p.estado === 'VENCIDO').length;
+  const afuera = talleres.data?.datos ?? [];
 
   const parados = NO_OPERATIVOS.map((estado) => ({
     estado,
@@ -68,7 +78,8 @@ export function InicioPage() {
     porRecibir.length === 0 &&
     sinEnviar.length === 0 &&
     vencen.length === 0 &&
-    totalParados === 0;
+    totalParados === 0 &&
+    afuera.length === 0;
 
   // Los huecos de carga que dejan al sistema sin poder avisar.
   const sinMinimo = cobertura.data?.sinMinimo ?? 0;
@@ -115,6 +126,31 @@ export function InicioPage() {
             ))}
           </ul>
           <Link to="/equipos">Ver los equipos →</Link>
+        </div>
+      )}
+
+      {afuera.length > 0 && (
+        <div className="panel">
+          <div className="cabecera-bloque">
+            <h2>En talleres externos</h2>
+            <span className="badge">{talleres.data?.total ?? afuera.length}</span>
+          </div>
+          <ul className="lista-inicio">
+            {afuera.map((o) => (
+              <li key={o.id}>
+                {o.equipoId ? (
+                  <Link to={`/equipos/${o.equipoId}`}>{o.equipoNombre}</Link>
+                ) : (
+                  <Link to="/ordenes-trabajo?afuera=1">{o.equipoItNombre ?? o.numero}</Link>
+                )}
+                <span className="texto-suave">
+                  en {o.proveedorNombre ?? 'un taller'} desde el {formatearFechaSola(o.abiertaEn)} ·{' '}
+                  {o.titulo}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <Link to="/ordenes-trabajo?afuera=1">Ver las órdenes →</Link>
         </div>
       )}
 

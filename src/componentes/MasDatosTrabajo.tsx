@@ -71,6 +71,18 @@ export function MasDatosTrabajo({
             </label>
           )}
 
+          {datos.ejecutor === 'EXTERNO' && (
+            <label className="campo">
+              Remito o factura del taller
+              <input
+                value={datos.comprobante ?? ''}
+                maxLength={100}
+                placeholder="opcional · R-0001-00004930"
+                onChange={(e) => cambiar({ comprobante: e.target.value })}
+              />
+            </label>
+          )}
+
           <label className="campo">
             Costo de mano de obra
             <CampoNumero

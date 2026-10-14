@@ -79,6 +79,8 @@ export interface OrdenTrabajo {
   cerradaPorId: string | null;
   cerradaPorNombre: string | null;
   motivoAnulacion: string | null;
+  /** El remito o la factura con que el taller de afuera devolvió el equipo. */
+  comprobanteExterno: string | null;
   creadoEn: string;
   materiales: MaterialUsado[];
 }
@@ -121,6 +123,18 @@ export interface CerrarOrdenTrabajoInput {
   proveedorId?: string | null;
   costoManoObra?: number | null;
   horasParada?: number | null;
+  /** El remito o la factura del taller, si se hizo afuera. */
+  comprobanteExterno?: string | null;
+}
+
+/** Una vez que se le mandó la orden al taller. */
+export interface EnvioDeTrabajo {
+  id: string;
+  via: 'CORREO' | 'WHATSAPP';
+  destinatarios: string;
+  automatico: boolean;
+  enviadoEn: string;
+  usuarioNombre: string | null;
 }
 
 /** Alguien que puede hacerse cargo de una orden. */
@@ -138,4 +152,6 @@ export interface FiltrosOrdenesTrabajo {
   incluirComponentes?: boolean;
   equipoItId?: string;
   asignadoAId?: string;
+  /** EXTERNO: las de talleres de afuera. */
+  ejecutor?: Ejecutor;
 }

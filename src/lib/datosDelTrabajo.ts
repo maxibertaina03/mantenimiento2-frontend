@@ -8,6 +8,8 @@ export interface DatosDelTrabajo {
   proveedorNombre?: string;
   costo: number | undefined;
   horas: number | undefined;
+  /** El remito o la factura del taller, si fue externo. */
+  comprobante?: string;
 }
 
 export const DATOS_DEL_TRABAJO_VACIOS: DatosDelTrabajo = {
@@ -29,5 +31,9 @@ export function paraEnviar(datos: DatosDelTrabajo) {
     proveedorId: datos.ejecutor === 'EXTERNO' ? datos.proveedorId : undefined,
     costoManoObra: datos.costo,
     horasParada: datos.horas,
+    // Solo si se cargó: así no se pisa uno que ya estaba guardado.
+    ...(datos.ejecutor === 'EXTERNO' && datos.comprobante?.trim()
+      ? { comprobanteExterno: datos.comprobante.trim() }
+      : {}),
   };
 }

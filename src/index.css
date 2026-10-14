@@ -3208,3 +3208,18 @@ button {
     margin-left: 0;
   }
 }
+
+/* El aviso de «está en un taller» en la ficha del equipo, con sus botones. */
+.aviso-taller {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+.aviso-taller-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}

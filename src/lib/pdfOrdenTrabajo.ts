@@ -263,6 +263,21 @@ async function construirPdf(orden: OrdenTrabajo, extras: ExtrasOrdenTrabajo) {
   return doc;
 }
 
+/**
+ * El mismo PDF, en base64, para mandárselo al taller como adjunto.
+ *
+ * Sin el prefijo `data:application/pdf;base64,` que agrega jsPDF: el servidor
+ * espera base64 puro.
+ */
+export async function pdfOrdenTrabajoComoBase64(
+  orden: OrdenTrabajo,
+  extras: ExtrasOrdenTrabajo = {},
+): Promise<string> {
+  const doc = await construirPdf(orden, extras);
+  const conPrefijo = doc.output('datauristring');
+  return conPrefijo.slice(conPrefijo.indexOf(',') + 1);
+}
+
 /** Genera el PDF de la orden de trabajo e inicia la descarga. */
 export async function descargarPdfOrdenTrabajo(
   orden: OrdenTrabajo,

@@ -144,7 +144,7 @@ export function ReclamarFaltante({
           <p className="texto-suave texto-chico">
             {orden.proveedorTelefono
               ? `El teléfono cargado («${orden.proveedorTelefono}») no parece un celular: corregilo arriba.`
-              : 'El proveedor no tiene celular cargado: cargáselo arriba, en «Corregir el contacto».'}
+              : 'El proveedor no tiene celular cargado: cargáselo con el botón de arriba.'}
           </p>
         )}
         {abiertoWhatsapp && !registrarWhatsapp.error && (

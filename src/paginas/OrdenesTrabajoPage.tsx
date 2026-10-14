@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useUsuarioActual } from '@/api/usuarios';
 import { useOrdenesTrabajo } from '@/api/ordenesTrabajo';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
@@ -28,6 +29,9 @@ export function OrdenesTrabajoPage() {
   const [modalAlta, setModalAlta] = useState(false);
   const [ordenAbierta, setOrdenAbierta] = useState<string | null>(null);
   const [soloMias, setSoloMias] = useState(false);
+  // Lo que está en un taller de afuera. Desde «Hoy» se llega ya filtrado.
+  const [parametros] = useSearchParams();
+  const [afuera, setAfuera] = useState(parametros.get('afuera') === '1');
   const { data: yo } = useUsuarioActual();
 
   useEffect(() => {
@@ -40,9 +44,10 @@ export function OrdenesTrabajoPage() {
 
   const { data, isLoading, error, isFetching } = useOrdenesTrabajo(pagina, LIMITE, {
     buscar: busqueda,
-    estado: estado || undefined,
+    estado: afuera ? 'ABIERTA' : estado || undefined,
     tipo: tipo || undefined,
     asignadoAId: soloMias ? (yo?.id ?? undefined) : undefined,
+    ejecutor: afuera ? 'EXTERNO' : undefined,
   });
 
   const ordenes = data?.datos ?? [];
@@ -138,6 +143,17 @@ export function OrdenesTrabajoPage() {
             Solo las mías
           </label>
         )}
+        <label className="casilla">
+          <input
+            type="checkbox"
+            checked={afuera}
+            onChange={(e) => {
+              setAfuera(e.target.checked);
+              setPagina(1);
+            }}
+          />
+          🚚 En talleres externos
+        </label>
       </div>
 
       {isLoading && <Cargando />}

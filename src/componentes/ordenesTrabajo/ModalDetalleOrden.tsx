@@ -4,6 +4,7 @@ import { useAnularOrdenTrabajo, useAsignables, useCerrarOrdenTrabajo, useEditarO
 import { CampoNumero } from '@/componentes/CampoNumero';
 import { ComboEquipo } from '@/componentes/ComboEquipo';
 import { ComboMaterial } from '@/componentes/ComboMaterial';
+import { EnviarOrdenTrabajo } from '@/componentes/EnviarOrdenTrabajo';
 import { Cargando, MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
 import { ImprimirOrdenTrabajo, MandarATaller } from '@/componentes/OrdenATaller';
@@ -38,6 +39,7 @@ export function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () =
   const [masDatos, setMasDatos] = useState<DatosDelTrabajo>(DATOS_DEL_TRABAJO_VACIOS);
   const [equipoNuevo, setEquipoNuevo] = useState<{ id: string; nombre: string } | null>(null);
   const [nuevoAsignado, setNuevoAsignado] = useState('');
+  const [enviandoAlTaller, setEnviandoAlTaller] = useState(false);
 
   const { data: yo } = useUsuarioActual();
   const reasignar = useReasignarOrdenTrabajo();
@@ -92,6 +94,18 @@ export function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () =
             </span>
             <span className="texto-suave">{ETIQUETA_TIPO_TRABAJO[orden.tipo]}</span>
             {orden.estado !== 'ANULADA' && <ImprimirOrdenTrabajo orden={orden} />}
+            {orden.estado === 'ABIERTA' &&
+              orden.ejecutor === 'EXTERNO' &&
+              orden.proveedorId &&
+              puede(P.TRABAJOS_EDITAR) && (
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => setEnviandoAlTaller(true)}
+                >
+                  ✉ Mandársela al taller
+                </button>
+              )}
           </div>
 
           <h3 className="subtitulo-form">{orden.titulo}</h3>
@@ -271,6 +285,7 @@ export function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () =
                     ` · Mano de obra $${formatearNumero(orden.costoManoObra)}`}
                   {orden.horasParada !== null &&
                     ` · ${formatearNumero(orden.horasParada)} horas parada`}
+                  {orden.comprobanteExterno && ` · Comprobante del taller: ${orden.comprobanteExterno}`}
                 </p>
               )}
               <p className="texto-suave texto-chico">
@@ -364,6 +379,10 @@ export function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () =
             </div>
           )}
         </div>
+      )}
+
+      {orden && enviandoAlTaller && (
+        <EnviarOrdenTrabajo orden={orden} onCerrar={() => setEnviandoAlTaller(false)} />
       )}
     </Modal>
   );

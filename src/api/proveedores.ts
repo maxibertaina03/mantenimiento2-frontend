@@ -13,6 +13,15 @@ const claves = {
     ['proveedores', 'lista', pagina, limite, buscar] as const,
 };
 
+/** Uno solo, con su contacto. Se refresca cuando se corrige el contacto. */
+export function useProveedor(id: string | null | undefined) {
+  return useQuery({
+    enabled: Boolean(id),
+    queryKey: ['proveedores', 'detalle', id] as const,
+    queryFn: () => apiRequest<Proveedor>(`/proveedores/${id}`),
+  });
+}
+
 export function useProveedores(pagina = 1, limite = 20, buscar = '') {
   return useQuery({
     queryKey: claves.lista(pagina, limite, buscar),

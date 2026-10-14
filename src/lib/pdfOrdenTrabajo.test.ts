@@ -102,6 +102,7 @@ const orden: OrdenTrabajo = {
   cerradaPorId: null,
   cerradaPorNombre: null,
   motivoAnulacion: null,
+  comprobanteExterno: null,
   creadoEn: '2026-10-01T10:00:00.000Z',
   materiales: [],
 };
