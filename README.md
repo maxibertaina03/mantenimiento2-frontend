@@ -1,129 +1,78 @@
-# Mantenimiento — Frontend
+# Mantenimiento — Pantallas
 
-Interfaz web para la **gestión de stock de materiales** de un área de mantenimiento.
-Consume la API de NestJS del repo `mantenimiento2-backend`.
+[![CI](https://github.com/maxibertaina03/mantenimiento2-frontend/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/maxibertaina03/mantenimiento2-frontend/actions/workflows/ci.yml)
 
-Construida con **React + TypeScript + Vite + TanStack Query**.
+Las pantallas del sistema de mantenimiento de planta de **Lácteos Las Tres**: lo que se usa
+todos los días desde la computadora y desde el celular, también escaneando el QR pegado en una
+máquina o en un estante.
 
-> Este repo es **autónomo**. Necesita el backend corriendo para funcionar.
+Todo pasa por la API, que vive en otro repo:
+[`mantenimiento2-backend`](https://github.com/maxibertaina03/mantenimiento2-backend).
 
----
+| | |
+|---|---|
+| **En producción** | https://mantenimiento2-frontend.vercel.app (Vercel, se publica solo desde `main`) |
+| **Documentación del sistema** | [`docs/sistema.md`](https://github.com/maxibertaina03/mantenimiento2-backend/blob/main/docs/sistema.md) en el repo de la API |
+
+## Qué tiene
+
+| Pantalla | Para qué |
+|---|---|
+| **Hoy** | Las tareas de cada uno y una tarjeta por cada cosa pendiente: equipos parados, services, talleres externos, reponer, mercadería por llegar. |
+| **Materiales, Historial, Nuevo movimiento** | El pañol: stock, entradas y salidas (también con lector de QR), correcciones auditadas. |
+| **Calendario** | Tareas por persona, rutinas que se repiten; se imprime por semana o por mes. |
+| **Órdenes de trabajo** | Abrir, cargar materiales, cerrar; mandar a un taller de afuera y registrar la vuelta. |
+| **Órdenes de compra** | Armar, enviar al proveedor, recibir en partes, reclamar lo que falta, PDF. |
+| **Equipos y herramientas, Servicios** | La ficha de cada máquina (fotos, manuales, repuestos, componentes, planes) y lo que vence. |
+| **Equipos IT, Contraseñas** | Inventario de informática y el baúl de contraseñas. |
+| **Proveedores, Usuarios, Permisos** | Catálogo de proveedores, usuarios y qué puede hacer cada rol. |
+
+Cada pantalla y cada botón aparecen solo para quien tiene el permiso; la API lo vuelve a
+controlar.
 
 ## Stack
 
-- **React 18 + TypeScript + Vite**
-- **TanStack Query (React Query)** para data fetching y cache
-- **React Router** para navegación
-- Cliente HTTP tipado que lee la URL base desde `VITE_API_URL`
-- UI propia con CSS simple (sin librería de diseño pesada)
-
----
-
-## Requisitos
-
-- Node.js 18+ y npm.
-- El backend (`mantenimiento2-backend`) corriendo y accesible.
-
----
-
-## 1. Instalar dependencias
-
-```bash
-npm install
-```
-
-## 2. Variables de entorno
-
-```bash
-cp .env.example .env
-```
-
-| Variable                       | Descripción                                                        |
-| ------------------------------ | ------------------------------------------------------------------ |
-| `VITE_API_URL`                 | URL base de la API **incluyendo `/api`**. Default `http://localhost:3000/api`. |
-| `VITE_CLERK_PUBLISHABLE_KEY`   | (Futuro) key de Clerk. Hoy sin uso, auth desactivada.              |
-
-> Debe coincidir con el `FRONTEND_URL` configurado en el CORS del backend
-> (por defecto el backend permite `http://localhost:5173`, que es el puerto de Vite).
-
-## 3. Levantar en desarrollo
-
-```bash
-npm run dev
-```
-
-Abre en `http://localhost:5173`.
-
-## 4. Build de producción
-
-```bash
-npm run build      # type-check (tsc) + bundle (vite)
-npm run preview    # sirve el build localmente
-```
-
----
-
-## Pantallas
-
-| Ruta                  | Pantalla                                                            |
-| --------------------- | ------------------------------------------------------------------ |
-| `/materiales`         | Lista de materiales + alerta de los que están bajo stock mínimo    |
-| `/materiales/:id`     | Detalle del material con su historial de movimientos               |
-| `/movimientos/nuevo`  | Alta de movimiento (ENTRADA / SALIDA / AJUSTE) con su lógica       |
-| `/proveedores`        | ABM de proveedores (alta, edición, baja)                           |
-
----
+React 18 · TypeScript · Vite · React Router · TanStack React Query · Clerk (login) · jsPDF ·
+Sentry · Vitest + Testing Library
 
 ## Estructura
 
 ```
 src/
-├── main.tsx              # QueryClientProvider + Router (ClerkProvider preparado/comentado)
-├── App.tsx               # rutas
-├── index.css             # estilos
-├── lib/
-│   ├── apiClient.ts      # fetch tipado (lee VITE_API_URL) + manejo de errores
-│   ├── queryClient.ts    # config de React Query
-│   └── formato.ts        # helpers de fecha/número
-├── tipos/                # interfaces espejo de los DTOs del backend
-├── api/                  # hooks de React Query por dominio
-├── componentes/          # UI reutilizable (Layout, Modal, Estados, Badge)
-└── paginas/              # las 4 pantallas
+├── App.tsx           las rutas, cada una con su permiso
+├── paginas/          una por pantalla
+├── componentes/      piezas y modales (ordenesCompra/, ordenesTrabajo/, equiposIt/)
+├── api/              un archivo por recurso, con los hooks de React Query
+├── lib/              cliente HTTP, PDFs, QR, fechas, permisos, envíos por WhatsApp…
+├── tipos/            la forma de los datos que devuelve la API
+└── index.css         los estilos, con variables de color
+docs/manual/          el manual para la gente que usa el sistema (y cómo regenerarlo)
 ```
 
----
+## Levantarlo en una máquina
 
-## Autenticación (Clerk)
+Hace falta **Node 22** y la API corriendo en local (ver su README).
 
-La app usa **Clerk**. El comportamiento depende de si `VITE_CLERK_PUBLISHABLE_KEY` está
-configurada:
-
-- **Con key** → toda la app queda detrás del login. Sin sesión se muestra la pantalla de
-  Clerk (`<SignIn />`); con sesión, el token se adjunta automáticamente a cada request de
-  la API (`Authorization: Bearer …`) y aparece el `UserButton` en el sidebar.
-- **Sin key** → la app corre **sin auth** (modo desarrollo). En ese caso el backend debe
-  tener `AUTH_DISABLED="true"`.
-
-### Configurar Clerk
-
-1. Creá una aplicación en [clerk.com](https://clerk.com) (la misma instancia que el backend).
-2. En **API Keys**, copiá la **Publishable key** (`pk_test_…`).
-3. En el `.env`:
-   ```
-   VITE_CLERK_PUBLISHABLE_KEY="pk_test_..."
-   ```
-4. Reiniciá `npm run dev`. Asegurate de que el backend tenga su `CLERK_SECRET_KEY` puesta
-   y `AUTH_DISABLED="false"`.
-
-Piezas clave: `src/main.tsx` (gate de login), `src/componentes/ProveedorToken.tsx`
-(registra el token) y `src/lib/apiClient.ts` (lo adjunta a las requests).
-
----
-
-## Notas
-
-- El cliente API centraliza las llamadas en `lib/apiClient.ts`; si cambia la forma de
-  respuesta del backend, se ajusta en un solo lugar.
-- Las mutaciones invalidan las queries afectadas (p. ej. registrar un movimiento refresca
-  el stock de materiales automáticamente).
+```bash
+npm ci
+cp .env.example .env.local      # VITE_API_URL=http://localhost:3000/api
+npm run dev                     # http://localhost:5173
 ```
+
+Sin `VITE_CLERK_PUBLISHABLE_KEY` corre sin login; en ese caso la API tiene que tener
+`AUTH_DISABLED="true"`.
+
+## Tests
+
+```bash
+npm test          # pantallas y componentes, como los usa una persona
+npm run lint
+npm run build     # tsc + vite
+```
+
+El CI corre los tres en cada push y pull request.
+
+## Cómo se trabaja
+
+Ramas, formato de los commits, pull requests y versiones: **[CONTRIBUTING.md](CONTRIBUTING.md)**.
+Los cambios de cada versión: **[CHANGELOG.md](CHANGELOG.md)**.
