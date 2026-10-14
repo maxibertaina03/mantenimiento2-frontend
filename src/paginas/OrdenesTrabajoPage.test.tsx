@@ -593,3 +593,65 @@ describe('registrar un trabajo desde la ficha de una maquina', () => {
     expect(screen.getByRole('option', { name: 'Cambio de aceite' })).toBeInTheDocument();
   });
 });
+
+describe('una orden que se hace en un taller de afuera', () => {
+  /** El tubo, en GENINETTO: el trabajo lo hace el taller. */
+  const externa = {
+    ...ORDEN,
+    titulo: 'Llenar el tubo de argon',
+    ejecutor: 'EXTERNO',
+    proveedorId: 'prov-1',
+    proveedorNombre: 'GENINETTO',
+    materiales: [],
+  };
+
+  const mockearExterna = (rol: 'MANTENIMIENTO' | 'ADMIN', asignadoAId = 'u1') => {
+    const orden = { ...externa, asignadoAId, asignadoANombre: asignadoAId === 'u1' ? 'Facundo' : 'Leandro' };
+    apiRequestMock.mockImplementation((rutaCruda: string) => {
+      const ruta = String(rutaCruda ?? '');
+      if (ruta.startsWith('/usuarios/me')) return Promise.resolve({ id: 'u1', nombre: 'Facundo', rol });
+      if (ruta.startsWith('/permisos/mios')) return Promise.resolve({ rol, permisos });
+      if (ruta.startsWith('/ordenes-trabajo/asignables')) {
+        return Promise.resolve([
+          { id: 'u1', nombre: 'Facundo' },
+          { id: 'u2', nombre: 'Leandro' },
+        ]);
+      }
+      if (ruta.endsWith('/envios')) return Promise.resolve([]);
+      if (/^\/ordenes-trabajo\/[^/]+$/.test(ruta)) {
+        return Promise.resolve({ ...orden, resumen: { materialesDistintos: 0, unidadesTotales: 0 } });
+      }
+      if (ruta.startsWith('/ordenes-trabajo')) {
+        return Promise.resolve({ datos: [orden], total: 1, pagina: 1, limite: 20 });
+      }
+      return Promise.resolve({ datos: [], total: 0, pagina: 1, limite: 20 });
+    });
+  };
+
+  it('a quien la tiene: volvió del taller y mandársela; sin cargar materiales ni pasarla a otro', async () => {
+    permisos = ['trabajos.ver', 'trabajos.editar', 'trabajos.asignar'];
+    mockearExterna('ADMIN');
+    const usuario = userEvent.setup();
+    mostrar();
+
+    await usuario.click(await screen.findByRole('button', { name: /^ver$/i }));
+
+    expect(await screen.findByRole('button', { name: /volvió del taller/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /mandársela al taller/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /\+ usar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /materiales/i })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Pasarle el trabajo/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /envíos/i })).toBeInTheDocument();
+  });
+
+  it('si la tiene otro, el admin sí puede pasársela a alguien (para destrabarla)', async () => {
+    permisos = ['trabajos.ver', 'trabajos.editar', 'trabajos.asignar'];
+    mockearExterna('ADMIN', 'u2');
+    const usuario = userEvent.setup();
+    mostrar();
+
+    await usuario.click(await screen.findByRole('button', { name: /^ver$/i }));
+    expect(await screen.findByLabelText(/Pasarle el trabajo/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /volvió del taller/i })).not.toBeInTheDocument();
+  });
+});
