@@ -1451,7 +1451,7 @@ button {
     content: attr(data-etiqueta);
     font-weight: 600;
     font-size: 0.78rem;
-    color: var(--color-texto-suave, #6b7280);
+    color: var(--color-texto-suave);
     text-align: left;
     flex: 0 0 auto;
   }
@@ -3222,4 +3222,68 @@ button {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
+}
+
+/* ─────────── Hoy: una tarjeta por cada cosa pendiente ───────────
+   Tocando una se despliega su lista abajo. Todo entra en una pantalla. */
+.tarjetas-hoy {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+.tarjeta-hoy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  background: var(--color-panel);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.tarjeta-hoy:hover {
+  border-color: var(--color-primario);
+}
+.tarjeta-hoy.activa {
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primario) 25%, transparent);
+}
+.tarjeta-hoy-numero {
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--color-primario);
+}
+.tarjeta-hoy-urgente .tarjeta-hoy-numero {
+  color: var(--color-peligro);
+}
+.tarjeta-hoy-titulo {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.tarjeta-hoy-detalle {
+  font-size: 0.78rem;
+  color: var(--color-texto-suave);
+}
+.detalle-hoy .lista-inicio {
+  margin-bottom: 0.5rem;
+}
+.huecos-hoy summary {
+  cursor: pointer;
+}
+@media (max-width: 600px) {
+  .tarjetas-hoy {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .tarjeta-hoy-numero {
+    font-size: 1.35rem;
+  }
 }

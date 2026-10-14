@@ -1,3 +1,4 @@
+import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useCoberturaAlertas, useMaterialesBajoStock } from '@/api/materiales';
 import { useOrdenes } from '@/api/ordenesCompra';
@@ -16,21 +17,38 @@ const MAXIMO_EN_LISTA = 6;
 /** Los estados que significan que el equipo no está trabajando. */
 const NO_OPERATIVOS = ['EN_REPARACION', 'FUERA_DE_SERVICIO'] as const;
 
+type Clave = 'parados' | 'servicios' | 'talleres' | 'reponer' | 'llegar' | 'sinEnviar';
+
+/** Una tarjeta de arriba, y lo que se despliega al tocarla. */
+interface Tarjeta {
+  clave: Clave;
+  /** El número grande. */
+  cuantos: number;
+  titulo: string;
+  /** Una línea chica debajo del número, cuando dice algo más. */
+  detalle?: string;
+  /** Pide atención: se pinta distinto. */
+  urgente?: boolean;
+  /** La lista que se despliega abajo. */
+  contenido: ReactNode;
+  /** A dónde lleva «Ver todo». */
+  ir: { a: string; texto: string };
+}
+
 /**
  * Qué hay que hacer hoy.
  *
- * La pantalla de entrada era el listado de 911 materiales, que no contesta
- * ninguna pregunta: hay que saber de antemano qué buscar. Esta contesta cuatro,
- * en el orden en que importan al abrir el sistema a la mañana: qué está parado,
- * qué service vence, qué falta reponer y qué quedó a medio hacer.
+ * Arriba lo que le toca a cada uno. Debajo, una tarjeta por cada cosa
+ * pendiente —equipos parados, services, talleres, reponer, mercadería, órdenes
+ * sin enviar— con su número; tocando una se despliega su lista. Antes eran
+ * seis bloques uno abajo del otro y para llegar al último había que bajar
+ * varias pantallas: así se ve todo de un vistazo, en la compu y en el celular.
  *
- * No repite lo que hacen las otras pantallas: cada bloque muestra las primeras
- * filas y lleva a la vista completa, que es donde están los filtros.
+ * Las tarjetas en cero no se muestran: ocupan lugar para no decir nada.
  *
- * El último bloque es distinto y es el que más importa: dice de qué NO puede
- * avisar el sistema porque le falta el dato cargado. Sin eso, la pantalla puede
- * decir "no hay nada pendiente" mientras media planta está sin cubrir, y eso
- * sería peor que no tener la pantalla.
+ * El aviso de lo que el sistema NO puede saber (materiales sin mínimo,
+ * equipos sin plan) sigue estando, plegado al pie. Sin eso, la pantalla podría
+ * decir "no hay nada pendiente" mientras media planta está sin cubrir.
  */
 export function InicioPage() {
   // Antes esto era "sos administrador". Con cuatro roles no alcanza: gerencia
@@ -39,6 +57,8 @@ export function InicioPage() {
   const veServicios = puede(P.SERVICIOS_VER);
   const veEquipos = puede(P.EQUIPOS_VER);
   const veTrabajos = puede(P.TRABAJOS_VER);
+  /** La tarjeta abierta. `null`: la primera; 'ninguna': se cerró a propósito. */
+  const [abierta, setAbierta] = useState<Clave | 'ninguna' | null>(null);
 
   const bajoStock = useMaterialesBajoStock();
   const cobertura = useCoberturaAlertas();
@@ -73,18 +93,143 @@ export function InicioPage() {
   })).filter((x) => x.cuantos > 0);
   const totalParados = parados.reduce((suma, x) => suma + x.cuantos, 0);
 
-  const nadaQueHacer =
-    faltantes.length === 0 &&
-    porRecibir.length === 0 &&
-    sinEnviar.length === 0 &&
-    vencen.length === 0 &&
-    totalParados === 0 &&
-    afuera.length === 0;
+  // En orden de urgencia: lo parado frena la producción; lo sin enviar, nada todavía.
+  const tarjetas: Tarjeta[] = [
+    {
+      clave: 'parados' as const,
+      cuantos: totalParados,
+      titulo: 'Equipos parados',
+      urgente: true,
+      ir: { a: '/equipos', texto: 'Ver los equipos' },
+      contenido: (
+        <ul className="lista-inicio">
+          {parados.map((x) => (
+            <li key={x.estado}>
+              <Link to={`/equipos?estado=${x.estado}`}>
+                {ETIQUETA_ESTADO_EQUIPO[x.estado] ?? x.estado}
+              </Link>
+              <span className="texto-suave">
+                {x.cuantos} de {equipos.data?.total ?? 0} equipos
+              </span>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+    {
+      clave: 'servicios' as const,
+      cuantos: veServicios ? vencen.length : 0,
+      titulo: 'Mantenimiento',
+      detalle: vencidos > 0 ? `${vencidos} vencidos` : 'por vencer',
+      urgente: vencidos > 0,
+      ir: { a: '/servicios', texto: 'Ver todos los servicios' },
+      contenido: (
+        <ul className="lista-inicio">
+          {vencen.slice(0, MAXIMO_EN_LISTA).map((p) => (
+            <li key={p.id}>
+              <Link to={`/equipos/${p.equipoId}`}>{p.equipoNombre}</Link>
+              <span className="texto-suave">
+                {p.nombre}, {textoVencimiento(p.diasParaVencer)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+    {
+      clave: 'talleres' as const,
+      cuantos: talleres.data?.total ?? afuera.length,
+      titulo: 'En talleres externos',
+      ir: { a: '/ordenes-trabajo?afuera=1', texto: 'Ver las órdenes' },
+      contenido: (
+        <ul className="lista-inicio">
+          {afuera.map((o) => (
+            <li key={o.id}>
+              {o.equipoId ? (
+                <Link to={`/equipos/${o.equipoId}`}>{o.equipoNombre}</Link>
+              ) : (
+                <Link to="/ordenes-trabajo?afuera=1">{o.equipoItNombre ?? o.numero}</Link>
+              )}
+              <span className="texto-suave">
+                en {o.proveedorNombre ?? 'un taller'} desde el {formatearFechaSola(o.abiertaEn)} ·{' '}
+                {o.titulo}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+    {
+      clave: 'reponer' as const,
+      cuantos: faltantes.length,
+      titulo: 'Hay que reponer',
+      detalle: 'bajo el mínimo',
+      ir: { a: '/materiales', texto: `Ver los ${faltantes.length} materiales` },
+      contenido: (
+        <ul className="lista-inicio">
+          {faltantes.slice(0, MAXIMO_EN_LISTA).map((m) => (
+            <li key={m.id}>
+              <Link to={`/materiales/${m.id}`}>{m.nombre}</Link>
+              <span className="texto-suave">
+                quedan {formatearNumero(m.stockActual)} {m.unidad} de{' '}
+                {formatearNumero(m.stockMinimo)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+    {
+      clave: 'llegar' as const,
+      cuantos: totalPorRecibir || porRecibir.length,
+      titulo: 'Mercadería por llegar',
+      ir: { a: '/ordenes-compra', texto: 'Ir a órdenes de compra' },
+      contenido: (
+        <ul className="lista-inicio">
+          {porRecibir.map((o) => (
+            <li key={o.id}>
+              <Link to="/ordenes-compra">{o.numero}</Link>
+              <span className="texto-suave">
+                {o.proveedorNombre ?? 'sin proveedor'}
+                {o.estado === 'RECIBIDA_PARCIAL' && ' · llegó una parte'}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+    {
+      // Una orden en borrador es trabajo empezado que nadie terminó: el
+      // proveedor todavía no se enteró de que existe.
+      clave: 'sinEnviar' as const,
+      cuantos: borradores.data?.total ?? sinEnviar.length,
+      titulo: 'Órdenes sin enviar',
+      ir: { a: '/ordenes-compra', texto: 'Ir a órdenes de compra' },
+      contenido: (
+        <>
+          <ul className="lista-inicio">
+            {sinEnviar.map((o) => (
+              <li key={o.id}>
+                <Link to="/ordenes-compra">{o.numero}</Link>
+                <span className="texto-suave">{o.proveedorNombre ?? 'sin proveedor'}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="texto-suave texto-chico">
+            Están armadas pero el proveedor todavía no las recibió.
+          </p>
+        </>
+      ),
+    },
+  ].filter((t) => t.cuantos > 0);
+
+  const claveAbierta = abierta === null ? tarjetas[0]?.clave : abierta;
+  const actual = tarjetas.find((t) => t.clave === claveAbierta);
 
   // Los huecos de carga que dejan al sistema sin poder avisar.
   const sinMinimo = cobertura.data?.sinMinimo ?? 0;
   const sinPlan = equipos.data?.sinPlan ?? 0;
-  const hayHuecos = sinMinimo > 0 || sinPlan > 0;
+  const hayHuecos = sinMinimo > 0 || (veEquipos && sinPlan > 0);
 
   return (
     <>
@@ -96,7 +241,7 @@ export function InicioPage() {
           rebotar, esto se ve siempre que alguien entre. */}
       <MisTareasDeHoy />
 
-      {nadaQueHacer && (
+      {tarjetas.length === 0 ? (
         <div className="panel">
           <p style={{ margin: 0 }}>
             No hay nada pendiente: ningún equipo parado, ningún material bajo su mínimo y ninguna
@@ -104,145 +249,45 @@ export function InicioPage() {
             {veServicios && ', y ningún service por vencer'}.
           </p>
         </div>
-      )}
-
-      {/* Primero lo que está parado: es lo único que frena la producción. */}
-      {totalParados > 0 && (
-        <div className="panel">
-          <div className="cabecera-bloque">
-            <h2>Equipos parados</h2>
-            <span className="badge badge-bajo">{totalParados}</span>
-          </div>
-          <ul className="lista-inicio">
-            {parados.map((x) => (
-              <li key={x.estado}>
-                <Link to={`/equipos?estado=${x.estado}`}>
-                  {ETIQUETA_ESTADO_EQUIPO[x.estado] ?? x.estado}
-                </Link>
-                <span className="texto-suave">
-                  {x.cuantos} de {equipos.data?.total ?? 0} equipos
-                </span>
-              </li>
+      ) : (
+        <>
+          <div className="tarjetas-hoy">
+            {tarjetas.map((t) => (
+              <button
+                key={t.clave}
+                type="button"
+                className={[
+                  'tarjeta-hoy',
+                  t.urgente ? 'tarjeta-hoy-urgente' : '',
+                  t.clave === claveAbierta ? 'activa' : '',
+                ].join(' ')}
+                aria-expanded={t.clave === claveAbierta}
+                onClick={() => setAbierta(t.clave === claveAbierta ? 'ninguna' : t.clave)}
+              >
+                <span className="tarjeta-hoy-numero">{t.cuantos}</span>
+                <span className="tarjeta-hoy-titulo">{t.titulo}</span>
+                {t.detalle && <span className="tarjeta-hoy-detalle">{t.detalle}</span>}
+              </button>
             ))}
-          </ul>
-          <Link to="/equipos">Ver los equipos →</Link>
-        </div>
-      )}
-
-      {afuera.length > 0 && (
-        <div className="panel">
-          <div className="cabecera-bloque">
-            <h2>En talleres externos</h2>
-            <span className="badge">{talleres.data?.total ?? afuera.length}</span>
           </div>
-          <ul className="lista-inicio">
-            {afuera.map((o) => (
-              <li key={o.id}>
-                {o.equipoId ? (
-                  <Link to={`/equipos/${o.equipoId}`}>{o.equipoNombre}</Link>
-                ) : (
-                  <Link to="/ordenes-trabajo?afuera=1">{o.equipoItNombre ?? o.numero}</Link>
-                )}
-                <span className="texto-suave">
-                  en {o.proveedorNombre ?? 'un taller'} desde el {formatearFechaSola(o.abiertaEn)} ·{' '}
-                  {o.titulo}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <Link to="/ordenes-trabajo?afuera=1">Ver las órdenes →</Link>
-        </div>
-      )}
 
-      {veServicios && vencen.length > 0 && (
-        <div className="panel">
-          <div className="cabecera-bloque">
-            <h2>Mantenimiento</h2>
-            {vencidos > 0 && <span className="badge badge-bajo">{vencidos} vencidos</span>}
-          </div>
-          <ul className="lista-inicio">
-            {vencen.slice(0, MAXIMO_EN_LISTA).map((p) => (
-              <li key={p.id}>
-                <Link to={`/equipos/${p.equipoId}`}>{p.equipoNombre}</Link>
-                <span className="texto-suave">
-                  {p.nombre}, {textoVencimiento(p.diasParaVencer)}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <Link to="/servicios">Ver todos los servicios →</Link>
-        </div>
-      )}
-
-      {faltantes.length > 0 && (
-        <div className="panel">
-          <div className="cabecera-bloque">
-            <h2>Hay que reponer</h2>
-            <span className="badge badge-bajo">{faltantes.length}</span>
-          </div>
-          <ul className="lista-inicio">
-            {faltantes.slice(0, MAXIMO_EN_LISTA).map((m) => (
-              <li key={m.id}>
-                <Link to={`/materiales/${m.id}`}>{m.nombre}</Link>
-                <span className="texto-suave">
-                  quedan {formatearNumero(m.stockActual)} {m.unidad} de{' '}
-                  {formatearNumero(m.stockMinimo)}
-                </span>
-              </li>
-            ))}
-          </ul>
-          {faltantes.length > MAXIMO_EN_LISTA && (
-            <Link to="/materiales">Ver los {faltantes.length} materiales →</Link>
+          {actual && (
+            <div className="panel detalle-hoy">
+              <div className="cabecera-bloque">
+                <h2>{actual.titulo}</h2>
+              </div>
+              {actual.contenido}
+              <Link to={actual.ir.a}>{actual.ir.texto} →</Link>
+            </div>
           )}
-        </div>
-      )}
-
-      {porRecibir.length > 0 && (
-        <div className="panel">
-          <div className="cabecera-bloque">
-            <h2>Mercadería por llegar</h2>
-            <span className="badge">{totalPorRecibir || porRecibir.length}</span>
-          </div>
-          <ul className="lista-inicio">
-            {porRecibir.map((o) => (
-              <li key={o.id}>
-                <Link to="/ordenes-compra">{o.numero}</Link>
-                <span className="texto-suave">
-                  {o.proveedorNombre ?? 'sin proveedor'}
-                  {o.estado === 'RECIBIDA_PARCIAL' && ' · llegó una parte'}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <Link to="/ordenes-compra">Ir a órdenes de compra →</Link>
-        </div>
-      )}
-
-      {/* Una orden en borrador es trabajo empezado que nadie terminó: el
-          proveedor todavía no se enteró de que existe. */}
-      {sinEnviar.length > 0 && (
-        <div className="panel">
-          <div className="cabecera-bloque">
-            <h2>Órdenes sin enviar</h2>
-            <span className="badge">{borradores.data?.total ?? sinEnviar.length}</span>
-          </div>
-          <ul className="lista-inicio">
-            {sinEnviar.map((o) => (
-              <li key={o.id}>
-                <Link to="/ordenes-compra">{o.numero}</Link>
-                <span className="texto-suave">{o.proveedorNombre ?? 'sin proveedor'}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="texto-suave texto-chico" style={{ marginBottom: 0 }}>
-            Están armadas pero el proveedor todavía no las recibió.
-          </p>
-        </div>
+        </>
       )}
 
       {hayHuecos && (
-        <div className="panel panel-aviso">
-          <b>De esto el sistema todavía no te puede avisar</b>
+        <details className="panel panel-aviso huecos-hoy">
+          <summary>
+            <b>De esto el sistema todavía no te puede avisar</b>
+          </summary>
           <ul className="lista-huecos">
             {sinMinimo > 0 && (
               <li>
@@ -263,7 +308,7 @@ export function InicioPage() {
               </li>
             )}
           </ul>
-        </div>
+        </details>
       )}
     </>
   );

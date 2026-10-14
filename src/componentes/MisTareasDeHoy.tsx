@@ -7,6 +7,9 @@ import type { Tarea } from '@/tipos/tarea';
 import { CompletarTarea } from './CompletarTarea';
 import { Cargando, MensajeError } from './Estados';
 
+/** Cuántas tareas se ven sin tocar «Ver todas». */
+const TAREAS_A_LA_VISTA = 3;
+
 /** El día, en palabras cortas. */
 function cuando(iso: string): string {
   const dia = new Date(iso);
@@ -36,6 +39,7 @@ export function MisTareasDeHoy() {
   const habilitado = puede(P.TAREAS_VER);
   const { data, isLoading, error } = useMisTareas(habilitado);
   const [completando, setCompletando] = useState<Tarea | null>(null);
+  const [todas, setTodas] = useState(false);
   const puedeHacerlas = puede(P.TAREAS_EDITAR);
 
   if (!habilitado) return null;
@@ -46,11 +50,16 @@ export function MisTareasDeHoy() {
   if (!isLoading && !error && tareas.length === 0) return null;
 
   const vencidas = tareas.filter((t) => vencio(t.fecha));
+  // Las primeras, para que la pantalla de entrada no se haga larga; el resto, a pedido.
+  const visibles = todas ? tareas : tareas.slice(0, TAREAS_A_LA_VISTA);
 
   return (
     <div className="panel">
       <div className="cabecera-historial">
-        <h2>Lo que hay que hacer</h2>
+        <h2>
+          Lo que hay que hacer{' '}
+          {tareas.length > 0 && <span className="badge">{tareas.length}</span>}
+        </h2>
         <Link to="/calendario" className="btn btn-chico">
           Ver el calendario
         </Link>
@@ -68,7 +77,7 @@ export function MisTareasDeHoy() {
       )}
 
       <ul className="lista-simple">
-        {tareas.map((t) => (
+        {visibles.map((t) => (
           <li key={t.id}>
             <div className="fila-tarea-hoy">
               <span>
@@ -95,6 +104,12 @@ export function MisTareasDeHoy() {
           </li>
         ))}
       </ul>
+
+      {tareas.length > TAREAS_A_LA_VISTA && (
+        <button type="button" className="btn btn-chico" onClick={() => setTodas((v) => !v)}>
+          {todas ? 'Ver menos' : `Ver las ${tareas.length}`}
+        </button>
+      )}
 
       {completando && (
         <CompletarTarea tarea={completando} onCerrar={() => setCompletando(null)} />

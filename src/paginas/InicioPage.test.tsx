@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -278,15 +279,54 @@ describe('InicioPage — ordenes sin enviar', () => {
       ordenes: [{ id: 'o1', numero: 'OC-0007', proveedorNombre: 'Fraluga' }],
       borradores: [{ id: 'o9', numero: 'OC-0012', proveedorNombre: 'Fraluga' }],
     });
+    const usuario = userEvent.setup();
     mostrar();
 
-    const porLlegar = (await screen.findByText('Mercadería por llegar')).closest('.panel')!;
-    const sinEnviar = screen.getByText('Órdenes sin enviar').closest('.panel')!;
-
-    expect(porLlegar).toHaveTextContent('OC-0007');
-    expect(porLlegar).not.toHaveTextContent('OC-0012');
+    // Se ve una lista por vez: la de la tarjeta que se toca.
+    await usuario.click(await screen.findByRole('button', { name: /Órdenes sin enviar/ }));
+    const sinEnviar = screen.getByRole('heading', { name: 'Órdenes sin enviar' }).closest('.panel')!;
     expect(sinEnviar).toHaveTextContent('OC-0012');
     expect(sinEnviar).not.toHaveTextContent('OC-0007');
+
+    await usuario.click(screen.getByRole('button', { name: /Mercadería por llegar/ }));
+    const porLlegar = screen.getByRole('heading', { name: 'Mercadería por llegar' }).closest('.panel')!;
+    expect(porLlegar).toHaveTextContent('OC-0007');
+    expect(porLlegar).not.toHaveTextContent('OC-0012');
+  });
+});
+
+describe('InicioPage — tarjetas', () => {
+  it('una tarjeta por cosa pendiente, con su número; las que están en cero no aparecen', async () => {
+    servidor({
+      bajoStock: [material(), material({ id: 'm2', nombre: 'Correa A42' })],
+      ordenes: [{ id: 'o1', numero: 'OC-0007', proveedorNombre: 'Fraluga' }],
+    });
+    mostrar();
+
+    expect(await screen.findByRole('button', { name: /2\s*Hay que reponer/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /1\s*Mercadería por llegar/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Órdenes sin enviar/ })).not.toBeInTheDocument();
+  });
+
+  it('arranca con la primera abierta; tocar otra cambia la lista, y tocarla de nuevo la cierra', async () => {
+    const usuario = userEvent.setup();
+    servidor({
+      bajoStock: [material()],
+      ordenes: [{ id: 'o1', numero: 'OC-0007', proveedorNombre: 'Fraluga' }],
+    });
+    mostrar();
+
+    expect(await screen.findByText('Rodamiento 6204')).toBeInTheDocument();
+    expect(screen.queryByText('OC-0007')).not.toBeInTheDocument();
+
+    const llegar = screen.getByRole('button', { name: /Mercadería por llegar/ });
+    await usuario.click(llegar);
+    expect(screen.getByText('OC-0007')).toBeInTheDocument();
+    expect(screen.queryByText('Rodamiento 6204')).not.toBeInTheDocument();
+    expect(llegar).toHaveAttribute('aria-expanded', 'true');
+
+    await usuario.click(llegar);
+    expect(screen.queryByText('OC-0007')).not.toBeInTheDocument();
   });
 });
 
