@@ -232,3 +232,34 @@ describe('EquiposPage — equipos y herramientas', () => {
     });
   });
 });
+
+describe('EquiposPage — los filtros viven en la dirección', () => {
+  const consultas = () =>
+    apiRequestMock.mock.calls
+      .filter((c) => String(c[0]) === '/equipos')
+      .map((c) => c[1]?.query as Record<string, unknown>);
+
+  it('REGRESION: el enlace de «Hoy» a los equipos en reparación filtra de verdad', async () => {
+    servidor();
+    mostrar('/equipos?estado=EN_REPARACION');
+
+    await waitFor(() =>
+      expect(consultas()).toContainEqual(expect.objectContaining({ estado: 'EN_REPARACION' })),
+    );
+  });
+
+  it('entrar a un equipo y volver deja el filtro y la página', async () => {
+    servidor();
+    const usuario = userEvent.setup();
+    mostrar('/equipos?estado=EN_REPARACION&pagina=2');
+
+    await usuario.click(await screen.findByText(compresor.nombre));
+    await usuario.click(await screen.findByRole('link', { name: /equipos y herramientas/i }));
+
+    await waitFor(() =>
+      expect(consultas().at(-1)).toEqual(
+        expect.objectContaining({ estado: 'EN_REPARACION', pagina: 2 }),
+      ),
+    );
+  });
+});
