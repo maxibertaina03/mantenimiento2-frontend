@@ -89,7 +89,7 @@ beforeEach(() => {
       if (ruta.startsWith('/permisos/mios')) {
         return Promise.resolve({
           rol: 'ADMIN',
-          permisos: ['movimientos.ver', 'movimientos.crear', 'movimientos.editar'],
+          permisos: ['inventario.ver', 'inventario.contar', 'inventario.ajustar'],
         });
       }
       if (ruta === '/tomas-inventario/toma-1') return Promise.resolve(DETALLE);

@@ -38,7 +38,7 @@ export function InventarioPage() {
             categoría, por estantería o todo junto.
           </p>
         </div>
-        {puede(P.MOVIMIENTOS_CREAR) && (
+        {puede(P.INVENTARIO_CONTAR) && (
           <button className="btn btn-primario" onClick={() => setAbriendo(true)}>
             + Nueva toma
           </button>

@@ -92,8 +92,8 @@ export function TomaInventarioPage() {
 
   const { toma, resumen } = data;
   const abierta = toma.estado === 'ABIERTA';
-  const puedeContar = abierta && puede(P.MOVIMIENTOS_CREAR);
-  const puedeConfirmar = abierta && puede(P.MOVIMIENTOS_EDITAR);
+  const puedeContar = abierta && puede(P.INVENTARIO_CONTAR);
+  const puedeConfirmar = abierta && puede(P.INVENTARIO_AJUSTAR);
   /** Contados que todavía no se confirmaron: lo que «Confirmar» va a procesar. */
   const porConfirmar = renglones.filter((r) => r.contado !== null && !resuelto(r)).length;
   // Abierta: lo que falta contar (o volver a contar); cerrada: todo.
