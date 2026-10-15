@@ -49,7 +49,7 @@ export function App() {
         <Route
           path="/inventario"
           element={
-            <RutaConPermiso permisos={[P.MOVIMIENTOS_VER]}>
+            <RutaConPermiso permisos={[P.INVENTARIO_VER]}>
               <InventarioPage />
             </RutaConPermiso>
           }
@@ -57,7 +57,7 @@ export function App() {
         <Route
           path="/inventario/:id"
           element={
-            <RutaConPermiso permisos={[P.MOVIMIENTOS_VER]}>
+            <RutaConPermiso permisos={[P.INVENTARIO_VER]}>
               <TomaInventarioPage />
             </RutaConPermiso>
           }
