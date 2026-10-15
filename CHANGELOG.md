@@ -4,6 +4,17 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.3.0] — 2026-10-16
+
+### Agregado
+
+- **Toma de inventario** (menú «Toma de inventario»). Se abre una toma sobre una categoría,
+  una estantería o todo el pañol y se cuenta material por material, desde el celular o con la
+  planilla impresa. Mientras se cuenta no se muestra cuánto figura: se escribe lo que se ve.
+  Escanear el QR de un material lo trae directo. Antes de confirmar se ven las diferencias, y al
+  confirmar se ajusta el stock. Lo que se movió después de contarlo queda para volver a contar.
+  Se puede contar por tandas y cerrar la toma cuando se termina. Informe en PDF.
+
 ## [1.2.0] — 2026-10-15
 
 ### Agregado
@@ -57,6 +68,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.3.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.3.0
 [1.2.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.2.0
 [1.1.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.1.0
 [1.0.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.0.1
