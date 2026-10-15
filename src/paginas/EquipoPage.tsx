@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   useAlmacenDisponible,
   useEquipo,
@@ -27,6 +27,7 @@ import { VolvioDelTaller } from '@/componentes/VolvioDelTaller';
 import { esCelular } from '@/lib/dispositivo';
 import { armarEtiquetas, imprimirEtiquetas } from '@/lib/etiquetaQr';
 import { formatearFecha, formatearFechaSola } from '@/lib/formato';
+import { useVolverA } from '@/lib/listaEnUrl';
 import { P, usePuede } from '@/lib/permisos';
 import { stockDeRepuesto } from '@/lib/stockDeRepuesto';
 import { ETIQUETA_ESTADO_EQUIPO, type Equipo, type RepuestoEquipo } from '@/tipos/equipo';
@@ -84,6 +85,9 @@ export function EquipoPage() {
 function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
   const puede = usePuede();
   const navegar = useNavigate();
+  const ubicacion = useLocation();
+  // La lista como estaba al entrar (filtros, búsqueda, página), o la lista sola.
+  const volverA = useVolverA('/equipos');
   const [parametros, setParametros] = useSearchParams();
   const pedida = parametros.get('pestana');
   const pestana: Pestana = PESTANAS.includes(pedida as Pestana) ? (pedida as Pestana) : 'resumen';
@@ -164,12 +168,14 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
     parametros.delete('desde');
     if (p === 'resumen') parametros.delete('pestana');
     else parametros.set('pestana', p);
-    setParametros(parametros);
+    // Con el estado de la navegación: si no, cambiar de pestaña olvidaba a qué
+    // lista volver.
+    setParametros(parametros, { state: ubicacion.state });
   };
 
   return (
     <>
-      <Link to="/equipos" className="texto-suave volver">
+      <Link to={volverA} className="texto-suave volver">
         ← Equipos y herramientas
       </Link>
 

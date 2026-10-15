@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEliminarEquipo, useEquipos, useResumenEquipos } from '@/api/equipos';
 import { AccionesFila } from '@/componentes/AccionesFila';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
@@ -11,8 +11,29 @@ import { CargarFotosPlanta } from '@/componentes/CargarFotosPlanta';
 import { ESTADOS_EQUIPO, ETIQUETA_ESTADO_EQUIPO } from '@/tipos/equipo';
 import type { Equipo, EstadoEquipo, FiltrosEquipos } from '@/tipos/equipo';
 import { ETIQUETA_CLASIFICACION_PLURAL } from '@/tipos/ordenCompra';
+import {
+  estadoParaVolver,
+  useBusquedaDemorada,
+  useListaEnUrl,
+  type EsquemaFiltros,
+} from '@/lib/listaEnUrl';
 
 const LIMITE = 20;
+
+/** Los filtros que van en la dirección. «Hoy» enlaza con `?estado=EN_REPARACION`. */
+const ESQUEMA: EsquemaFiltros<FiltrosEquipos> = {
+  buscar: 'texto',
+  ubicacionId: 'texto',
+  tipoId: 'texto',
+  marcaId: 'texto',
+  modeloId: 'texto',
+  estado: 'texto',
+  clasificacion: 'texto',
+  garantiaVencida: 'si',
+  sinQr: 'si',
+  ordenarPor: 'texto',
+  direccion: 'texto',
+};
 
 /** Cuántos filtros achican el listado. El orden no cuenta: no saca filas. */
 function contarFiltros(f: FiltrosEquipos): number {
@@ -22,10 +43,14 @@ function contarFiltros(f: FiltrosEquipos): number {
 }
 
 export function EquiposPage() {
-  const [buscar, setBuscar] = useState('');
-  const [busquedaDebounced, setBusquedaDebounced] = useState('');
-  const [pagina, setPagina] = useState(1);
-  const [filtros, setFiltros] = useState<FiltrosEquipos>({});
+  // Los filtros, la búsqueda y la página viven en la dirección: entrar a una
+  // ficha y volver deja la lista como estaba.
+  const { filtros: filtrosConBusqueda, pagina, cambiarFiltros, reemplazarFiltros, irAPagina } =
+    useListaEnUrl<FiltrosEquipos>(ESQUEMA);
+  const { buscar: busquedaDebounced = '', ...filtros } = filtrosConBusqueda;
+  const [buscar, setBuscar] = useBusquedaDemorada(busquedaDebounced, (b) =>
+    cambiarFiltros({ buscar: b }),
+  );
   const [panelFiltros, setPanelFiltros] = useState(false);
   const [editando, setEditando] = useState<Equipo | null>(null);
   const [creando, setCreando] = useState(false);
@@ -35,19 +60,12 @@ export function EquiposPage() {
   const [fotos, setFotos] = useState(false);
 
   const navegar = useNavigate();
+  const ubicacion = useLocation();
   // Las etiquetas QR ya impresas y pegadas en las máquinas llevan a
   // /equipos?equipo=<id>. La ficha ahora es una página propia: esa dirección
   // tiene que seguir sirviendo, así que lleva a /equipos/<id>.
   const [parametros] = useSearchParams();
   const idPedido = parametros.get('equipo') ?? '';
-
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setBusquedaDebounced(buscar);
-      setPagina(1);
-    }, 300);
-    return () => clearTimeout(t);
-  }, [buscar]);
 
   const { data, isLoading, error, isFetching } = useEquipos(pagina, LIMITE, {
     ...filtros,
@@ -65,11 +83,8 @@ export function EquiposPage() {
   const totalPaginas = data ? Math.max(1, Math.ceil(data.total / LIMITE)) : 1;
   const puestos = contarFiltros(filtros);
 
-  const cambiarFiltro = (parcial: Partial<FiltrosEquipos>) => {
-    setFiltros((f) => ({ ...f, ...parcial }));
-    // Con el filtro nuevo, la página en la que estabas puede ya no existir.
-    setPagina(1);
-  };
+  // Con el filtro nuevo vuelve a la página 1: la de antes puede ya no existir.
+  const cambiarFiltro = (parcial: Partial<FiltrosEquipos>) => cambiarFiltros(parcial);
 
   const borrar = async (e: Equipo) => {
     const aviso =
@@ -273,7 +288,10 @@ export function EquiposPage() {
               Solo los que ya no están en garantía
             </label>
             {puestos > 0 && (
-              <button className="btn btn-chico" onClick={() => setFiltros({})}>
+              <button
+                className="btn btn-chico"
+                onClick={() => reemplazarFiltros({ buscar: busquedaDebounced || undefined })}
+              >
                 ✕ Limpiar filtros ({puestos})
               </button>
             )}
@@ -308,7 +326,11 @@ export function EquiposPage() {
             </thead>
             <tbody>
               {data.datos.map((e) => (
-                <tr key={e.id} onClick={() => navegar(`/equipos/${e.id}`)} style={{ cursor: 'pointer' }}>
+                <tr
+                  key={e.id}
+                  onClick={() => navegar(`/equipos/${e.id}`, { state: estadoParaVolver(ubicacion) })}
+                  style={{ cursor: 'pointer' }}
+                >
                   <td data-etiqueta="Equipo">
                     {/* Un solo bloque: en el celular la celda es «etiqueta | valor», y
                         cada renglón suelto se ponía al lado del nombre y se cortaba. */}
@@ -354,7 +376,7 @@ export function EquiposPage() {
 
       {data && totalPaginas > 1 && (
         <div className="paginacion">
-          <button className="btn" disabled={pagina <= 1} onClick={() => setPagina((p) => p - 1)}>
+          <button className="btn" disabled={pagina <= 1} onClick={() => irAPagina(pagina - 1)}>
             ← Anterior
           </button>
           <span className="texto-suave">
@@ -363,7 +385,7 @@ export function EquiposPage() {
           <button
             className="btn"
             disabled={pagina >= totalPaginas}
-            onClick={() => setPagina((p) => p + 1)}
+            onClick={() => irAPagina(pagina + 1)}
           >
             Siguiente →
           </button>

@@ -4,6 +4,19 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.1.0] — 2026-10-15
+
+### Cambiado
+
+- **Materiales y Equipos recuerdan dónde estabas.** El filtro, la búsqueda y la página quedan
+  en la dirección: entrar a un material (o a un equipo) y volver deja la lista igual, por
+  ejemplo «Electricidad», página 4. También vale el botón «atrás» del navegador, y el enlace a
+  una lista filtrada se puede compartir.
+
+### Arreglado
+
+- El enlace de «Hoy» a los equipos parados (`/equipos?estado=…`) ahora sí filtra la lista.
+
 ## [1.0.1] — 2026-10-14
 
 ### Agregado
@@ -33,5 +46,6 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.1.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.1.0
 [1.0.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.0.1
 [1.0.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.0.0
