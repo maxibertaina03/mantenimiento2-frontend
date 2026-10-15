@@ -7,10 +7,13 @@ import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { FormularioMaterial } from '@/componentes/FormularioMaterial';
 import { Modal } from '@/componentes/Modal';
 import { formatearFecha, formatearNumero } from '@/lib/formato';
+import { useVolverA } from '@/lib/listaEnUrl';
 
 export function MaterialDetallePage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
+  // La lista como estaba al entrar (filtro, búsqueda, página), o la lista sola.
+  const volverA = useVolverA('/materiales');
   const { data: material, isLoading, error } = useMaterialConHistorial(id);
   const actualizar = useActualizarMaterial(id);
   // La ficha es a donde cae quien escanea el QR del estante: desde acá tiene
@@ -25,7 +28,7 @@ export function MaterialDetallePage() {
     <>
       <div className="cabecera-pagina">
         <div>
-          <Link to="/materiales" className="texto-suave">
+          <Link to={volverA} className="texto-suave">
             ← Volver a materiales
           </Link>
           <h1 style={{ marginTop: '0.4rem' }}>{material.nombre}</h1>

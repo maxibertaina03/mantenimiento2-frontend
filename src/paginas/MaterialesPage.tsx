@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   obtenerTodosLosMateriales,
   useEliminarMaterial,
@@ -21,32 +21,52 @@ import { exportarPdf } from '@/lib/pdf';
 import { formatearNumero } from '@/lib/formato';
 import type { Material } from '@/tipos/material';
 import { tieneMouse } from '@/lib/dispositivo';
+import {
+  estadoParaVolver,
+  useBusquedaDemorada,
+  useListaEnUrl,
+  type EsquemaFiltros,
+} from '@/lib/listaEnUrl';
 
 const LIMITE = 20;
+
+/** Los filtros que van en la dirección, y de qué tipo es cada uno. */
+const ESQUEMA: EsquemaFiltros<Filtros> = {
+  buscar: 'texto',
+  categoriaId: 'texto',
+  unidadId: 'texto',
+  stockMin: 'numero',
+  stockMax: 'numero',
+  bajoStock: 'si',
+  sinUnidad: 'si',
+  mostrar: 'texto',
+  sinQr: 'si',
+  estanteriaId: 'texto',
+  sinUbicacion: 'si',
+  ordenarPor: 'texto',
+  direccion: 'texto',
+};
 
 /** Unidades que se ofrecen aunque todavía no las use ningún material. */
 export function MaterialesPage() {
   const navegar = useNavigate();
+  const ubicacion = useLocation();
   const eliminar = useEliminarMaterial();
   const jubilar = useJubilarMaterial();
-  const [buscar, setBuscar] = useState('');
-  const [busquedaDebounced, setBusquedaDebounced] = useState('');
-  const [pagina, setPagina] = useState(1);
 
-  // Debounce: esperamos 300ms tras dejar de tipear antes de pedir a la API.
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setBusquedaDebounced(buscar);
-      setPagina(1); // al cambiar la búsqueda volvemos a la primera página
-    }, 300);
-    return () => clearTimeout(t);
-  }, [buscar]);
-
-  // Los filtros viven acá y no en el componente: el listado, la exportación y
-  // la paginación tienen que ver todos lo mismo.
-  const [filtros, setFiltros] = useState<Filtros>({});
-  const [panelFiltros, setPanelFiltros] = useState(false);
-  const filtrosConBusqueda: Filtros = { ...filtros, buscar: busquedaDebounced };
+  // Los filtros, la búsqueda y la página viven en la dirección: entrar a un
+  // material y volver deja la lista como estaba («Electricidad», página 4).
+  const { filtros: filtrosConBusqueda, pagina, cambiarFiltros, reemplazarFiltros, irAPagina } =
+    useListaEnUrl<Filtros>(ESQUEMA);
+  const { buscar: busquedaDebounced = '', ...filtros } = filtrosConBusqueda;
+  const [buscar, setBuscar] = useBusquedaDemorada(busquedaDebounced, (b) =>
+    cambiarFiltros({ buscar: b }),
+  );
+  // Si se vuelve con filtros puestos, el panel aparece abierto: que se vea qué filtra.
+  const [panelFiltros, setPanelFiltros] = useState(() => contarFiltros(filtros) > 0);
+  /** Abre la ficha recordando la lista como está, para que «← Volver» la deje igual. */
+  const abrir = (id: string) =>
+    navegar(`/materiales/${id}`, { state: estadoParaVolver(ubicacion) });
 
   const { data, isLoading, error, isFetching } = useMateriales(pagina, LIMITE, filtrosConBusqueda);
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -158,12 +178,9 @@ export function MaterialesPage() {
       {panelFiltros && (
         <FiltrosMateriales
           filtros={filtros}
-          onCambio={(f) => {
-            setFiltros(f);
-            // Volver a la primera página: con el filtro nuevo, la página en la
-            // que estabas puede ya no existir y la tabla saldría vacía.
-            setPagina(1);
-          }}
+          // Vuelve a la página 1: con el filtro nuevo, la de antes puede no
+          // existir y la tabla saldría vacía.
+          onCambio={(f) => reemplazarFiltros({ ...f, buscar: busquedaDebounced })}
         />
       )}
 
@@ -192,10 +209,14 @@ export function MaterialesPage() {
               <tr
                 key={m.id}
                 className="fila-clickeable"
-                onClick={() => navegar(`/materiales/${m.id}`)}
+                onClick={() => abrir(m.id)}
               >
                 <td data-etiqueta="Material">
-                  <Link to={`/materiales/${m.id}`} onClick={(e) => e.stopPropagation()}>
+                  <Link
+                    to={`/materiales/${m.id}`}
+                    state={estadoParaVolver(ubicacion)}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {m.nombre}
                   </Link>
                 </td>
@@ -223,7 +244,7 @@ export function MaterialesPage() {
                   <AccionesFila
                     descripcion={m.nombre}
                     jubilado={!m.activo}
-                    onVer={() => navegar(`/materiales/${m.id}`)}
+                    onVer={() => abrir(m.id)}
                     onEditar={() => setEditando(m)}
                     onJubilar={() => {
                       // Lo que hay que hacer con casi todo lo que ya se usó:
@@ -264,7 +285,7 @@ Deja de aparecer al cargar ` +
             <button
               className="btn btn-sm"
               disabled={pagina <= 1}
-              onClick={() => setPagina((p) => p - 1)}
+              onClick={() => irAPagina(pagina - 1)}
             >
               ← Anterior
             </button>
@@ -274,7 +295,7 @@ Deja de aparecer al cargar ` +
             <button
               className="btn btn-sm"
               disabled={pagina >= totalPaginas}
-              onClick={() => setPagina((p) => p + 1)}
+              onClick={() => irAPagina(pagina + 1)}
             >
               Siguiente →
             </button>
