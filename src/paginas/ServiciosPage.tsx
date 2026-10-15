@@ -4,6 +4,7 @@ import { useTareaDelPlan } from '@/api/calendario';
 import { usePlanesQueVencen } from '@/api/equipos';
 import { useUsuarioActual } from '@/api/usuarios';
 import { CompletarTarea } from '@/componentes/CompletarTarea';
+import { PostergarTarea } from '@/componentes/PostergarTarea';
 import { P, usePuede } from '@/lib/permisos';
 import type { Tarea } from '@/tipos/tarea';
 import { textoVencimiento } from '@/componentes/PlanesEquipo';
@@ -35,6 +36,7 @@ export function ServiciosPage() {
   const { data: yo } = useUsuarioActual();
   const traerTarea = useTareaDelPlan();
   const [completando, setCompletando] = useState<Tarea | null>(null);
+  const [postergando, setPostergando] = useState<Tarea | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
 
   /**
@@ -52,6 +54,12 @@ export function ServiciosPage() {
       return;
     }
     setCompletando(tarea);
+  };
+
+  /** Postergar el service es postergar su tarea del calendario: el plan se mueve con ella. */
+  const postergar = async (planId: string) => {
+    setAviso(null);
+    setPostergando(await traerTarea.mutateAsync(planId));
   };
 
   const vencidos = (data ?? []).filter((p) => p.estado === 'VENCIDO').length;
@@ -129,6 +137,8 @@ export function ServiciosPage() {
                     {formatearFechaSola(p.proximaFecha)}
                     <div className="texto-suave texto-chico">
                       {textoVencimiento(p.diasParaVencer)}
+                      {p.postergadoDesde &&
+                        ` · postergado, era el ${formatearFechaSola(p.postergadoDesde)}`}
                     </div>
                   </td>
                   <td data-etiqueta="Estado">
@@ -138,6 +148,20 @@ export function ServiciosPage() {
                   </td>
                   {puedeHacerlos && (
                     <td className="celda-acciones">
+                      {/* Lo vencido no se posterga: se hace. */}
+                      {p.estado !== 'VENCIDO' && (
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          disabled={traerTarea.isPending}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void postergar(p.id);
+                          }}
+                        >
+                          Postergar
+                        </button>
+                      )}
                       <button
                         type="button"
                         className="btn btn-sm btn-primario"
@@ -159,6 +183,9 @@ export function ServiciosPage() {
         </div>
       )}
 
+      {postergando && (
+        <PostergarTarea tarea={postergando} onCerrar={() => setPostergando(null)} />
+      )}
       {completando && (
         <CompletarTarea tarea={completando} onCerrar={() => setCompletando(null)} />
       )}

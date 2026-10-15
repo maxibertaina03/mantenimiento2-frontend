@@ -149,6 +149,10 @@ export interface PlanMantenimiento {
   /** Los días que se trabaja: 0 domingo … 6 sábado. */
   diasSemana: number[];
   proximaFecha: string;
+  /** Cómo se cuenta el próximo después de hacer uno. */
+  modoProxima: ModoProxima;
+  /** Si se postergó: la fecha que tenía antes. */
+  postergadoDesde: string | null;
   activo: boolean;
   estado: EstadoPlan;
   /** Negativo si ya venció. */
@@ -168,7 +172,15 @@ export interface CrearPlanInput {
   periodicidadDias: number;
   diasSemana?: number[];
   proximaFecha: string;
+  modoProxima?: ModoProxima;
 }
+
+/**
+ * Cómo se cuenta el próximo service después de hacer uno. Tocaba el sábado
+ * 10/10, se hizo el 14/10, cada 14 días: desde que se hizo → 28/10; respetando
+ * el calendario → 24/10.
+ */
+export type ModoProxima = 'DESDE_TRABAJO' | 'CALENDARIO';
 
 /** Un equipo montado dentro de otro, como se lista en la ficha de la máquina. */
 export interface ComponenteEquipo {

@@ -84,7 +84,9 @@ export function PlanesEquipo({ equipo }: { equipo: Equipo }) {
                   Cada {p.periodicidadDias} {p.periodicidadDias === 1 ? 'día' : 'días'} ·{' '}
                   {describirDias(p.diasSemana).toLowerCase()} · próximo{' '}
                   {formatearFechaSola(p.proximaFecha)}
+                  {p.postergadoDesde && ` (postergado, era el ${formatearFechaSola(p.postergadoDesde)})`}
                   {p.activo && ` · ${textoVencimiento(p.diasParaVencer)}`}
+                  {p.modoProxima === 'CALENDARIO' && ' · respeta el calendario'}
                 </p>
 
                 {p.tareas && <p className="hito-descripcion">{p.tareas}</p>}
@@ -156,6 +158,7 @@ function FormularioPlan({
     periodicidadDias: plan?.periodicidadDias ?? 90,
     diasSemana: plan?.diasSemana ?? [...LUNES_A_VIERNES],
     proximaFecha: plan?.proximaFecha?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
+    modoProxima: plan?.modoProxima ?? 'DESDE_TRABAJO',
   });
 
   const cambiar = (parcial: Partial<CrearPlanInput>) => setForm((f) => ({ ...f, ...parcial }));
@@ -168,6 +171,7 @@ function FormularioPlan({
       periodicidadDias: form.periodicidadDias,
       diasSemana: form.diasSemana,
       proximaFecha: form.proximaFecha,
+      modoProxima: form.modoProxima,
     };
     if (esEdicion) await actualizar.mutateAsync({ planId: plan.id, ...datos });
     else await crear.mutateAsync(datos);
@@ -235,6 +239,39 @@ function FormularioPlan({
           dias={form.diasSemana ?? [...LUNES_A_VIERNES]}
           onCambio={(diasSemana) => cambiar({ diasSemana })}
         />
+
+        <fieldset className="campo modo-proxima">
+          <legend>Si se hace tarde, ¿cómo se cuenta el próximo?</legend>
+          <label className="casilla">
+            <input
+              type="radio"
+              name="modoProxima"
+              checked={form.modoProxima !== 'CALENDARIO'}
+              onChange={() => cambiar({ modoProxima: 'DESDE_TRABAJO' })}
+            />
+            <span>
+              <strong>Desde que se hizo.</strong>{' '}
+              <span className="texto-suave">
+                Tocaba el 10/10 y se hizo el 14/10, cada 14 días → el próximo el 28/10.
+              </span>
+            </span>
+          </label>
+          <label className="casilla">
+            <input
+              type="radio"
+              name="modoProxima"
+              checked={form.modoProxima === 'CALENDARIO'}
+              onChange={() => cambiar({ modoProxima: 'CALENDARIO' })}
+            />
+            <span>
+              <strong>Respetar el calendario.</strong>{' '}
+              <span className="texto-suave">
+                El mismo caso → el 24/10: se mantienen las fechas aunque haya atrasos. Para lo que
+                va atado a un día fijo.
+              </span>
+            </span>
+          </label>
+        </fieldset>
 
         <div className="campo">
           <label>Tareas</label>

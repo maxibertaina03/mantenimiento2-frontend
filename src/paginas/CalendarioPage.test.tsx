@@ -31,6 +31,7 @@ const TAREA: Tarea = {
   titulo: 'Revisar presion de caldera',
   descripcion: 'Tiene que estar entre 5 y 7 bar',
   fecha: '2026-09-23T00:00:00.000Z',
+  fechaOriginal: null,
   estado: 'PENDIENTE',
   asignadoAId: 'u1',
   asignadoANombre: 'Facundo',

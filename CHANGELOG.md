@@ -4,6 +4,17 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.2.0] — 2026-10-15
+
+### Agregado
+
+- **Respetar el calendario:** al crear o editar un plan de mantenimiento se elige cómo se cuenta
+  el próximo service si se hace tarde: desde que se hizo (como siempre) o respetando las fechas
+  planificadas. La ficha del equipo muestra cuál usa cada plan.
+- **Postergar** en Hoy, en el calendario y en Servicios: para las tareas que todavía no
+  vencieron, a otro día y con el motivo. Si se pasa del límite (la vez siguiente que toca), la
+  pantalla lo explica. La tarea y el service muestran de qué día se postergaron, quién y por qué.
+
 ## [1.1.0] — 2026-10-15
 
 ### Cambiado
@@ -46,6 +57,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.2.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.2.0
 [1.1.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.1.0
 [1.0.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.0.1
 [1.0.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.0.0
