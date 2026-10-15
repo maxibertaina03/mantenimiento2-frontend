@@ -3317,3 +3317,99 @@ button {
   padding-left: 1.1rem;
   color: var(--color-alerta-texto);
 }
+
+/* ─────────── Toma de inventario ───────────
+   Pensada para el celular: un renglón por material, el campo a mano. */
+.cabecera-toma-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.cabecera-toma-titulo h1 {
+  margin: 0;
+}
+.avance-toma {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  overflow: hidden;
+  margin: 0.6rem 0 0.3rem;
+}
+.avance-toma-barra {
+  height: 100%;
+  background: var(--color-primario);
+  transition: width 0.2s;
+}
+.grupo-toma {
+  margin-bottom: 1rem;
+}
+.grupo-toma-titulo {
+  font-size: 0.95rem;
+  margin: 0.75rem 0 0.4rem;
+  color: var(--color-texto-suave);
+}
+.renglon-toma {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--color-panel);
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  margin-bottom: 0.4rem;
+}
+.renglon-toma-difiere {
+  border-color: var(--color-alerta-borde);
+  background: var(--color-alerta-fondo);
+}
+.renglon-toma-material {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 14rem;
+}
+.renglon-toma-conteo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.renglon-toma-conteo input {
+  width: 7rem;
+  text-align: right;
+  font-size: 1.05rem;
+  padding: 0.45rem 0.6rem;
+}
+.renglon-toma-valor {
+  font-weight: 700;
+  min-width: 3rem;
+  text-align: right;
+}
+.renglon-toma-estado {
+  min-width: 1.2rem;
+  color: var(--color-texto-suave);
+}
+.lista-confirmar-toma {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.lista-confirmar-toma li + li {
+  margin-top: 0.35rem;
+}
+.lista-diferencias {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--color-alerta-texto);
+}
+@media (max-width: 600px) {
+  .renglon-toma-conteo {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .renglon-toma-conteo input {
+    flex: 1;
+    max-width: 10rem;
+  }
+}

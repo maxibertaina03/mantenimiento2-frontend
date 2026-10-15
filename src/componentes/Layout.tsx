@@ -68,6 +68,11 @@ export function Layout() {
               Nuevo movimiento
             </NavLink>
           )}
+          {puede(P.MOVIMIENTOS_VER) && (
+            <NavLink to="/inventario" className={claseNav}>
+              Toma de inventario
+            </NavLink>
+          )}
           {puede(P.TAREAS_VER) && (
             <NavLink to="/calendario" className={claseNav}>
               Calendario
