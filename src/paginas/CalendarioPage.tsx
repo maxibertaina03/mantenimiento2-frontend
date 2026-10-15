@@ -7,6 +7,9 @@ import { useUsuarios } from '@/api/usuarios';
 import { useUsuarioActual } from '@/api/usuarios';
 import { CalendarioImpreso, type ModoImpresion } from '@/componentes/CalendarioImpreso';
 import { CompletarTarea } from '@/componentes/CompletarTarea';
+import { PostergarTarea } from '@/componentes/PostergarTarea';
+import { vencio } from '@/lib/diaDeTarea';
+import { formatearFechaSola } from '@/lib/formato';
 import { ElegirImpresion } from '@/componentes/ElegirImpresion';
 import { NuevaTarea } from '@/componentes/NuevaTarea';
 import { RutinasDeTareas } from '@/componentes/RutinasDeTareas';
@@ -448,6 +451,7 @@ function DetalleTarea({
   const puede = usePuede();
   const { data: yo } = useUsuarioActual();
   const [completando, setCompletando] = useState(false);
+  const [postergando, setPostergando] = useState(false);
   const cancelar = useCancelarTarea();
   const asignar = useAsignarTarea();
   const [nuevoDuenio, setNuevoDuenio] = useState('');
@@ -459,6 +463,12 @@ function DetalleTarea({
   if (completando) {
     return <CompletarTarea tarea={tarea} onCerrar={onCerrar} />;
   }
+  if (postergando) {
+    return <PostergarTarea tarea={tarea} onCerrar={onCerrar} />;
+  }
+  // Lo vencido no se posterga: se hace.
+  const sePuedePostergar =
+    tarea.estado === 'PENDIENTE' && puede(P.TAREAS_EDITAR) && !vencio(tarea.fecha);
 
   return (
     <Modal titulo={tarea.titulo} abierto onCerrar={onCerrar}>
@@ -471,6 +481,17 @@ function DetalleTarea({
         </p>
 
         {tarea.descripcion && <p>{tarea.descripcion}</p>}
+
+        {(tarea.postergaciones ?? []).length > 0 && (
+          <ul className="lista-postergaciones texto-chico">
+            {(tarea.postergaciones ?? []).map((p, i) => (
+              <li key={i}>
+                Postergada del {formatearFechaSola(p.desde)} al {formatearFechaSola(p.hasta)}
+                {p.usuarioNombre ? ` por ${p.usuarioNombre}` : ''}: {p.motivo}
+              </li>
+            ))}
+          </ul>
+        )}
 
         {tarea.planNombre && (
           <p className="texto-suave texto-chico">
@@ -545,6 +566,11 @@ function DetalleTarea({
               }}
             >
               Cancelar tarea
+            </button>
+          )}
+          {sePuedePostergar && (
+            <button type="button" className="btn" onClick={() => setPostergando(true)}>
+              Postergar
             </button>
           )}
           {sePuedeHacer && (

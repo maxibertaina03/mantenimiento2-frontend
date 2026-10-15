@@ -19,6 +19,8 @@ export interface Tarea {
   descripcion: string | null;
   /** El día en que hay que hacerla, en ISO. */
   fecha: string;
+  /** Si se postergó: el día que tenía al principio. */
+  fechaOriginal: string | null;
   estado: EstadoTarea;
   asignadoAId: string | null;
   asignadoANombre: string | null;
@@ -34,6 +36,16 @@ export interface Tarea {
   ordenTrabajoId: string | null;
   ordenTrabajoNumero: string | null;
   creadaPorId: string | null;
+  creadoEn: string;
+  /** Las veces que se postergó, de la primera a la última. */
+  postergaciones?: Postergacion[];
+}
+
+export interface Postergacion {
+  desde: string;
+  hasta: string;
+  motivo: string;
+  usuarioNombre: string | null;
   creadoEn: string;
 }
 

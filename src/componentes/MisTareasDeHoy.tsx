@@ -5,6 +5,7 @@ import { vencio } from '@/lib/diaDeTarea';
 import { P, usePuede } from '@/lib/permisos';
 import type { Tarea } from '@/tipos/tarea';
 import { CompletarTarea } from './CompletarTarea';
+import { PostergarTarea } from './PostergarTarea';
 import { Cargando, MensajeError } from './Estados';
 
 /** Cuántas tareas se ven sin tocar «Ver todas». */
@@ -39,6 +40,7 @@ export function MisTareasDeHoy() {
   const habilitado = puede(P.TAREAS_VER);
   const { data, isLoading, error } = useMisTareas(habilitado);
   const [completando, setCompletando] = useState<Tarea | null>(null);
+  const [postergando, setPostergando] = useState<Tarea | null>(null);
   const [todas, setTodas] = useState(false);
   const puedeHacerlas = puede(P.TAREAS_EDITAR);
 
@@ -86,6 +88,7 @@ export function MisTareasDeHoy() {
                   {cuando(t.fecha)}
                   {t.equipoNombre ? ` · ${t.equipoNombre}` : ''}
                   {t.descripcion ? ` · ${t.descripcion}` : ''}
+                  {t.fechaOriginal ? ` · postergada (era el ${cuando(t.fechaOriginal)})` : ''}
                 </div>
                 {/* Sin responsable la puede hacer cualquiera: se dice, para que
                     nadie piense que la ve por error. */}
@@ -96,9 +99,25 @@ export function MisTareasDeHoy() {
                 )}
               </span>
               {puedeHacerlas && (
-                <button type="button" className="btn btn-chico" onClick={() => setCompletando(t)}>
-                  Darla por hecha
-                </button>
+                <span className="fila-acciones">
+                  {/* Lo vencido no se posterga: se hace. */}
+                  {!vencio(t.fecha) && (
+                    <button
+                      type="button"
+                      className="btn btn-chico"
+                      onClick={() => setPostergando(t)}
+                    >
+                      Postergar
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="btn btn-chico"
+                    onClick={() => setCompletando(t)}
+                  >
+                    Darla por hecha
+                  </button>
+                </span>
               )}
             </div>
           </li>
@@ -113,6 +132,9 @@ export function MisTareasDeHoy() {
 
       {completando && (
         <CompletarTarea tarea={completando} onCerrar={() => setCompletando(null)} />
+      )}
+      {postergando && (
+        <PostergarTarea tarea={postergando} onCerrar={() => setPostergando(null)} />
       )}
     </div>
   );

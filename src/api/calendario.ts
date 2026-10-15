@@ -102,6 +102,16 @@ export function useTareaDelPlan() {
   });
 }
 
+/** Postergar: el plan se mueve con la tarea, así que se refresca todo. */
+export function usePostergarTarea() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, fecha, motivo }: { id: string; fecha: string; motivo: string }) =>
+      apiRequest<Tarea>(`/calendario/${id}/postergar`, { method: 'POST', body: { fecha, motivo } }),
+    onSuccess: () => invalidarTodo(qc),
+  });
+}
+
 export function useCancelarTarea() {
   const qc = useQueryClient();
   return useMutation({
