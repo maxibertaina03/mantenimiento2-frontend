@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { EquiposPage } from '@/paginas/EquiposPage';
 import { EquipoPage } from '@/paginas/EquipoPage';
 import { InicioPage } from '@/paginas/InicioPage';
+import { InventarioPage } from '@/paginas/InventarioPage';
+import { TomaInventarioPage } from '@/paginas/TomaInventarioPage';
 import { ServiciosPage } from '@/paginas/ServiciosPage';
 import { Layout } from './componentes/Layout';
 import { RutaConPermiso } from './componentes/RutaConPermiso';
@@ -41,6 +43,22 @@ export function App() {
           element={
             <RutaConPermiso permisos={[P.MATERIALES_VER]}>
               <MaterialDetallePage />
+            </RutaConPermiso>
+          }
+        />
+        <Route
+          path="/inventario"
+          element={
+            <RutaConPermiso permisos={[P.MOVIMIENTOS_VER]}>
+              <InventarioPage />
+            </RutaConPermiso>
+          }
+        />
+        <Route
+          path="/inventario/:id"
+          element={
+            <RutaConPermiso permisos={[P.MOVIMIENTOS_VER]}>
+              <TomaInventarioPage />
             </RutaConPermiso>
           }
         />
