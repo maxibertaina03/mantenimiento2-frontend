@@ -20,14 +20,35 @@ export interface Material {
   fila: number | null;
   /** Cuándo se imprimió su etiqueta QR. null = todavía no tiene. */
   qrGeneradoEn: string | null;
+  /** La foto para reconocerlo en el estante. null = no tiene. */
+  fotoUrl: string | null;
   notas: string | null;
   creadoEn: string;
   actualizadoEn: string;
 }
 
+/**
+ * La última vez que se contó el material: en una toma confirmada, o con un
+ * ajuste cargado a mano (fijar el stock a un número también es contarlo).
+ */
+export interface UltimoInventario {
+  origen: 'TOMA' | 'AJUSTE';
+  fecha: string;
+  /** Cuánto se contó, o a cuánto se ajustó. */
+  contado: number;
+  /** Cuánto figuraba al contarlo. Solo en las tomas. */
+  figuraba: number | null;
+  resultado: 'AJUSTADO' | 'SIN_DIFERENCIA' | null;
+  tomaId: string | null;
+  tomaNumero: string | null;
+  porNombre: string | null;
+}
+
 /** Material con su historial completo de movimientos. */
 export interface MaterialConHistorial extends Material {
   movimientos: HistorialMovimiento[];
+  /** null = nunca se lo contó. */
+  ultimoInventario: UltimoInventario | null;
 }
 
 export interface CrearMaterialInput {
