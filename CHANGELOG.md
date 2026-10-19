@@ -4,6 +4,15 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.5.0] — 2026-10-19
+
+### Seguridad
+
+- Sin vulnerabilidades conocidas en lo que llega al navegador. Se actualizaron la librería
+  que arma los PDF (jsPDF 4) con su componente de tablas, y la navegación (React Router 7).
+  Los PDF salen idénticos a los de antes: órdenes de compra y de trabajo, planilla e informe
+  de la toma y los listados se compararon uno por uno.
+
 ## [1.4.1] — 2026-10-19
 
 ### Seguridad
@@ -92,6 +101,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.5.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.5.0
 [1.4.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.4.1
 [1.4.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.4.0
 [1.3.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.3.1
