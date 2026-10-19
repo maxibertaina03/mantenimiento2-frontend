@@ -4,6 +4,17 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.4.0] — 2026-10-19
+
+### Agregado
+
+- **Foto del material.** En la ficha de cada material se puede subir una foto desde el celular
+  o la computadora (se achica sola), para reconocer en el estante los repuestos que se
+  confunden. En la lista de materiales aparece una miniatura al lado del nombre.
+- **Último inventario.** La ficha del material dice cuándo se lo contó por última vez, hace
+  cuántos días, en qué toma (con el enlace) y cuánto se contó contra lo que figuraba. Si nunca
+  se contó, lo dice.
+
 ## [1.3.1] — 2026-10-16
 
 ### Cambiado
@@ -75,6 +86,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.4.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.4.0
 [1.3.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.3.1
 [1.3.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.3.0
 [1.2.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.2.0

@@ -5,9 +5,70 @@ import { BadgeMovimiento } from '@/componentes/BadgeMovimiento';
 import { EquiposDeMaterial } from '@/componentes/EquiposDeMaterial';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { FormularioMaterial } from '@/componentes/FormularioMaterial';
+import { FotoMaterial } from '@/componentes/FotoMaterial';
 import { Modal } from '@/componentes/Modal';
-import { formatearFecha, formatearNumero } from '@/lib/formato';
+import { formatearFecha, formatearFechaSola, formatearNumero } from '@/lib/formato';
 import { useVolverA } from '@/lib/listaEnUrl';
+import { P, usePuede } from '@/lib/permisos';
+import type { UltimoInventario } from '@/tipos/material';
+
+/** «hoy», «ayer», «hace 12 días»: para ver de un vistazo si está fresco. */
+function haceCuanto(iso: string): string {
+  const dias = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  if (dias <= 0) return 'hoy';
+  if (dias === 1) return 'ayer';
+  return `hace ${dias} días`;
+}
+
+/**
+ * La última vez que se contó: en una toma (con enlace, si se la puede ver) o
+ * con un ajuste a mano.
+ */
+function UltimoInventarioDato({
+  ultimo,
+  unidad,
+}: {
+  ultimo: UltimoInventario | null;
+  unidad: string;
+}) {
+  const puede = usePuede();
+  if (!ultimo) return <p style={{ marginTop: '0.2rem' }}>Nunca se contó</p>;
+
+  const por = ultimo.porNombre ? ` · ${ultimo.porNombre}` : '';
+  let detalle: string;
+  if (ultimo.origen === 'AJUSTE') {
+    detalle = `Ajuste a mano a ${formatearNumero(ultimo.contado)} ${unidad}${por}`;
+  } else if (ultimo.resultado === 'SIN_DIFERENCIA') {
+    detalle = `Se contaron ${formatearNumero(ultimo.contado)} ${unidad}, sin diferencia${por}`;
+  } else {
+    detalle =
+      `Se contaron ${formatearNumero(ultimo.contado)} ${unidad}` +
+      (ultimo.figuraba !== null ? `, figuraban ${formatearNumero(ultimo.figuraba)}` : '') +
+      ` · se ajustó${por}`;
+  }
+
+  return (
+    <>
+      <p style={{ marginTop: '0.2rem', marginBottom: 0 }}>
+        {formatearFechaSola(ultimo.fecha)}{' '}
+        <span className="texto-suave">({haceCuanto(ultimo.fecha)})</span>
+        {ultimo.origen === 'TOMA' && ultimo.tomaId && (
+          <>
+            {' · '}
+            {puede(P.INVENTARIO_VER) ? (
+              <Link to={`/inventario/${ultimo.tomaId}`}>{ultimo.tomaNumero}</Link>
+            ) : (
+              ultimo.tomaNumero
+            )}
+          </>
+        )}
+      </p>
+      <p className="texto-suave texto-chico" style={{ marginTop: '0.1rem' }}>
+        {detalle}
+      </p>
+    </>
+  );
+}
 
 export function MaterialDetallePage() {
   const { id = '' } = useParams();
@@ -65,7 +126,7 @@ export function MaterialDetallePage() {
 
       {actualizar.error && <MensajeError error={actualizar.error} />}
 
-      <div className="panel">
+      <div className="panel ficha-material">
         <div className="grilla-2">
           <div>
             <p className="texto-suave" style={{ margin: 0 }}>
@@ -104,12 +165,19 @@ export function MaterialDetallePage() {
             </p>
             <p style={{ marginTop: '0.2rem' }}>{formatearNumero(material.stockMinimo)}</p>
           </div>
+          <div>
+            <p className="texto-suave" style={{ margin: 0 }}>
+              Último inventario
+            </p>
+            <UltimoInventarioDato ultimo={material.ultimoInventario} unidad={material.unidad} />
+          </div>
+          {material.notas && (
+            <p className="texto-suave" style={{ marginBottom: 0, gridColumn: '1 / -1' }}>
+              Notas: {material.notas}
+            </p>
+          )}
         </div>
-        {material.notas && (
-          <p className="texto-suave" style={{ marginBottom: 0 }}>
-            Notas: {material.notas}
-          </p>
-        )}
+        <FotoMaterial material={material} />
       </div>
 
       <EquiposDeMaterial materialId={material.id} unidad={material.unidad} />

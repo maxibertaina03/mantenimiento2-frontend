@@ -206,6 +206,32 @@ export function useActualizarMaterial(id: string) {
   });
 }
 
+/** Si el servidor tiene dónde guardar fotos. Sin eso, la pantalla no ofrece cargarla. */
+export function useFotosDeMaterialesDisponibles() {
+  return useQuery({
+    queryKey: ['materiales', 'fotos', 'estado'],
+    queryFn: () => apiRequest<{ disponible: boolean }>('/materiales/fotos/estado'),
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useCambiarFotoMaterial(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (foto: { imagenBase64: string; nombreArchivo: string }) =>
+      apiRequest<Material>(`/materiales/${id}/foto`, { method: 'POST', body: foto }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesMateriales.base }),
+  });
+}
+
+export function useQuitarFotoMaterial(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiRequest<Material>(`/materiales/${id}/foto`, { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesMateriales.base }),
+  });
+}
+
 export function useEliminarMaterial() {
   const qc = useQueryClient();
   return useMutation({

@@ -216,7 +216,11 @@ export function MaterialesPage() {
                     to={`/materiales/${m.id}`}
                     state={estadoParaVolver(ubicacion)}
                     onClick={(e) => e.stopPropagation()}
+                    className="nombre-con-foto"
                   >
+                    {m.fotoUrl && (
+                      <img src={m.fotoUrl} alt="" className="miniatura-material" loading="lazy" />
+                    )}
                     {m.nombre}
                   </Link>
                 </td>

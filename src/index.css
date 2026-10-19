@@ -1740,6 +1740,44 @@ button {
   flex: 1 1 220px;
 }
 
+/* Ficha del material: los datos y, al costado, la foto para reconocerlo.
+   En el celular la foto baja abajo de los datos. */
+.ficha-material {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+@media (min-width: 760px) {
+  .ficha-material:has(.foto-material) {
+    grid-template-columns: minmax(0, 1fr) 260px;
+  }
+}
+/* En la lista: una miniatura al lado del nombre de los que tienen foto. */
+.nombre-con-foto {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.miniatura-material {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  object-fit: cover;
+  border: 1px solid var(--color-borde);
+  border-radius: 6px;
+  background: var(--color-fondo);
+}
+
+.foto-material {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+.foto-material .btn {
+  align-self: flex-start;
+}
+
 .foto-equipo-vacia {
   display: grid;
   place-items: center;
