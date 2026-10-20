@@ -1,3 +1,9 @@
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Printer,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useOrdenes } from '@/api/ordenesCompra';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
@@ -76,14 +82,15 @@ export function OrdenesCompraPage() {
       <div className="cabecera-pagina">
         <h1>Órdenes de compra</h1>
         <button className="btn btn-primario" onClick={() => setModalAlta(true)}>
-          + Nueva orden
+          <Plus className="icono" aria-hidden />
+          Nueva orden
         </button>
       </div>
 
       <div className="grilla-filtros">
         <input
           type="search"
-          placeholder="🔍 Buscar por orden, proveedor, remito o factura…"
+          placeholder="Buscar por orden, proveedor, remito o factura…"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
         />
@@ -156,7 +163,8 @@ export function OrdenesCompraPage() {
                         onClick={() => descargarPdfOrdenCompra(orden)}
                         title="Descargar la orden en PDF para imprimir o enviar"
                       >
-                        🖨 PDF
+                        <Printer className="icono" aria-hidden />
+                        PDF
                       </button>
                     </div>
                   </td>
@@ -170,7 +178,8 @@ export function OrdenesCompraPage() {
       {data && totalPaginas > 1 && (
         <div className="acciones paginacion">
           <button className="btn btn-sm" disabled={pagina <= 1} onClick={() => setPagina((p) => p - 1)}>
-            ← Anterior
+            <ChevronLeft className="icono" aria-hidden />
+            Anterior
           </button>
           <span className="texto-suave">
             Página {pagina} de {totalPaginas} · {data.total} órdenes
@@ -180,7 +189,8 @@ export function OrdenesCompraPage() {
             disabled={pagina >= totalPaginas}
             onClick={() => setPagina((p) => p + 1)}
           >
-            Siguiente →
+            Siguiente
+            <ChevronRight className="icono" aria-hidden />
           </button>
         </div>
       )}

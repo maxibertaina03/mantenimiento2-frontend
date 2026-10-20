@@ -1,3 +1,4 @@
+import { Printer } from 'lucide-react';
 import { useState } from 'react';
 import { useMarcarQrGenerado, useTodosLosEquipos } from '@/api/equipos';
 import { useCatalogoEquipos } from '@/api/catalogosEquipo';
@@ -179,7 +180,8 @@ export function EtiquetasQr({ onCerrar }: { onCerrar: () => void }) {
                 : undefined
             }
           >
-            {preparando ? 'Generando…' : `🖨 Generar e imprimir ${equipos.length}`}
+            <Printer className="icono" aria-hidden />
+            {preparando ? 'Generando…' : `Generar e imprimir ${equipos.length}`}
           </button>
         </div>
       </div>

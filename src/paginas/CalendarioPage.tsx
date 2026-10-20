@@ -1,3 +1,10 @@
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Printer,
+  Repeat,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useAsignarTarea, useCalendario, useCancelarTarea } from '@/api/calendario';
@@ -157,28 +164,33 @@ export function CalendarioPage() {
           {puede(P.TAREAS_EDITAR) && (
             <>
               <button className="btn" onClick={() => setVerRutinas(true)}>
-                ↻ Rutinas
+                <Repeat className="icono" aria-hidden />
+                Rutinas
               </button>
               <button className="btn btn-primario" onClick={() => setDiaElegido(hoy)}>
-                + Nueva tarea
+                <Plus className="icono" aria-hidden />
+                Nueva tarea
               </button>
             </>
           )}
           <button className="btn" onClick={() => setEligiendoImpresion(true)}>
-            🖨 Imprimir
+            <Printer className="icono" aria-hidden />
+            Imprimir
           </button>
         </div>
       </div>
 
       <div className="barra-calendario no-imprimir">
         <button className="btn btn-sm" onClick={() => mover(-1)}>
-          ← Anterior
+          <ChevronLeft className="icono" aria-hidden />
+          Anterior
         </button>
         <strong>
           {MESES[ancla.getMonth()]} de {ancla.getFullYear()}
         </strong>
         <button className="btn btn-sm" onClick={() => mover(1)}>
-          Siguiente →
+          Siguiente
+          <ChevronRight className="icono" aria-hidden />
         </button>
         <button className="btn btn-sm" onClick={() => setAncla(new Date())}>
           Hoy

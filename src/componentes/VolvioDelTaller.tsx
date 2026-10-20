@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import { useState } from 'react';
 import { useCerrarOrdenTrabajo } from '@/api/ordenesTrabajo';
 import type { OrdenTrabajo } from '@/tipos/ordenTrabajo';
@@ -97,7 +98,8 @@ export function VolvioDelTaller({
             className="btn btn-primario"
             disabled={cerrar.isPending || resolucion.trim() === ''}
           >
-            {cerrar.isPending ? 'Cerrando…' : '✔ Volvió: cerrar la orden'}
+            <Check className="icono" aria-hidden />
+            {cerrar.isPending ? 'Cerrando…' : 'Volvió: cerrar la orden'}
           </button>
         </div>
       </form>

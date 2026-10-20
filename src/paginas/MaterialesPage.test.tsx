@@ -108,7 +108,7 @@ describe('volver a la lista de materiales', () => {
     expect(screen.getByText('Cable p4-1')).toBeInTheDocument();
     // El filtro sigue puesto y a la vista.
     expect(screen.getByLabelText('Categoría')).toHaveValue('cat-elec');
-    expect(screen.getByRole('button', { name: '⚗ Filtros (1)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Filtros (1)' })).toBeInTheDocument();
     expect(ultimaConsulta()).toEqual(
       expect.objectContaining({ pagina: 4, categoriaId: 'cat-elec' }),
     );

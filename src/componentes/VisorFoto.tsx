@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -49,7 +50,7 @@ export function VisorFoto({
         <figcaption>{titulo}</figcaption>
       </figure>
       <button type="button" className="visor-logo-cerrar" aria-label="Cerrar">
-        ✕
+        <X className="icono" aria-hidden />
       </button>
     </div>,
     document.body,

@@ -1,3 +1,4 @@
+import { FolderOpen } from 'lucide-react';
 import { useState } from 'react';
 import { useDetectarImportacion, useImportarEquiposPlanta } from '@/api/equipos';
 import { Cargando, MensajeError } from './Estados';
@@ -136,7 +137,7 @@ export function ImportarEquiposPlanta({ onCerrar }: { onCerrar: () => void }) {
 
         <SelectorArchivo
           carpeta
-          icono="📁"
+          icono={<FolderOpen />}
           titulo="Elegí la carpeta con las fotos de la planta"
           ayuda="Una subcarpeta por sector, una foto por equipo"
           ocupado={detectar.isPending ? 'Leyendo la carpeta…' : null}

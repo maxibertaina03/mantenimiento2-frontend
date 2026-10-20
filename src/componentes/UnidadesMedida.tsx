@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import {
   useActualizarUnidad,
@@ -106,7 +107,8 @@ export function UnidadesMedida({ abierto, onCerrar }: { abierto: boolean; onCerr
             Cerrar
           </button>
           <button className="btn btn-primario" onClick={() => setCreando(true)}>
-            + Nueva unidad
+            <Plus className="icono" aria-hidden />
+            Nueva unidad
           </button>
         </div>
       </div>

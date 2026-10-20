@@ -1,3 +1,4 @@
+import { Mail, MessageCircle, Printer } from 'lucide-react';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -134,7 +135,7 @@ export function EnviarOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar:
               {envios.map((e) => (
                 <li key={e.id}>
                   <span>
-                    {e.via === 'CORREO' ? '✉' : '💬'} {e.destinatarios}
+                    {e.via === 'CORREO' ? <Mail className="icono" aria-hidden /> : <MessageCircle className="icono" aria-hidden />} {e.destinatarios}
                     {!e.automatico && <span className="texto-suave"> (a mano)</span>}
                   </span>
                   <span className="texto-suave texto-chico">
@@ -158,10 +159,12 @@ export function EnviarOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar:
                 </div>
                 <div className="acciones-envio">
                   <a className="btn btn-primario" href={urlCorreoManual}>
-                    ✉ Abrir mi correo
+                    <Mail className="icono" aria-hidden />
+                    Abrir mi correo
                   </a>
                   <button className="btn" onClick={() => descargarPdfOrdenCompra(orden)}>
-                    🖨 Descargar el PDF
+                    <Printer className="icono" aria-hidden />
+                    Descargar el PDF
                   </button>
                 </div>
               </>
@@ -194,7 +197,8 @@ export function EnviarOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar:
                     disabled={enviar.isPending || !hayDondeMandar}
                     title={hayDondeMandar ? undefined : 'No hay ninguna dirección a la que mandarla'}
                   >
-                    {enviar.isPending ? 'Enviando…' : '✉ Enviar por correo'}
+                    <Mail className="icono" aria-hidden />
+                    {enviar.isPending ? 'Enviando…' : 'Enviar por correo'}
                   </button>
                 </div>
                 {enviar.error && !sinSmtp && <MensajeError error={enviar.error} />}
@@ -217,11 +221,13 @@ export function EnviarOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar:
               onClick={() => abrirWhatsapp(urlWhatsapp, numeroProveedor)}
               disabled={registrarWhatsapp.isPending}
             >
-              💬 Al proveedor
+              <MessageCircle className="icono" aria-hidden />
+              Al proveedor
             </button>
           ) : (
             <button className="btn" disabled title="El proveedor no tiene teléfono cargado">
-              💬 Al proveedor
+              <MessageCircle className="icono" aria-hidden />
+              Al proveedor
             </button>
           )}
 
@@ -231,12 +237,14 @@ export function EnviarOrden({ orden, onCerrar }: { orden: OrdenCompra; onCerrar:
               onClick={() => abrirWhatsapp(urlWhatsappAdmin, numeroAdmin)}
               disabled={registrarWhatsapp.isPending}
             >
-              💬 A administración
+              <MessageCircle className="icono" aria-hidden />
+              A administración
             </button>
           )}
 
           <button className="btn" onClick={() => descargarPdfOrdenCompra(orden)}>
-            🖨 Descargar el PDF
+            <Printer className="icono" aria-hidden />
+            Descargar el PDF
           </button>
         </div>
 

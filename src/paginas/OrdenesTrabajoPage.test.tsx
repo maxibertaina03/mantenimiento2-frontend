@@ -227,7 +227,7 @@ describe('OrdenesTrabajoPage', () => {
     await usuario.click(await screen.findByRole('button', { name: /^ver$/i }));
 
     expect(await screen.findByText('Se cambio el sello mecanico')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /\+ usar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^usar$/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /reabrir/i })).toBeInTheDocument();
   });
 });
@@ -278,7 +278,7 @@ describe('el trabajo es de quien lo tiene asignado', () => {
     await screen.findByRole('heading', { name: /Orden OT-2026-0001/ });
 
     expect(screen.getByText(/es de Leandro/i)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /\+ usar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^usar$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /cerrar orden/i })).not.toBeInTheDocument();
     // Pero el material que ya se cargo se ve igual: saber que pasa es de todos.
     expect(screen.getByText('Reten 40x72x10')).toBeInTheDocument();
@@ -290,7 +290,7 @@ describe('el trabajo es de quien lo tiene asignado', () => {
 
     await usuario.click(await screen.findByRole('button', { name: /^ver$/i }));
 
-    expect(await screen.findByRole('button', { name: /\+ usar/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /^usar$/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /cerrar orden/i })).toBeInTheDocument();
   });
 
@@ -638,7 +638,7 @@ describe('una orden que se hace en un taller de afuera', () => {
 
     expect(await screen.findByRole('button', { name: /volvió del taller/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /mandársela al taller/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /\+ usar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^usar$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: /materiales/i })).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/Pasarle el trabajo/i)).not.toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /envíos/i })).toBeInTheDocument();

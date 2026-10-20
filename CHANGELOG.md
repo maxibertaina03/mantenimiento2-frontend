@@ -4,6 +4,28 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.6.0] — 2026-10-20
+
+### Cambiado
+
+- **Diseño nuevo en todo el sistema.** Tipografía Inter, una sola paleta de colores y tamaños,
+  íconos parejos en lugar de emojis, y botones, tablas, campos y ventanas más prolijos.
+- **Menú agrupado por área** (Pañol, Mantenimiento, Compras, Informática, Administración), con
+  íconos y fijo mientras se baja por la página.
+- **Hoy:** la fecha bajo el título, tarjetas con ícono y color según urgencia, y las tareas con
+  la fecha en un cuadradito (rojo si ya venció).
+- **Materiales:** la cabecera con menús «Exportar» y «Configurar» (eran siete botones), la foto
+  o un recuadro y la ubicación bajo el nombre, y el estado con un punto de color.
+- **Registrar movimiento:** el tipo se elige con tres botones de color (Entrada, Salida,
+  Ajuste) y los motivos tienen nombres legibles («Uso en un trabajo»), también en el historial.
+- Las fechas se muestran «16/10/2026 10:26» y ya no se parten en las tablas.
+
+### Agregado
+
+- **En el celular, una barra fija abajo** con Hoy, Materiales, Cargar, Calendario y «Más».
+  Las ventanas salen desde abajo a lo ancho, los filtros van compactos y cada lista se ve como
+  tarjetas con su título.
+
 ## [1.5.1] — 2026-10-20
 
 ### Cambiado (para quien desarrolla)
@@ -111,6 +133,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.6.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.6.0
 [1.5.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.5.1
 [1.5.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.5.0
 [1.4.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.4.1

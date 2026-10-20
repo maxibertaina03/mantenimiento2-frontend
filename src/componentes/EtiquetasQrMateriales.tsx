@@ -1,3 +1,4 @@
+import { Printer } from 'lucide-react';
 import { useState } from 'react';
 import { useMarcarQrMaterial, useTodosLosMateriales } from '@/api/materiales';
 import { useCategorias } from '@/api/categorias';
@@ -184,7 +185,8 @@ export function EtiquetasQrMateriales({ onCerrar }: { onCerrar: () => void }) {
                 : undefined
             }
           >
-            {preparando ? 'Generando…' : `🖨 Generar e imprimir ${materiales.length}`}
+            <Printer className="icono" aria-hidden />
+            {preparando ? 'Generando…' : `Generar e imprimir ${materiales.length}`}
           </button>
         </div>
       </div>

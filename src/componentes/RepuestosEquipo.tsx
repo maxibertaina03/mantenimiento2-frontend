@@ -1,3 +1,10 @@
+import {
+  MapPin,
+  Pencil,
+  Plus,
+  TriangleAlert,
+  X,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -70,14 +77,16 @@ export function RepuestosEquipo({ equipo }: { equipo: Equipo }) {
             className="btn btn-chico btn-primario"
             onClick={() => setAgregando(true)}
           >
-            + Agregar repuesto
+            <Plus className="icono" aria-hidden />
+            Agregar repuesto
           </button>
         )}
       </div>
 
       {(sinStock > 0 || porReponer > 0) && (
         <p className="aviso-repuestos">
-          ⚠{' '}
+          <TriangleAlert className="icono" aria-hidden />
+          {' '}
           {[
             sinStock > 0 ? `${sinStock} sin stock` : null,
             porReponer > 0 ? `${porReponer} con poco stock` : null,
@@ -96,7 +105,7 @@ export function RepuestosEquipo({ equipo }: { equipo: Equipo }) {
           </label>
           {yaEsta && (
             <p className="aviso-escaneo es-error">
-              Ya está en la lista. Si lleva más de uno, cambiá la cantidad con ✎.
+              Ya está en la lista. Si lleva más de uno, cambiá la cantidad con el lápiz.
             </p>
           )}
           <div className="grilla-2">
@@ -210,7 +219,11 @@ function FilaRepuesto({
           {r.materialNombre}
         </Link>
         {detalle.length > 0 && <div className="texto-chico">{detalle.join(' · ')}</div>}
-        {r.ubicacion && <div className="texto-suave texto-chico">📍 {r.ubicacion}</div>}
+        {r.ubicacion && (
+          <div className="texto-suave texto-chico">
+            <MapPin className="icono" aria-hidden /> {r.ubicacion}
+          </div>
+        )}
       </div>
       <span className={`chip-stock chip-stock-${stock.clase}`}>{stock.texto}</span>
       {puedeEditar && (
@@ -222,7 +235,7 @@ function FilaRepuesto({
             aria-label={`Cambiar ${r.materialNombre}`}
             onClick={onEditar}
           >
-            ✎
+            <Pencil className="icono" aria-hidden />
           </button>
           <button
             type="button"
@@ -232,7 +245,7 @@ function FilaRepuesto({
             disabled={ocupado}
             onClick={onQuitar}
           >
-            ✕
+            <X className="icono" aria-hidden />
           </button>
         </div>
       )}

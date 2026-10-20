@@ -16,6 +16,8 @@ interface Props {
   jubilado?: boolean;
 }
 
+import { Archive, ArchiveRestore, Eye, Pencil, Trash2 } from 'lucide-react';
+
 /**
  * Acciones de una fila/tarjeta: ver, editar y eliminar.
  *
@@ -42,7 +44,7 @@ export function AccionesFila({
           aria-label={`Ver ${descripcion}`}
           title="Ver detalle"
         >
-          👁
+          <Eye className="icono" aria-hidden />
         </button>
       )}
       {onEditar && (
@@ -53,7 +55,7 @@ export function AccionesFila({
           aria-label={`Editar ${descripcion}`}
           title="Editar"
         >
-          ✏️
+          <Pencil className="icono" aria-hidden />
         </button>
       )}
       {onJubilar && (
@@ -68,7 +70,11 @@ export function AccionesFila({
           }
           title={jubilado ? 'Devolver a circulación' : 'Sacar de circulación'}
         >
-          {jubilado ? '↺' : '⏏'}
+          {jubilado ? (
+            <ArchiveRestore className="icono" aria-hidden />
+          ) : (
+            <Archive className="icono" aria-hidden />
+          )}
         </button>
       )}
       {onEliminar && (
@@ -79,7 +85,7 @@ export function AccionesFila({
           aria-label={`Eliminar ${descripcion}`}
           title="Eliminar"
         >
-          ✕
+          <Trash2 className="icono" aria-hidden />
         </button>
       )}
     </div>

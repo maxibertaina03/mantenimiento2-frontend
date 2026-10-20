@@ -1,3 +1,18 @@
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  ImageIcon,
+  Plus,
+  QrCode,
+  Ruler,
+  Settings,
+  SlidersHorizontal,
+  Tags,
+  Warehouse,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -7,6 +22,7 @@ import {
   useMateriales,
 } from '@/api/materiales';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
+import { MenuDesplegable } from '@/componentes/MenuDesplegable';
 import { AccionesFila } from '@/componentes/AccionesFila';
 import { CategoriasMaterial } from '@/componentes/CategoriasMaterial';
 import { UnidadesMedida } from '@/componentes/UnidadesMedida';
@@ -116,7 +132,7 @@ export function MaterialesPage() {
           nombreArchivo: `materiales_stock_${sufijoFechaArchivo()}.pdf`,
           orientacion: 'landscape',
           resaltarFilas: todos.map((m) => m.bajoStock),
-          leyenda: bajos > 0 ? `⚠ ${bajos} bajo stock (resaltados)` : 'Todo OK',
+          leyenda: bajos > 0 ? `${bajos} bajo stock (resaltados)` : 'Todo OK',
         });
       }
     } catch (e) {
@@ -129,28 +145,45 @@ export function MaterialesPage() {
   return (
     <>
       <div className="cabecera-pagina">
-        <h1>Materiales</h1>
-        <div className="fila-acciones">
-          <button className="btn" onClick={() => exportar('csv')} disabled={exportando}>
-            {exportando ? 'Exportando…' : '⬇ CSV'}
-          </button>
-          <button className="btn" onClick={() => exportar('pdf')} disabled={exportando}>
-            {exportando ? 'Exportando…' : '⬇ PDF'}
-          </button>
+        <div>
+          <h1>Materiales</h1>
+          <p>
+            {data ? `${formatearNumero(data.total)} materiales` : 'El pañol'}
+            {' · '}stock, ubicación y lo que hay que reponer
+          </p>
+        </div>
+        {/* Lo que se usa poco va en menús: eran siete botones y el que
+            importa, «Nuevo material», se perdía entre los demás. */}
+        <div className="acciones-cabecera">
+          <MenuDesplegable
+            texto={exportando ? 'Exportando…' : 'Exportar'}
+            Icono={Download}
+            deshabilitado={exportando}
+            opciones={[
+              { texto: 'Planilla (CSV)', Icono: FileSpreadsheet, onElegir: () => exportar('csv') },
+              { texto: 'PDF', Icono: FileText, onElegir: () => exportar('pdf') },
+            ]}
+          />
           <button className="btn" onClick={() => setEtiquetas(true)}>
-            ▦ Etiquetas QR
+            <QrCode className="icono" aria-hidden />
+            Etiquetas QR
           </button>
-          <button className="btn" onClick={() => setModalCategorias(true)}>
-            ⚙ Categorías
-          </button>
-          <button className="btn" onClick={() => setModalUnidades(true)}>
-            ⚙ Unidades
-          </button>
-          <button className="btn" onClick={() => setModalEstanterias(true)}>
-            ⚙ Estanterías
-          </button>
+          <MenuDesplegable
+            texto="Configurar"
+            Icono={Settings}
+            opciones={[
+              { texto: 'Categorías', Icono: Tags, onElegir: () => setModalCategorias(true) },
+              { texto: 'Unidades', Icono: Ruler, onElegir: () => setModalUnidades(true) },
+              {
+                texto: 'Estanterías',
+                Icono: Warehouse,
+                onElegir: () => setModalEstanterias(true),
+              },
+            ]}
+          />
           <button className="btn btn-primario" onClick={() => setModalAbierto(true)}>
-            + Nuevo material
+            <Plus className="icono" aria-hidden />
+            Nuevo material
           </button>
         </div>
       </div>
@@ -160,7 +193,7 @@ export function MaterialesPage() {
         <input
           type="search"
           inputMode="search"
-          placeholder="🔍 Buscar material por nombre…"
+          placeholder="Buscar material por nombre…"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
           // Solo con mouse: en el celular abriría el teclado apenas se entra.
@@ -170,7 +203,8 @@ export function MaterialesPage() {
           className={contarFiltros(filtros) > 0 ? 'btn btn-primario' : 'btn'}
           onClick={() => setPanelFiltros((v) => !v)}
         >
-          ⚗ Filtros{contarFiltros(filtros) > 0 ? ` (${contarFiltros(filtros)})` : ''}
+          <SlidersHorizontal className="icono" aria-hidden />
+          Filtros{contarFiltros(filtros) > 0 ? ` (${contarFiltros(filtros)})` : ''}
         </button>
         {isFetching && <span className="texto-suave">buscando…</span>}
       </div>
@@ -212,17 +246,32 @@ export function MaterialesPage() {
                 onClick={() => abrir(m.id)}
               >
                 <td data-etiqueta="Material">
-                  <Link
-                    to={`/materiales/${m.id}`}
-                    state={estadoParaVolver(ubicacion)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="nombre-con-foto"
-                  >
-                    {m.fotoUrl && (
+                  <div className="nombre-con-foto">
+                    {m.fotoUrl ? (
                       <img src={m.fotoUrl} alt="" className="miniatura-material" loading="lazy" />
+                    ) : (
+                      <span className="miniatura-material miniatura-vacia" aria-hidden>
+                        <ImageIcon />
+                      </span>
                     )}
-                    {m.nombre}
-                  </Link>
+                    {/* Solo el nombre es el enlace: así se lee «Cable 2,5 mm» y no
+                        también dónde está guardado. */}
+                    <span className="nombre-y-lugar">
+                      <Link
+                        to={`/materiales/${m.id}`}
+                        state={estadoParaVolver(ubicacion)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="nombre-material"
+                      >
+                        {m.nombre}
+                      </Link>
+                      <span className="lugar-material">
+                        {m.estanteriaNombre
+                          ? `Estantería ${m.estanteriaNombre}${m.fila ? ` · fila ${m.fila}` : ''}`
+                          : 'Sin ubicar'}
+                      </span>
+                    </span>
+                  </div>
                 </td>
                 <td data-etiqueta="Categoría">{m.categoriaNombre ?? '—'}</td>
                 <td data-etiqueta="Unidad">{m.unidad || '—'}</td>
@@ -240,7 +289,7 @@ export function MaterialesPage() {
                   ) : m.bajoStock ? (
                     <span className="badge badge-bajo">Bajo stock</span>
                   ) : (
-                    <span className="texto-suave">OK</span>
+                    <span className="badge badge-ok">OK</span>
                   )}
                 </td>
                 {/* stopPropagation: los botones no deben navegar al detalle. */}
@@ -291,7 +340,8 @@ Deja de aparecer al cargar ` +
               disabled={pagina <= 1}
               onClick={() => irAPagina(pagina - 1)}
             >
-              ← Anterior
+              <ChevronLeft className="icono" aria-hidden />
+              Anterior
             </button>
             <span className="texto-suave" style={{ padding: '0 0.5rem' }}>
               Página {pagina} de {totalPaginas}
@@ -301,7 +351,8 @@ Deja de aparecer al cargar ` +
               disabled={pagina >= totalPaginas}
               onClick={() => irAPagina(pagina + 1)}
             >
-              Siguiente →
+              Siguiente
+              <ChevronRight className="icono" aria-hidden />
             </button>
           </div>
         </div>

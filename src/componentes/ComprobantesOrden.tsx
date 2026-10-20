@@ -1,3 +1,4 @@
+import { FileText, Images, Paperclip } from 'lucide-react';
 import { useRef, useState } from 'react';
 import {
   TIPOS_COMPROBANTE,
@@ -102,7 +103,7 @@ export function ComprobantesOrden({ ordenId }: { ordenId: string }) {
           {comprobantes.map((c) => (
             <li key={c.id}>
               <span>
-                {c.esImagen ? '🖼' : '📄'} <strong>{c.nombre}</strong>
+                {c.esImagen ? <Images className="icono" aria-hidden /> : <FileText className="icono" aria-hidden />} <strong>{c.nombre}</strong>
                 <div className="texto-suave texto-chico">
                   {TIPOS_COMPROBANTE.find((t) => t.valor === c.tipo)?.etiqueta ?? c.tipo} ·{' '}
                   {pesa(c.tamanoBytes)} · {formatearFecha(c.subidoEn)}
@@ -153,7 +154,8 @@ export function ComprobantesOrden({ ordenId }: { ordenId: string }) {
             onClick={() => entrada.current?.click()}
             disabled={preparando || adjuntar.isPending}
           >
-            {preparando || adjuntar.isPending ? 'Subiendo…' : '📎 Adjuntar archivo'}
+            <Paperclip className="icono" aria-hidden />
+            {preparando || adjuntar.isPending ? 'Subiendo…' : 'Adjuntar archivo'}
           </button>
         </div>
       )}

@@ -1,3 +1,12 @@
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  QrCode,
+  Settings,
+  Upload,
+  Users,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useEquipo, useEquipos, useResumenEquipos, useTiposEquipo } from '@/api/equiposIt';
@@ -104,19 +113,24 @@ export function EquiposItPage() {
         </div>
         <div className="fila-acciones">
           <button className="btn" onClick={() => setModalTipos(true)}>
-            ⚙ Tipos
+            <Settings className="icono" aria-hidden />
+            Tipos
           </button>
           <button className="btn" onClick={() => setModalResponsables(true)}>
-            👤 Responsables
+            <Users className="icono" aria-hidden />
+            Responsables
           </button>
           <button className="btn" onClick={() => setModalEtiquetas(true)}>
-            🏷 Etiquetas QR
+            <QrCode className="icono" aria-hidden />
+            Etiquetas QR
           </button>
           <button className="btn" onClick={() => setModalImportar(true)}>
-            ↑ Importar CSV
+            <Upload className="icono" aria-hidden />
+            Importar CSV
           </button>
           <button className="btn btn-primario" onClick={() => setModalAlta(true)}>
-            + Nuevo equipo
+            <Plus className="icono" aria-hidden />
+            Nuevo equipo
           </button>
         </div>
       </header>
@@ -139,7 +153,7 @@ export function EquiposItPage() {
       <div className="grilla-filtros">
         <input
           type="search"
-          placeholder="🔍 Buscar por código, marca, modelo, serie, IP o nombre de red…"
+          placeholder="Buscar por código, marca, modelo, serie, IP o nombre de red…"
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
@@ -299,7 +313,8 @@ export function EquiposItPage() {
             disabled={pagina <= 1}
             onClick={() => setPagina((p) => p - 1)}
           >
-            ← Anterior
+            <ChevronLeft className="icono" aria-hidden />
+            Anterior
           </button>
           <span className="texto-suave">
             Página {pagina} de {totalPaginas} · {data.total} equipos
@@ -309,7 +324,8 @@ export function EquiposItPage() {
             disabled={pagina >= totalPaginas}
             onClick={() => setPagina((p) => p + 1)}
           >
-            Siguiente →
+            Siguiente
+            <ChevronRight className="icono" aria-hidden />
           </button>
         </div>
       )}

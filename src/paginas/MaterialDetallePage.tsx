@@ -1,3 +1,8 @@
+import {
+  ArrowLeft,
+  Pencil,
+  Plus,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useActualizarMaterial, useMaterialConHistorial } from '@/api/materiales';
@@ -8,6 +13,7 @@ import { FormularioMaterial } from '@/componentes/FormularioMaterial';
 import { FotoMaterial } from '@/componentes/FotoMaterial';
 import { Modal } from '@/componentes/Modal';
 import { formatearFecha, formatearFechaSola, formatearNumero } from '@/lib/formato';
+import { ETIQUETA_MOTIVO } from '@/tipos/movimiento';
 import { useVolverA } from '@/lib/listaEnUrl';
 import { P, usePuede } from '@/lib/permisos';
 import type { UltimoInventario } from '@/tipos/material';
@@ -90,7 +96,8 @@ export function MaterialDetallePage() {
       <div className="cabecera-pagina">
         <div>
           <Link to={volverA} className="texto-suave">
-            ← Volver a materiales
+            <ArrowLeft className="icono" aria-hidden />
+            Volver a materiales
           </Link>
           <h1 style={{ marginTop: '0.4rem' }}>{material.nombre}</h1>
         </div>
@@ -100,11 +107,13 @@ export function MaterialDetallePage() {
               className="btn btn-primario"
               onClick={() => navigate(`/movimientos/nuevo?materialId=${material.id}`)}
             >
-              + Registrar movimiento
+              <Plus className="icono" aria-hidden />
+              Registrar movimiento
             </button>
           )}
           <button className="btn" onClick={() => setEditando(true)}>
-            ✎ Editar
+            <Pencil className="icono" aria-hidden />
+            Editar
           </button>
           <button
             className="btn"
@@ -205,7 +214,7 @@ export function MaterialDetallePage() {
                 <td data-etiqueta="Tipo">
                   <BadgeMovimiento tipo={m.tipo} />
                 </td>
-                <td data-etiqueta="Motivo">{m.motivo}</td>
+                <td data-etiqueta="Motivo">{ETIQUETA_MOTIVO[m.motivo] ?? m.motivo}</td>
                 <td className="num" data-etiqueta="Cantidad">
                   {formatearNumero(m.cantidad)}
                 </td>

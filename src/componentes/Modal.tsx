@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 interface Props {
@@ -118,7 +119,7 @@ export function Modal({
         <div className="modal-titulo">
           <h2>{titulo}</h2>
           <button className="btn btn-sm" onClick={intentarCerrar} aria-label="Cerrar">
-            ✕
+            <X className="icono" aria-hidden />
           </button>
         </div>
         <div className="modal-cuerpo" onInputCapture={marcarTocado} onChangeCapture={marcarTocado}>

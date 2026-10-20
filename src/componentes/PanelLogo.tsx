@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { LogoLasTres } from './LogoLasTres';
 
@@ -70,7 +71,7 @@ function VisorLogo({ alCerrar }: { alCerrar: () => void }) {
         <LogoLasTres className="visor-logo-svg" />
       </div>
       <button type="button" className="visor-logo-cerrar" onClick={alCerrar} aria-label="Cerrar">
-        ✕
+        <X className="icono" aria-hidden />
       </button>
     </div>
   );

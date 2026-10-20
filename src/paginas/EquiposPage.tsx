@@ -1,3 +1,14 @@
+import {
+  ChevronLeft,
+  ChevronRight,
+  Images,
+  List,
+  Plus,
+  QrCode,
+  SlidersHorizontal,
+  Upload,
+  X,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEliminarEquipo, useEquipos, useResumenEquipos } from '@/api/equipos';
@@ -110,19 +121,24 @@ export function EquiposPage() {
         </div>
         <div className="fila-acciones">
           <button className="btn" onClick={() => setFotos(true)}>
-            🖼 Cargar fotos
+            <Images className="icono" aria-hidden />
+            Cargar fotos
           </button>
           <button className="btn" onClick={() => setEtiquetas(true)}>
-            ▦ Etiquetas QR
+            <QrCode className="icono" aria-hidden />
+            Etiquetas QR
           </button>
           <button className="btn" onClick={() => setCatalogos(true)}>
-            ☰ Listas
+            <List className="icono" aria-hidden />
+            Listas
           </button>
           <button className="btn" onClick={() => setImportando(true)}>
-            ⬆ Importar carpeta
+            <Upload className="icono" aria-hidden />
+            Importar carpeta
           </button>
           <button className="btn btn-primario" onClick={() => setCreando(true)}>
-            + Nuevo equipo
+            <Plus className="icono" aria-hidden />
+            Nuevo equipo
           </button>
         </div>
       </div>
@@ -194,7 +210,7 @@ export function EquiposPage() {
         <input
           type="search"
           inputMode="search"
-          placeholder="🔍 Buscar por nombre o código…"
+          placeholder="Buscar por nombre o código…"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
         />
@@ -202,7 +218,8 @@ export function EquiposPage() {
           className={puestos > 0 ? 'btn btn-primario' : 'btn'}
           onClick={() => setPanelFiltros((v) => !v)}
         >
-          ⚗ Filtros{puestos > 0 ? ` (${puestos})` : ''}
+          <SlidersHorizontal className="icono" aria-hidden />
+          Filtros{puestos > 0 ? ` (${puestos})` : ''}
         </button>
         {isFetching && <span className="texto-suave">buscando…</span>}
       </div>
@@ -292,7 +309,8 @@ export function EquiposPage() {
                 className="btn btn-chico"
                 onClick={() => reemplazarFiltros({ buscar: busquedaDebounced || undefined })}
               >
-                ✕ Limpiar filtros ({puestos})
+                <X className="icono" aria-hidden />
+                Limpiar filtros ({puestos})
               </button>
             )}
           </div>
@@ -377,7 +395,8 @@ export function EquiposPage() {
       {data && totalPaginas > 1 && (
         <div className="paginacion">
           <button className="btn" disabled={pagina <= 1} onClick={() => irAPagina(pagina - 1)}>
-            ← Anterior
+            <ChevronLeft className="icono" aria-hidden />
+            Anterior
           </button>
           <span className="texto-suave">
             Página {pagina} de {totalPaginas} · {data.total} equipos
@@ -387,7 +406,8 @@ export function EquiposPage() {
             disabled={pagina >= totalPaginas}
             onClick={() => irAPagina(pagina + 1)}
           >
-            Siguiente →
+            Siguiente
+            <ChevronRight className="icono" aria-hidden />
           </button>
         </div>
       )}

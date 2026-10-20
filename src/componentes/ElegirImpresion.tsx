@@ -1,3 +1,4 @@
+import { Printer } from 'lucide-react';
 import { useState } from 'react';
 import { semanaInicial, textoSemana } from '@/lib/fechasCalendario';
 import type { ModoImpresion } from './CalendarioImpreso';
@@ -97,7 +98,8 @@ export function ElegirImpresion({
             Cancelar
           </button>
           <button type="submit" className="btn btn-primario">
-            🖨 Imprimir
+            <Printer className="icono" aria-hidden />
+            Imprimir
           </button>
         </div>
       </form>

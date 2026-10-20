@@ -1,3 +1,4 @@
+import { Camera, Pencil, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
   MAXIMO_FOTOS_POR_EQUIPO,
@@ -168,7 +169,7 @@ export function OtrasFotosEquipo({
                     aria-label={`Escribir qué se ve en ${titulo(f)}`}
                     onClick={() => setEditando({ id: f.id, texto: f.descripcion ?? '' })}
                   >
-                    ✎
+                    <Pencil className="icono" aria-hidden />
                   </button>
                   <button
                     type="button"
@@ -177,7 +178,8 @@ export function OtrasFotosEquipo({
                     disabled={principal.isPending}
                     onClick={() => principal.mutate(f.id)}
                   >
-                    ★ Principal
+                    <Star className="icono" aria-hidden />
+                    Principal
                   </button>
                   <button
                     type="button"
@@ -187,7 +189,7 @@ export function OtrasFotosEquipo({
                     disabled={borrar.isPending}
                     onClick={() => quitar(f)}
                   >
-                    🗑
+                    <Trash2 className="icono" aria-hidden />
                   </button>
                 </div>
               )}
@@ -209,7 +211,7 @@ export function OtrasFotosEquipo({
           />
           <SelectorArchivo
             accept="image/*"
-            icono="📷"
+            icono={<Camera />}
             compacto
             multiple
             titulo="Agregar fotos"
@@ -226,7 +228,7 @@ export function OtrasFotosEquipo({
         ))}
       </datalist>
 
-      {errorLocal && <div className="alerta alerta-error">⚠️ {errorLocal}</div>}
+      {errorLocal && <div className="alerta alerta-error">{errorLocal}</div>}
       {error && <MensajeError error={error} />}
       {viendo && (
         <VisorFoto url={viendo.url} titulo={titulo(viendo)} alCerrar={() => setViendo(null)} />

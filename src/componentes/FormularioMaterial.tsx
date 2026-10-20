@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useCategorias, useCrearCategoria } from '@/api/categorias';
 import { useActualizarMaterial, useCrearMaterial } from '@/api/materiales';
@@ -105,7 +106,8 @@ export function FormularioMaterial({
                 onClick={() => setModoNuevaCat(true)}
                 title="Crear una categoría nueva"
               >
-                + Nueva
+                <Plus className="icono" aria-hidden />
+                Nueva
               </button>
             </div>
           ) : (

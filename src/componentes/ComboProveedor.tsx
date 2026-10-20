@@ -47,7 +47,7 @@ export function ComboProveedor({ onCambio, inicial = null }: Props) {
     <div className="combo" ref={ref}>
       <input
         type="text"
-        placeholder={seleccionado ? seleccionado.nombre : '🔍 Buscar proveedor (nombre o CUIT)…'}
+        placeholder={seleccionado ? seleccionado.nombre : 'Buscar proveedor (nombre o CUIT)…'}
         value={abierto ? texto : seleccionado?.nombre ?? ''}
         onFocus={() => {
           setAbierto(true);

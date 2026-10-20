@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useCompletarTarea } from '@/api/calendario';
 import { CampoNumero } from './CampoNumero';
@@ -111,7 +112,8 @@ export function CompletarTarea({ tarea, onCerrar }: { tarea: Tarea; onCerrar: ()
             disabled={!material || cantidad === undefined || cantidad <= 0}
             onClick={agregar}
           >
-            + Usar
+            <Plus className="icono" aria-hidden />
+            Usar
           </button>
         </div>
 

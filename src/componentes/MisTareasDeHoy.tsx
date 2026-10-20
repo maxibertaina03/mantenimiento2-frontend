@@ -1,3 +1,4 @@
+import { CalendarDays, Check, Clock } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMisTareas } from '@/api/calendario';
@@ -9,19 +10,27 @@ import { PostergarTarea } from './PostergarTarea';
 import { Cargando, MensajeError } from './Estados';
 
 /** Cuántas tareas se ven sin tocar «Ver todas». */
-const TAREAS_A_LA_VISTA = 3;
+const TAREAS_A_LA_VISTA = 4;
 
-/** El día, en palabras cortas. */
-function cuando(iso: string): string {
-  const dia = new Date(iso);
+/** El día del mes y el mes corto, para el cuadradito de la fecha. */
+function partesDeFecha(iso: string): { dia: string; mes: string; esHoy: boolean } {
+  const fecha = new Date(iso);
   const hoy = new Date();
-  const mismoDia =
-    dia.getUTCFullYear() === hoy.getFullYear() &&
-    dia.getUTCMonth() === hoy.getMonth() &&
-    dia.getUTCDate() === hoy.getDate();
+  const esHoy =
+    fecha.getUTCFullYear() === hoy.getFullYear() &&
+    fecha.getUTCMonth() === hoy.getMonth() &&
+    fecha.getUTCDate() === hoy.getDate();
+  return {
+    dia: String(fecha.getUTCDate()),
+    mes: fecha.toLocaleDateString('es-AR', { timeZone: 'UTC', month: 'short' }).replace('.', ''),
+    esHoy,
+  };
+}
 
-  if (mismoDia) return 'hoy';
-  return dia.toLocaleDateString('es-AR', { timeZone: 'UTC', day: 'numeric', month: 'short' });
+/** El día, en palabras cortas: «hoy» o «14 oct». */
+function cuando(iso: string): string {
+  const { dia, mes, esHoy } = partesDeFecha(iso);
+  return esHoy ? 'hoy' : `${dia} ${mes}`;
 }
 
 /**
@@ -56,40 +65,52 @@ export function MisTareasDeHoy() {
   const visibles = todas ? tareas : tareas.slice(0, TAREAS_A_LA_VISTA);
 
   return (
-    <div className="panel">
-      <div className="cabecera-historial">
+    <section className="panel panel-lista">
+      <div className="panel-cabecera">
         <h2>
-          Lo que hay que hacer{' '}
-          {tareas.length > 0 && <span className="badge">{tareas.length}</span>}
+          Lo que hay que hacer
+          {vencidas.length > 0 ? (
+            <span className="badge badge-error">
+              {vencidas.length === 1 ? '1 vencida' : `${vencidas.length} vencidas`}
+            </span>
+          ) : (
+            tareas.length > 0 && <span className="badge">{tareas.length}</span>
+          )}
         </h2>
-        <Link to="/calendario" className="btn btn-chico">
-          Ver el calendario
+        <Link to="/calendario" className="btn btn-fantasma btn-sm">
+          <CalendarDays className="icono" aria-hidden />
+          Calendario
         </Link>
       </div>
 
       {isLoading && <Cargando />}
       {error && <MensajeError error={error} />}
 
-      {vencidas.length > 0 && (
-        <p className="aviso-escaneo es-error">
-          {vencidas.length === 1
-            ? 'Una de estas ya venció.'
-            : `${vencidas.length} de estas ya vencieron.`}
-        </p>
-      )}
-
-      <ul className="lista-simple">
-        {visibles.map((t) => (
-          <li key={t.id}>
-            <div className="fila-tarea-hoy">
-              <span>
+      <ul className="lista-tareas">
+        {visibles.map((t) => {
+          const vencida = vencio(t.fecha);
+          const { dia, mes, esHoy } = partesDeFecha(t.fecha);
+          return (
+            <li key={t.id} className="fila-tarea-hoy">
+              <span
+                className={`cuadro-fecha ${vencida ? 'vencida' : esHoy ? 'hoy' : ''}`}
+                title={vencida ? 'Ya venció' : undefined}
+              >
+                <b>{esHoy ? 'Hoy' : dia}</b>
+                {!esHoy && <small>{mes}</small>}
+              </span>
+              <span className="tarea-que">
                 <strong>{t.titulo}</strong>
-                <div className="texto-suave texto-chico">
-                  {cuando(t.fecha)}
-                  {t.equipoNombre ? ` · ${t.equipoNombre}` : ''}
-                  {t.descripcion ? ` · ${t.descripcion}` : ''}
-                  {t.fechaOriginal ? ` · postergada (era el ${cuando(t.fechaOriginal)})` : ''}
-                </div>
+                <span className="texto-suave texto-chico">
+                  {t.equipoNombre ?? t.descripcion ?? ''}
+                  {t.equipoNombre && t.descripcion ? ` · ${t.descripcion}` : ''}
+                  {t.fechaOriginal && (
+                    <span className="tarea-postergada">
+                      <Clock className="icono" aria-hidden /> postergada, era el{' '}
+                      {cuando(t.fechaOriginal)}
+                    </span>
+                  )}
+                </span>
                 {/* Sin responsable la puede hacer cualquiera: se dice, para que
                     nadie piense que la ve por error. */}
                 {t.asignadoAId === null && (
@@ -101,10 +122,10 @@ export function MisTareasDeHoy() {
               {puedeHacerlas && (
                 <span className="fila-acciones">
                   {/* Lo vencido no se posterga: se hace. */}
-                  {!vencio(t.fecha) && (
+                  {!vencida && (
                     <button
                       type="button"
-                      className="btn btn-chico"
+                      className="btn btn-fantasma btn-sm"
                       onClick={() => setPostergando(t)}
                     >
                       Postergar
@@ -112,30 +133,34 @@ export function MisTareasDeHoy() {
                   )}
                   <button
                     type="button"
-                    className="btn btn-chico"
+                    className="btn btn-sm"
+                    aria-label="Darla por hecha"
                     onClick={() => setCompletando(t)}
                   >
-                    Darla por hecha
+                    <Check className="icono" aria-hidden />
+                    Hecha
                   </button>
                 </span>
               )}
-            </div>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
 
       {tareas.length > TAREAS_A_LA_VISTA && (
-        <button type="button" className="btn btn-chico" onClick={() => setTodas((v) => !v)}>
-          {todas ? 'Ver menos' : `Ver las ${tareas.length}`}
-        </button>
+        <div className="panel-pie">
+          <button
+            type="button"
+            className="btn btn-fantasma btn-sm"
+            onClick={() => setTodas((v) => !v)}
+          >
+            {todas ? 'Ver menos' : `Ver las ${tareas.length}`}
+          </button>
+        </div>
       )}
 
-      {completando && (
-        <CompletarTarea tarea={completando} onCerrar={() => setCompletando(null)} />
-      )}
-      {postergando && (
-        <PostergarTarea tarea={postergando} onCerrar={() => setPostergando(null)} />
-      )}
-    </div>
+      {completando && <CompletarTarea tarea={completando} onCerrar={() => setCompletando(null)} />}
+      {postergando && <PostergarTarea tarea={postergando} onCerrar={() => setPostergando(null)} />}
+    </section>
   );
 }

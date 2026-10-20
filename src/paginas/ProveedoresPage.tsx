@@ -1,3 +1,8 @@
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   useActualizarProveedor,
@@ -55,7 +60,8 @@ export function ProveedoresPage() {
       <div className="cabecera-pagina">
         <h1>Proveedores</h1>
         <button className="btn btn-primario" onClick={abrirNuevo}>
-          + Nuevo proveedor
+          <Plus className="icono" aria-hidden />
+          Nuevo proveedor
         </button>
       </div>
 
@@ -63,7 +69,7 @@ export function ProveedoresPage() {
         <input
           type="search"
           inputMode="search"
-          placeholder="🔍 Buscar proveedor por nombre o CUIT…"
+          placeholder="Buscar proveedor por nombre o CUIT…"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
           // Solo con mouse: en el celular abriría el teclado apenas se entra.
@@ -128,7 +134,8 @@ export function ProveedoresPage() {
               disabled={pagina <= 1}
               onClick={() => setPagina((p) => p - 1)}
             >
-              ← Anterior
+              <ChevronLeft className="icono" aria-hidden />
+              Anterior
             </button>
             <span className="texto-suave" style={{ padding: '0 0.5rem' }}>
               Página {pagina} de {totalPaginas}
@@ -138,7 +145,8 @@ export function ProveedoresPage() {
               disabled={pagina >= totalPaginas}
               onClick={() => setPagina((p) => p + 1)}
             >
-              Siguiente →
+              Siguiente
+              <ChevronRight className="icono" aria-hidden />
             </button>
           </div>
         </div>

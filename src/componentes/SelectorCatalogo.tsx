@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
 interface Opcion {
@@ -140,7 +141,8 @@ export function SelectorCatalogo({
           onClick={() => setCargandoNuevo(true)}
           title={`Cargar ${etiqueta.toLowerCase()} que no esté en la lista`}
         >
-          + Nueva
+          <Plus className="icono" aria-hidden />
+          Nueva
         </button>
       </div>
       {ayuda && <span className="texto-suave texto-chico">{ayuda}</span>}

@@ -1,3 +1,11 @@
+import {
+  Check,
+  Mail,
+  MessageCircle,
+  PackageCheck,
+  Pencil,
+  Printer,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useComprobantes } from '@/api/comprobantes';
 import {
@@ -177,7 +185,8 @@ export function ModalDetalleOrden({
                     onCerrar();
                   }}
                 >
-                  {emitir.isPending ? 'Procesando…' : '🖨 Imprimir y enviar al proveedor'}
+                  <Printer className="icono" aria-hidden />
+                  {emitir.isPending ? 'Procesando…' : 'Imprimir y enviar al proveedor'}
                 </button>
               )}
               {esperaMercaderia && (
@@ -188,12 +197,23 @@ export function ModalDetalleOrden({
                     setMostrarRecepcion(true);
                   }}
                 >
-                  {orden.estado === 'EMITIDA' ? '📦 Recibir mercadería' : '📦 Recibir otra entrega'}
+                  {orden.estado === 'EMITIDA' ? (
+                    <>
+                      <PackageCheck className="icono" aria-hidden />
+                      Recibir mercadería
+                    </>
+                  ) : (
+                    <>
+                      <PackageCheck className="icono" aria-hidden />
+                      Recibir otra entrega
+                    </>
+                  )}
                 </button>
               )}
               {orden.estado === 'RECIBIDA_PARCIAL' && (
                 <button className="btn" onClick={() => setReclamando(true)}>
-                  ✉ Reclamar lo que falta
+                  <Mail className="icono" aria-hidden />
+                  Reclamar lo que falta
                 </button>
               )}
               {onEnviar && orden.estado !== 'BORRADOR' && (
@@ -203,7 +223,8 @@ export function ModalDetalleOrden({
                   title="Enviar al proveedor"
                   onClick={() => onEnviar(orden)}
                 >
-                  ✉ Enviar
+                  <Mail className="icono" aria-hidden />
+                  Enviar
                 </button>
               )}
               <button
@@ -212,7 +233,8 @@ export function ModalDetalleOrden({
                 title="Descargar PDF"
                 onClick={() => descargarPdfOrdenCompra(orden)}
               >
-                🖨 PDF
+                <Printer className="icono" aria-hidden />
+                PDF
               </button>
               {puedeCorregirPrecios && (
                 <button
@@ -221,7 +243,8 @@ export function ModalDetalleOrden({
                   title="Cargar o corregir precios"
                   onClick={empezarAEditarPrecios}
                 >
-                  ✏ Precios
+                  <Pencil className="icono" aria-hidden />
+                  Precios
                 </button>
               )}
               {orden.estado === 'RECIBIDA_PARCIAL' && (
@@ -249,7 +272,8 @@ export function ModalDetalleOrden({
         {/* ── Cómo está: una línea, solo cuando dice algo ── */}
         {orden.estado === 'RECIBIDA_PARCIAL' && !formularioAbierto && (
           <div className="alerta alerta-aviso">
-            {recienRecibida ? '✔ Entrega registrada. ' : ''}
+            <Check className="icono" aria-hidden />
+            {recienRecibida ? 'Entrega registrada. ' : ''}
             Llegó una parte y ya sumó al stock. Falta{' '}
             {pendientes.length === 1 ? 'un renglón' : `${pendientes.length} renglones`}: reclamalo, o
             recibilo cuando llegue.
@@ -268,12 +292,14 @@ export function ModalDetalleOrden({
         )}
         {orden.estado === 'RECIBIDA' && !orden.cerradaConFaltante && recienRecibida && (
           <div className="alerta alerta-exito">
-            ✔ Orden finalizada: la mercadería ingresó al stock.
+            <Check className="icono" aria-hidden />
+            Orden finalizada: la mercadería ingresó al stock.
           </div>
         )}
         {preciosGuardados && (
           <div className="alerta alerta-exito">
-            ✔ Precios guardados. Descargá el PDF de nuevo (o enviáselo) para que el proveedor
+            <Check className="icono" aria-hidden />
+            Precios guardados. Descargá el PDF de nuevo (o enviáselo) para que el proveedor
             tenga la orden completa.
           </div>
         )}
@@ -382,7 +408,11 @@ export function ModalDetalleOrden({
                               >
                                 {formatearNumero(r.cantidadRecibida)} de{' '}
                                 {formatearNumero(r.cantidad)}
-                                {r.pendiente > 0 ? ` · falta ${formatearNumero(r.pendiente)}` : ' ✔'}
+                                {r.pendiente > 0 ? (
+                                  ` · falta ${formatearNumero(r.pendiente)}`
+                                ) : (
+                                  <Check className="icono icono-ok" aria-label="completo" />
+                                )}
                               </td>
                             )}
                             {editandoPrecios ? (
@@ -488,7 +518,7 @@ export function ModalDetalleOrden({
                     {envios.data.map((e) => (
                       <li key={e.id}>
                         <span>
-                          {e.via === 'CORREO' ? '✉' : '💬'} {e.esReclamo ? 'Reclamo · ' : ''}
+                          {e.via === 'CORREO' ? <Mail className="icono" aria-hidden /> : <MessageCircle className="icono" aria-hidden />} {e.esReclamo ? 'Reclamo · ' : ''}
                           {e.destinatarios}
                           {!e.automatico && <span className="texto-suave"> (a mano)</span>}
                         </span>

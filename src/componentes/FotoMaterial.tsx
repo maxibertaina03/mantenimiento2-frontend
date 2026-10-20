@@ -1,3 +1,4 @@
+import { Camera } from 'lucide-react';
 import { useState } from 'react';
 import {
   useCambiarFotoMaterial,
@@ -58,7 +59,7 @@ export function FotoMaterial({ material }: { material: Material }) {
         <>
           <SelectorArchivo
             accept="image/*"
-            icono="📷"
+            icono={<Camera />}
             compacto={Boolean(material.fotoUrl)}
             titulo={material.fotoUrl ? 'Cambiar la foto' : 'Subí una foto del material'}
             ayuda="Para reconocerlo en el estante · desde el celular o la compu, se achica sola"
@@ -77,7 +78,7 @@ export function FotoMaterial({ material }: { material: Material }) {
           )}
         </>
       )}
-      {errorLocal && <div className="alerta alerta-error">⚠️ {errorLocal}</div>}
+      {errorLocal && <div className="alerta alerta-error">{errorLocal}</div>}
       {cambiar.error && <MensajeError error={cambiar.error} />}
       {quitar.error && <MensajeError error={quitar.error} />}
     </div>

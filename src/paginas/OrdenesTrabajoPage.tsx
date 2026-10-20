@@ -1,3 +1,7 @@
+import {
+  Plus,
+  Truck,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useUsuarioActual } from '@/api/usuarios';
@@ -66,7 +70,8 @@ export function OrdenesTrabajoPage() {
         {puede(P.TRABAJOS_EDITAR) && (
           <div className="fila-acciones">
             <button className="btn btn-primario" onClick={() => setModalAlta(true)}>
-              + Nueva orden
+              <Plus className="icono" aria-hidden />
+              Nueva orden
             </button>
           </div>
         )}
@@ -91,7 +96,7 @@ export function OrdenesTrabajoPage() {
         <input
           type="search"
           inputMode="search"
-          placeholder="🔍 Buscar por número o por lo que se hizo…"
+          placeholder="Buscar por número o por lo que se hizo…"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
         />
@@ -152,7 +157,8 @@ export function OrdenesTrabajoPage() {
               setPagina(1);
             }}
           />
-          🚚 En talleres externos
+          <Truck className="icono" aria-hidden />
+          En talleres externos
         </label>
       </div>
 

@@ -1,3 +1,9 @@
+import {
+  Check,
+  Mail,
+  MessageCircle,
+  Plus,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useUsuarioActual } from '@/api/usuarios';
 import {
@@ -187,7 +193,8 @@ export function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () =
                   className="btn btn-primario"
                   onClick={() => setVolviendo(true)}
                 >
-                  ✔ Volvió del taller
+                  <Check className="icono" aria-hidden />
+                  Volvió del taller
                 </button>
               )}
               {editable && !externa && (
@@ -196,7 +203,8 @@ export function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () =
                   className="btn btn-primario"
                   onClick={() => setCerrando(true)}
                 >
-                  ✔ Cerrar orden
+                  <Check className="icono" aria-hidden />
+                  Cerrar orden
                 </button>
               )}
               {orden.estado === 'ABIERTA' &&
@@ -204,7 +212,8 @@ export function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () =
                 orden.proveedorId &&
                 puede(P.TRABAJOS_EDITAR) && (
                   <button type="button" className="btn" onClick={() => setEnviandoAlTaller(true)}>
-                    ✉ Mandársela al taller
+                    <Mail className="icono" aria-hidden />
+                    Mandársela al taller
                   </button>
                 )}
               {orden.estado !== 'ANULADA' && <ImprimirOrdenTrabajo orden={orden} />}
@@ -386,7 +395,8 @@ export function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () =
                         }
                         onClick={() => material && cantidad && void agregar(material, cantidad)}
                       >
-                        {usar.isPending ? 'Sacando…' : '+ Usar'}
+                        <Plus className="icono" aria-hidden />
+                        {usar.isPending ? 'Sacando…' : 'Usar'}
                       </button>
                     </div>
                   )}
@@ -505,7 +515,7 @@ export function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () =
                     {envios.data.map((e) => (
                       <li key={e.id}>
                         <span>
-                          {e.via === 'CORREO' ? '✉' : '💬'} {e.destinatarios}
+                          {e.via === 'CORREO' ? <Mail className="icono" aria-hidden /> : <MessageCircle className="icono" aria-hidden />} {e.destinatarios}
                           {!e.automatico && <span className="texto-suave"> (a mano)</span>}
                         </span>
                         <span className="texto-suave texto-chico">
