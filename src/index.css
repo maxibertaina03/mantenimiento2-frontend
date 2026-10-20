@@ -920,7 +920,10 @@ button.combo-item:hover {
 }
 
 .modal-cuerpo {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 1.25rem 1.5rem 1.5rem;
 }
 .modal-titulo {
@@ -1403,17 +1406,53 @@ button.combo-item:hover {
 
 /* ─────────── Responsive (celular) ─────────── */
 @media (max-width: 640px) {
-  /* El modal ocupa la pantalla: en celular no tiene sentido dejar margen. */
+  /* La ventana sale desde abajo y mide, como mucho, lo que se VE de la
+     pantalla. Antes era `height: 100vh`, y en Android 100vh es la pantalla
+     con la barra de direcciones escondida: con la barra a la vista, el final
+     de la ventana —donde están los botones— quedaba fuera de la pantalla y no
+     se podía registrar un trabajo. `100dvh` es lo visible de verdad; el
+     `100vh` de arriba queda para los navegadores que no lo conocen. */
   .modal-fondo {
     padding: 0;
-    align-items: stretch;
+    align-items: flex-end;
   }
   .modal,
   .modal-ancho {
     max-width: none;
+    height: auto;
     max-height: 100vh;
-    height: 100vh;
-    border-radius: 0;
+    max-height: 100dvh;
+    border-radius: var(--radio-grande) var(--radio-grande) 0 0;
+  }
+  /* Los botones del final (Registrar, Guardar, Cancelar) quedan pegados
+     abajo y siempre a la vista, aunque el formulario sea largo. */
+  .modal-cuerpo > .acciones:last-child,
+  .modal-cuerpo > form > .acciones:last-child {
+    position: sticky;
+    bottom: calc(-1.25rem - env(safe-area-inset-bottom));
+    z-index: 2;
+    margin: 0.4rem -1.1rem calc(-1.25rem - env(safe-area-inset-bottom));
+    padding: 0.75rem 1.1rem calc(0.75rem + env(safe-area-inset-bottom));
+    background: var(--panel);
+    border-top: 1px solid var(--borde);
+    box-shadow: 0 -6px 14px rgba(16, 24, 40, 0.06);
+  }
+  /* Los botones de texto largo («Más datos: quién lo hizo, costo…») bajan de
+     renglón en vez de salirse de la ventana. */
+  .modal-cuerpo .btn {
+    white-space: normal;
+    text-align: center;
+  }
+  /* Campos en una fila de filtros dentro de un formulario: de a dos. */
+  .grilla-filtros > label.campo,
+  .grilla-filtros > .campo {
+    flex: 1 1 calc(50% - 0.25rem);
+    min-width: 0;
+  }
+  .grilla-filtros input[type='date'],
+  .grilla-filtros input[type='datetime-local'] {
+    width: 100%;
+    min-width: 0;
   }
 
   /* Todos los formularios pasan a una sola columna. */
@@ -4155,9 +4194,23 @@ label.casilla .icono {
     flex: 1 1 calc(50% - 0.6rem);
     min-width: 0;
   }
-  /* Una sola tarjeta de número no ocupa el ancho entero. */
+  /* Las tarjetas de números van en una fila que se desliza de costado: en
+     Equipos son cinco, y en una grilla de a dos ocupaban media pantalla. */
   .tarjetas-resumen {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(42%, max-content);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    margin-inline: -1rem;
+    padding: 0.1rem 1rem 0.3rem;
+  }
+  .tarjetas-resumen::-webkit-scrollbar {
+    display: none;
+  }
+  .tarjeta-resumen {
+    scroll-snap-align: start;
   }
   .tarjeta-resumen {
     padding: 0.75rem 0.9rem;
