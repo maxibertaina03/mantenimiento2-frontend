@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { useState } from 'react';
 import { useMateriales } from '@/api/materiales';
 import {
@@ -17,13 +18,14 @@ import { exportarPdf } from '@/lib/pdf';
 import { formatearFecha, formatearNumero, isoADatetimeLocal } from '@/lib/formato';
 import { P, usePuede } from '@/lib/permisos';
 import {
+  type ActualizarMovimientoInput,
+  ETIQUETA_MOTIVO,
+  type FiltrosMovimientos,
   MOTIVOS_MOVIMIENTO,
   MOTIVOS_POR_TIPO,
-  TIPOS_MOVIMIENTO,
-  type ActualizarMovimientoInput,
-  type FiltrosMovimientos,
-  type Movimiento,
   type MotivoMovimiento,
+  type Movimiento,
+  TIPOS_MOVIMIENTO,
   type TipoMovimiento,
 } from '@/tipos/movimiento';
 
@@ -147,10 +149,12 @@ export function MovimientosPage() {
         <h1>Historial de movimientos</h1>
         <div className="fila-acciones">
           <button className="btn" onClick={() => exportar('csv')} disabled={exportando}>
-            {exportando ? 'Exportando…' : '⬇ CSV'}
+            <Download className="icono" aria-hidden />
+            {exportando ? 'Exportando…' : 'CSV'}
           </button>
           <button className="btn btn-primario" onClick={() => exportar('pdf')} disabled={exportando}>
-            {exportando ? 'Exportando…' : '⬇ PDF'}
+            <Download className="icono" aria-hidden />
+            {exportando ? 'Exportando…' : 'PDF'}
           </button>
         </div>
       </div>
@@ -256,7 +260,7 @@ export function MovimientosPage() {
                   <td data-etiqueta="Tipo">
                     <BadgeMovimiento tipo={m.tipo} />
                   </td>
-                  <td data-etiqueta="Motivo">{m.motivo}</td>
+                  <td data-etiqueta="Motivo">{ETIQUETA_MOTIVO[m.motivo] ?? m.motivo}</td>
                   <td className="num" data-etiqueta="Cantidad">
                     {formatearNumero(m.cantidad)}
                   </td>
@@ -289,7 +293,8 @@ export function MovimientosPage() {
                 disabled={pagina <= 1}
                 onClick={() => setPagina((p) => p - 1)}
               >
-                ← Anterior
+                <ChevronLeft className="icono" aria-hidden />
+                Anterior
               </button>
               <span className="texto-suave" style={{ padding: '0 0.5rem' }}>
                 Página {pagina} de {totalPaginas}
@@ -299,7 +304,8 @@ export function MovimientosPage() {
                 disabled={pagina >= totalPaginas}
                 onClick={() => setPagina((p) => p + 1)}
               >
-                Siguiente →
+                Siguiente
+                <ChevronRight className="icono" aria-hidden />
               </button>
             </div>
           </div>

@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { useCategorias } from '@/api/categorias';
 import { useUnidadesMedida } from '@/api/unidadesMedida';
 import { useEstanterias } from '@/api/estanterias';
@@ -179,7 +180,8 @@ export function FiltrosMateriales({
 
         {puestos > 0 && (
           <button className="btn btn-chico" onClick={() => onCambio({ buscar: filtros.buscar })}>
-            ✕ Limpiar filtros ({puestos})
+            <X className="icono" aria-hidden />
+            Limpiar filtros ({puestos})
           </button>
         )}
       </div>

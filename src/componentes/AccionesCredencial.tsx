@@ -1,3 +1,4 @@
+import { Check, Copy, Eye, EyeOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   useHistorialCredencial,
@@ -94,7 +95,8 @@ export function VerSecreto({
                 disabled={revelar.isPending}
                 autoFocus
               >
-                {revelar.isPending ? 'Pidiendo…' : '👁 Mostrar la contraseña'}
+                <Eye className="icono" aria-hidden />
+                {revelar.isPending ? 'Pidiendo…' : 'Mostrar la contraseña'}
               </button>
             </div>
           </>
@@ -121,10 +123,30 @@ export function VerSecreto({
 
             <div className="acciones">
               <button className="btn" onClick={() => setVisible((v) => !v)}>
-                {visible ? '🙈 Tapar' : '👁 Mostrar'}
+                {visible ? (
+                  <>
+                    <EyeOff className="icono" aria-hidden />
+                    Tapar
+                  </>
+                ) : (
+                  <>
+                    <Eye className="icono" aria-hidden />
+                    Mostrar
+                  </>
+                )}
               </button>
               <button className="btn" onClick={copiar}>
-                {copiado ? '✓ Copiada' : '📋 Copiar'}
+                {copiado ? (
+                  <>
+                    <Check className="icono" aria-hidden />
+                    Copiada
+                  </>
+                ) : (
+                  <>
+                    <Copy className="icono" aria-hidden />
+                    Copiar
+                  </>
+                )}
               </button>
               <button className="btn btn-primario" onClick={onCerrar}>
                 Listo

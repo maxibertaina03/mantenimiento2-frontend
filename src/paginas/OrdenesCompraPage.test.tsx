@@ -369,7 +369,7 @@ describe('OrdenesCompraPage — comprar equipos y herramientas', () => {
     await abrirAlta(usuario);
 
     await usuario.type(screen.getByPlaceholderText(/Amoladora/i), 'Amoladora angular');
-    await usuario.click(screen.getAllByRole('button', { name: /\+ Agregar/i })[1]);
+    await usuario.click(screen.getAllByRole('button', { name: /^Agregar$/i })[1]);
 
     expect(await screen.findByText(/Agregado: Amoladora angular/i)).toBeInTheDocument();
   });
@@ -379,7 +379,7 @@ describe('OrdenesCompraPage — comprar equipos y herramientas', () => {
     const usuario = userEvent.setup();
     await abrirAlta(usuario);
 
-    expect(screen.getAllByRole('button', { name: /\+ Agregar/i })[1]).toBeDisabled();
+    expect(screen.getAllByRole('button', { name: /^Agregar$/i })[1]).toBeDisabled();
   });
 });
 

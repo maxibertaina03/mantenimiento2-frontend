@@ -114,7 +114,7 @@ describe('Repuestos en la ficha del equipo', () => {
       '/materiales/mat-reten',
     );
     expect(screen.getByText('Lleva 2 u · lado motor')).toBeInTheDocument();
-    expect(screen.getByText('📍 Estantería A · fila 3')).toBeInTheDocument();
+    expect(screen.getByText('Estantería A · fila 3')).toBeInTheDocument();
     expect(screen.getByText('Hay 10 u')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Repuestos (1)' })).toBeInTheDocument();
   });
@@ -129,7 +129,7 @@ describe('Repuestos en la ficha del equipo', () => {
     const usuario = userEvent.setup();
     mostrar(<RepuestosEquipo equipo={EQUIPO} />);
 
-    await usuario.click(await screen.findByRole('button', { name: '+ Agregar repuesto' }));
+    await usuario.click(await screen.findByRole('button', { name: 'Agregar repuesto' }));
     await usuario.click(screen.getByRole('textbox', { name: /qué material/i }));
     await usuario.click(await screen.findByText('Rodamiento 6205'));
     await usuario.type(screen.getByRole('spinbutton', { name: /cuántos lleva/i }), '2');
@@ -146,7 +146,7 @@ describe('Repuestos en la ficha del equipo', () => {
     const usuario = userEvent.setup();
     mostrar(<RepuestosEquipo equipo={EQUIPO} />);
 
-    await usuario.click(await screen.findByRole('button', { name: '+ Agregar repuesto' }));
+    await usuario.click(await screen.findByRole('button', { name: 'Agregar repuesto' }));
     await usuario.click(screen.getByRole('textbox', { name: /qué material/i }));
     // El de la lista desplegable, no los botones ✎ / ✕ de la fila.
     const desplegable = await screen.findByText((_, el) => el?.classList.contains('combo-lista') ?? false);
@@ -162,7 +162,7 @@ describe('Repuestos en la ficha del equipo', () => {
     mostrar(<RepuestosEquipo equipo={EQUIPO} />);
 
     await screen.findByRole('link', { name: 'Retén 40x72x10' });
-    expect(screen.queryByRole('button', { name: '+ Agregar repuesto' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Agregar repuesto' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Sacar/ })).not.toBeInTheDocument();
   });
 });

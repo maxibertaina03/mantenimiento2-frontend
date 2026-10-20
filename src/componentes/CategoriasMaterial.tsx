@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import {
   useActualizarCategoria,
@@ -92,7 +93,8 @@ export function CategoriasMaterial({
             Cerrar
           </button>
           <button className="btn btn-primario" onClick={() => setCreando(true)}>
-            + Nueva categoría
+            <Plus className="icono" aria-hidden />
+            Nueva categoría
           </button>
         </div>
       </div>

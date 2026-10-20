@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTareaDelPlan } from '@/api/calendario';
@@ -164,7 +165,7 @@ export function ServiciosPage() {
                       )}
                       <button
                         type="button"
-                        className="btn btn-sm btn-primario"
+                        className="btn btn-sm"
                         disabled={traerTarea.isPending}
                         onClick={(e) => {
                           // La fila abre la ficha del equipo; el botón no.
@@ -172,6 +173,7 @@ export function ServiciosPage() {
                           void darPorHecho(p.id);
                         }}
                       >
+                        <Check className="icono" aria-hidden />
                         Dar por hecho
                       </button>
                     </td>

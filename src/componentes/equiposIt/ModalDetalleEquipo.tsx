@@ -1,3 +1,4 @@
+import { Pencil } from 'lucide-react';
 import { useAsignacionesEquipo, useEliminarEquipo } from '@/api/equiposIt';
 import { CredencialesDelEquipo } from '@/componentes/CredencialesDelEquipo';
 import { TrabajosDelEquipo } from '@/componentes/TrabajosDelEquipo';
@@ -148,7 +149,8 @@ export function ModalDetalleEquipo({
 
         <div className="acciones">
           <button className="btn btn-primario" onClick={alEditar}>
-            ✏️ Editar
+            <Pencil className="icono" aria-hidden />
+            Editar
           </button>
           <button
             className="btn btn-peligro"

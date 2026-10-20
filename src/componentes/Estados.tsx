@@ -50,7 +50,7 @@ export function MensajeError({ error }: { error: unknown }) {
   }
 
   const mensaje = error instanceof Error ? error.message : 'Ocurrió un error inesperado.';
-  return <div className="alerta alerta-error">⚠️ {mensaje}</div>;
+  return <div className="alerta alerta-error">{mensaje}</div>;
 }
 
 /** Estado vacío para listados sin datos. */

@@ -119,7 +119,7 @@ export function ComboMaterial({
       <input
         type="text"
         autoFocus={enfocarAlMontar && tieneMouse()}
-        placeholder={seleccionado ? seleccionado.nombre : '🔍 Buscar material por nombre…'}
+        placeholder={seleccionado ? seleccionado.nombre : 'Buscar material por nombre…'}
         value={abierto ? texto : seleccionado?.nombre ?? ''}
         onFocus={() => {
           setAbierto(true);

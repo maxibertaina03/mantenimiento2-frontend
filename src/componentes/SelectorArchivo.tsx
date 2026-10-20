@@ -1,4 +1,5 @@
-import { useId, useRef, useState } from 'react';
+import { Upload } from 'lucide-react';
+import { useId, useRef, useState, type ReactNode } from 'react';
 
 interface Props {
   /** Lo que se pide, en grande: «Subí una foto de la máquina». */
@@ -13,8 +14,8 @@ interface Props {
   disabled?: boolean;
   /** Texto mientras se procesa lo elegido: «Subiendo…». */
   ocupado?: string | null;
-  /** Ícono grande de la izquierda. */
-  icono?: string;
+  /** Ícono grande de la izquierda (Lucide). */
+  icono?: ReactNode;
   /** Más chico, en una línea: para cambiar algo que ya está (otra foto). */
   compacto?: boolean;
   onElegir: (archivos: File[]) => void;
@@ -39,7 +40,7 @@ export function SelectorArchivo({
   carpeta = false,
   disabled = false,
   ocupado = null,
-  icono = '⬆',
+  icono = <Upload />,
   compacto = false,
   onElegir,
 }: Props) {

@@ -1,3 +1,4 @@
+import { Camera } from 'lucide-react';
 import { useState } from 'react';
 import { useCambiarFotoEquipo } from '@/api/equipos';
 import { comprimirImagen, formatearBytes } from '@/lib/comprimirImagen';
@@ -56,7 +57,7 @@ export function FotoEquipo({ equipo }: { equipo: Equipo }) {
 
       <SelectorArchivo
         accept="image/*"
-        icono="📷"
+        icono={<Camera />}
         compacto={Boolean(equipo.fotoUrl)}
         titulo={equipo.fotoUrl ? 'Cambiar la foto' : 'Subí una foto de la máquina'}
         ayuda="Desde el celular o la computadora · JPG o PNG, se achica sola"
@@ -64,7 +65,7 @@ export function FotoEquipo({ equipo }: { equipo: Equipo }) {
         onElegir={elegir}
       />
       {ahorro && <span className="texto-suave texto-chico">Subida: {ahorro}</span>}
-      {errorLocal && <div className="alerta alerta-error">⚠️ {errorLocal}</div>}
+      {errorLocal && <div className="alerta alerta-error">{errorLocal}</div>}
       {cambiar.error && <MensajeError error={cambiar.error} />}
     </div>
   );

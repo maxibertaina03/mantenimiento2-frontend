@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useCrearOrdenTrabajo } from '@/api/ordenesTrabajo';
 import { CampoNumero } from './CampoNumero';
@@ -201,7 +202,8 @@ export function RegistrarTrabajoEquipo({
             disabled={!material || cantidad === undefined || cantidad <= 0}
             onClick={agregarMaterial}
           >
-            + Usar
+            <Plus className="icono" aria-hidden />
+            Usar
           </button>
         </div>
 

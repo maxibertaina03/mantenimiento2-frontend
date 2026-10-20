@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import {
   useActualizarResponsable,
@@ -133,7 +134,8 @@ export function ResponsablesEquipo({ onCerrar }: { onCerrar: () => void }) {
               onClick={agregar}
               disabled={!nombre.trim() || crear.isPending}
             >
-              {crear.isPending ? 'Agregando…' : '+ Agregar'}
+              <Plus className="icono" aria-hidden />
+              {crear.isPending ? 'Agregando…' : 'Agregar'}
             </button>
           </div>
         </div>

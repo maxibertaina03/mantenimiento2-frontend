@@ -1,3 +1,9 @@
+import {
+  Check,
+  Mail,
+  MessageCircle,
+  Printer,
+} from 'lucide-react';
 import { useState } from 'react';
 import { ApiError, apiRequest } from '@/lib/apiClient';
 import {
@@ -106,7 +112,7 @@ export function EnviarOrdenTrabajo({
               {envios.map((e) => (
                 <li key={e.id}>
                   <span>
-                    {e.via === 'CORREO' ? '✉' : '💬'} {e.destinatarios}
+                    {e.via === 'CORREO' ? <Mail className="icono" aria-hidden /> : <MessageCircle className="icono" aria-hidden />} {e.destinatarios}
                     {!e.automatico && <span className="texto-suave"> (a mano)</span>}
                   </span>
                   <span className="texto-suave texto-chico">
@@ -122,7 +128,8 @@ export function EnviarOrdenTrabajo({
         <h3 className="subtitulo-form">Correo</h3>
         {enviadoA ? (
           <div className="alerta alerta-exito">
-            ✔ Orden enviada a {enviadoA.join(', ')} con el PDF adjunto. Quedó registrado.
+            <Check className="icono" aria-hidden />
+            Orden enviada a {enviadoA.join(', ')} con el PDF adjunto. Quedó registrado.
           </div>
         ) : sinCorreo ? (
           <div className="alerta alerta-aviso">
@@ -143,7 +150,8 @@ export function EnviarOrdenTrabajo({
                 onClick={porCorreo}
                 disabled={enviar.isPending || !tieneEmail}
               >
-                {enviar.isPending ? 'Enviando…' : '✉ Enviar por correo'}
+                <Mail className="icono" aria-hidden />
+                {enviar.isPending ? 'Enviando…' : 'Enviar por correo'}
               </button>
             </div>
             {enviar.error && !sinCorreo && <MensajeError error={enviar.error} />}
@@ -163,14 +171,16 @@ export function EnviarOrdenTrabajo({
             disabled={!urlWhatsapp || registrarWhatsapp.isPending}
             title={urlWhatsapp ? undefined : 'El taller no tiene un celular cargado'}
           >
-            💬 Mandar por WhatsApp
+            <MessageCircle className="icono" aria-hidden />
+            Mandar por WhatsApp
           </button>
           <button
             type="button"
             className="btn"
             onClick={async () => descargarPdfOrdenTrabajo(orden, await pdf())}
           >
-            🖨 Descargar el PDF
+            <Printer className="icono" aria-hidden />
+            Descargar el PDF
           </button>
         </div>
         {!urlWhatsapp && (
@@ -181,7 +191,9 @@ export function EnviarOrdenTrabajo({
           </p>
         )}
         {abiertoWhatsapp && !registrarWhatsapp.error && (
-          <p className="texto-suave texto-chico">✔ Envío por WhatsApp registrado.</p>
+          <p className="texto-suave texto-chico">
+            <Check className="icono" aria-hidden /> Envío por WhatsApp registrado.
+          </p>
         )}
         {registrarWhatsapp.error && <MensajeError error={registrarWhatsapp.error} />}
 

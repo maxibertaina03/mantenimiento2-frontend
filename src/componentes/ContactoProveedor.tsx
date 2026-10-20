@@ -1,3 +1,4 @@
+import { Pencil } from 'lucide-react';
 import { useState } from 'react';
 import { useActualizarProveedor } from '@/api/proveedores';
 import { esEmailValido } from '@/lib/envioOrden';
@@ -47,7 +48,8 @@ export function ContactoProveedor({
   if (!abierto) {
     return (
       <button className="btn btn-chico" onClick={() => setAbierto(true)}>
-        ✎ {email || telefono ? 'Corregir el contacto' : 'Cargar correo o teléfono'}
+        <Pencil className="icono" aria-hidden />
+        {email || telefono ? 'Corregir el contacto' : 'Cargar correo o teléfono'}
       </button>
     );
   }

@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import {
   useActualizarTipoEquipo,
@@ -107,7 +108,8 @@ export function TiposEquipo({ abierto, onCerrar }: { abierto: boolean; onCerrar:
             Cerrar
           </button>
           <button className="btn btn-primario" onClick={() => setCreando(true)}>
-            + Nuevo tipo
+            <Plus className="icono" aria-hidden />
+            Nuevo tipo
           </button>
         </div>
       </div>

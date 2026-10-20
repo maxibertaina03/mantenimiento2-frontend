@@ -76,7 +76,7 @@ describe('EnviarOrdenTrabajo', () => {
     const usuario = userEvent.setup();
     render(envolver(<EnviarOrdenTrabajo orden={TUBO} onCerrar={() => {}} />));
 
-    const correo = await screen.findByRole('button', { name: '✉ Enviar por correo' });
+    const correo = await screen.findByRole('button', { name: 'Enviar por correo' });
     await waitFor(() => expect(correo).toBeEnabled());
     await usuario.click(correo);
 
@@ -92,7 +92,7 @@ describe('EnviarOrdenTrabajo', () => {
     const abrir = vi.spyOn(window, 'open').mockImplementation(() => null);
     render(envolver(<EnviarOrdenTrabajo orden={TUBO} onCerrar={() => {}} />));
 
-    const whatsapp = await screen.findByRole('button', { name: '💬 Mandar por WhatsApp' });
+    const whatsapp = await screen.findByRole('button', { name: 'Mandar por WhatsApp' });
     await waitFor(() => expect(whatsapp).toBeEnabled());
     await usuario.click(whatsapp);
 

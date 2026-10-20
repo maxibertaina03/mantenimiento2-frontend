@@ -7,6 +7,7 @@ import {
   House,
   KeyRound,
   Menu,
+  MoreHorizontal,
   Monitor,
   Package,
   PackagePlus,
@@ -131,6 +132,23 @@ const GRUPOS: { titulo: string | null; opciones: Opcion[] }[] = [
   },
 ];
 
+/**
+ * La barra de abajo del celular: lo que se usa todos los días, a un toque y
+ * con el pulgar. «Más» abre el menú completo. Cada acceso aparece solo si el
+ * rol lo puede usar.
+ */
+const BARRA_INFERIOR: Opcion[] = [
+  { a: '/inicio', texto: 'Hoy', Icono: House },
+  { a: '/materiales', texto: 'Materiales', Icono: Package, permiso: P.MATERIALES_VER },
+  {
+    a: '/movimientos/nuevo',
+    texto: 'Cargar',
+    Icono: PackagePlus,
+    permiso: P.MOVIMIENTOS_CREAR,
+  },
+  { a: '/calendario', texto: 'Calendario', Icono: CalendarDays, permiso: P.TAREAS_VER },
+];
+
 /** Estructura general: menú lateral + área de contenido.
  *  En celular el menú se vuelve un cajón deslizable (hamburguesa). */
 export function Layout() {
@@ -195,6 +213,26 @@ export function Layout() {
         <BannerServidor />
         <Outlet />
       </main>
+
+      <nav className="barra-inferior" aria-label="Accesos rápidos">
+        {BARRA_INFERIOR.filter((o) => !o.permiso || puede(o.permiso)).map(
+          ({ a, texto, Icono }) => (
+            <NavLink key={a} to={a} className={claseNav}>
+              <Icono className="icono" aria-hidden />
+              {texto}
+            </NavLink>
+          ),
+        )}
+        <button
+          type="button"
+          className={menuAbierto ? 'activo' : ''}
+          onClick={() => setMenuAbierto((v) => !v)}
+          aria-label="Más opciones del menú"
+        >
+          <MoreHorizontal className="icono" aria-hidden />
+          Más
+        </button>
+      </nav>
     </div>
   );
 }

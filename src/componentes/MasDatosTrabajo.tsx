@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CampoNumero } from './CampoNumero';
 import { ComboProveedor } from './ComboProveedor';
@@ -35,7 +36,8 @@ export function MasDatosTrabajo({
     <>
       <div>
         <button type="button" className="btn btn-sm" onClick={() => setAbierto((v) => !v)}>
-          {abierto ? '− Menos datos' : '+ Más datos: quién lo hizo, costo, horas de parada'}
+          <Plus className="icono" aria-hidden />
+          {abierto ? '− Menos datos' : 'Más datos: quién lo hizo, costo, horas de parada'}
         </button>
       </div>
 

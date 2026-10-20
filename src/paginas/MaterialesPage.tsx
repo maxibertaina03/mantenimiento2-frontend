@@ -132,7 +132,7 @@ export function MaterialesPage() {
           nombreArchivo: `materiales_stock_${sufijoFechaArchivo()}.pdf`,
           orientacion: 'landscape',
           resaltarFilas: todos.map((m) => m.bajoStock),
-          leyenda: bajos > 0 ? `⚠ ${bajos} bajo stock (resaltados)` : 'Todo OK',
+          leyenda: bajos > 0 ? `${bajos} bajo stock (resaltados)` : 'Todo OK',
         });
       }
     } catch (e) {

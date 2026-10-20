@@ -1,3 +1,4 @@
+import { ArrowLeft, Check, Printer, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
@@ -133,7 +134,8 @@ export function TomaInventarioPage() {
   return (
     <>
       <Link to="/inventario" className="texto-suave volver">
-        ← Tomas de inventario
+        <ArrowLeft className="icono" aria-hidden />
+        Tomas de inventario
       </Link>
 
       <div className="panel cabecera-toma">
@@ -185,15 +187,18 @@ export function TomaInventarioPage() {
               title={porConfirmar === 0 ? 'No hay conteos nuevos para confirmar' : undefined}
               onClick={() => setConfirmando(true)}
             >
-              ✔ Confirmar y ajustar
+              <Check className="icono" aria-hidden />
+              Confirmar y ajustar
             </button>
           )}
           <button className="btn" onClick={() => void descargarPlanilla(data)}>
-            🖨 Planilla para contar
+            <Printer className="icono" aria-hidden />
+            Planilla para contar
           </button>
           {resumen.contados > 0 && (
             <button className="btn" onClick={() => void descargarInforme(data)}>
-              🖨 Informe
+              <Printer className="icono" aria-hidden />
+              Informe
             </button>
           )}
           {puedeConfirmar && resumen.contados > 0 && (
@@ -273,7 +278,8 @@ export function TomaInventarioPage() {
         <p className="texto-chico">
           Mostrando el material escaneado.{' '}
           <button type="button" className="btn btn-chico" onClick={() => setSoloMaterial(null)}>
-            ✕ Ver todos
+            <X className="icono" aria-hidden />
+            Ver todos
           </button>
         </p>
       )}
@@ -409,9 +415,9 @@ function RenglonConteo({
           {contar.isPending
             ? 'Guardando…'
             : contar.isError
-              ? '⚠ No se guardó'
+              ? 'No se guardó'
               : contar.isSuccess
-                ? '✓'
+                ? '✓ Guardado'
                 : ''}
         </span>
       </div>
@@ -495,7 +501,7 @@ function ResultadoDeConfirmar({ resultado }: { resultado: ResultadoConfirmacion 
   return (
     <div className={cerrada ? 'alerta alerta-exito' : 'alerta alerta-aviso'}>
       <p style={{ margin: 0 }}>
-        {cerrada ? '✔ Toma cerrada. ' : '✔ Ajustado lo contado. '}
+        {cerrada ? 'Toma cerrada. ' : 'Ajustado lo contado. '}
         {resultado.ajustados} ajustados · {resultado.sinDiferencia} sin diferencia
         {resultado.recontar > 0 &&
           ` · ${resultado.recontar} se movieron después de contarlos: volvé a contarlos y confirmá de nuevo`}

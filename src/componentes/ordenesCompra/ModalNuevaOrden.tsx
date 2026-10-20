@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useCrearOrden, useEmitirOrdenPorId } from '@/api/ordenesCompra';
 import { CampoNumero } from '@/componentes/CampoNumero';
@@ -262,7 +263,8 @@ export function ModalNuevaOrden({
             onClick={agregarRenglon}
             disabled={!material}
           >
-            + Agregar
+            <Plus className="icono" aria-hidden />
+            Agregar
           </button>
         </div>
 
@@ -324,7 +326,8 @@ export function ModalNuevaOrden({
             onClick={agregarEquipo}
             disabled={equipoTexto.trim() === ''}
           >
-            + Agregar
+            <Plus className="icono" aria-hidden />
+            Agregar
           </button>
         </div>
 

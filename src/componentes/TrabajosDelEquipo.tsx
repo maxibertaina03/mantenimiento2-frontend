@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useOrdenesTrabajo } from '@/api/ordenesTrabajo';
 import { formatearFechaSola, formatearNumero } from '@/lib/formato';
@@ -84,7 +85,8 @@ export function TrabajosDelEquipo({
         <h3 className="subtitulo-form">Historial de trabajos</h3>
         {permiteNuevos && puede(P.TRABAJOS_EDITAR) && (
           <button className="btn btn-chico btn-primario" onClick={() => setRegistrando(true)}>
-            + Registrar trabajo
+            <Plus className="icono" aria-hidden />
+            Registrar trabajo
           </button>
         )}
       </div>

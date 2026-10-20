@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import {
   useActualizarItemCatalogo,
@@ -149,7 +150,8 @@ function ListaSimple({
           }}
         />
         <button className="btn btn-primario" onClick={agregar} disabled={!nombre.trim() || crear.isPending}>
-          {crear.isPending ? 'Agregando…' : '+ Agregar'}
+          <Plus className="icono" aria-hidden />
+          {crear.isPending ? 'Agregando…' : 'Agregar'}
         </button>
       </div>
 
@@ -264,7 +266,8 @@ function ListaModelos() {
           disabled={!nombre.trim() || !marcaId || crear.isPending}
           title={marcaId ? undefined : 'Elegí primero la marca'}
         >
-          {crear.isPending ? 'Agregando…' : '+ Agregar'}
+          <Plus className="icono" aria-hidden />
+          {crear.isPending ? 'Agregando…' : 'Agregar'}
         </button>
       </div>
 

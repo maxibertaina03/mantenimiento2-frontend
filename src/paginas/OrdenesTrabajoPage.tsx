@@ -1,3 +1,7 @@
+import {
+  Plus,
+  Truck,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useUsuarioActual } from '@/api/usuarios';
@@ -66,7 +70,8 @@ export function OrdenesTrabajoPage() {
         {puede(P.TRABAJOS_EDITAR) && (
           <div className="fila-acciones">
             <button className="btn btn-primario" onClick={() => setModalAlta(true)}>
-              + Nueva orden
+              <Plus className="icono" aria-hidden />
+              Nueva orden
             </button>
           </div>
         )}
@@ -152,7 +157,8 @@ export function OrdenesTrabajoPage() {
               setPagina(1);
             }}
           />
-          🚚 En talleres externos
+          <Truck className="icono" aria-hidden />
+          En talleres externos
         </label>
       </div>
 

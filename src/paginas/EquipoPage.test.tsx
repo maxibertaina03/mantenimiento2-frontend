@@ -163,8 +163,8 @@ describe('La página del equipo', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Operativo')).toBeInTheDocument();
     // Los botones dependen de los permisos, que llegan después.
-    expect(await screen.findByRole('button', { name: '+ Registrar trabajo' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '✎ Editar' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Registrar trabajo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Editar' })).toBeInTheDocument();
   });
 
   it('las pestañas cuentan lo que hay, y en ámbar lo que hay que mirar', async () => {
@@ -215,7 +215,7 @@ describe('La página del equipo', () => {
       'aria-selected',
       'true',
     );
-    expect(await screen.findByRole('button', { name: '+ Agregar repuesto' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Agregar repuesto' })).toBeInTheDocument();
   });
 
   it('un equipo que no existe lo dice, con la salida a la lista', async () => {
@@ -234,7 +234,7 @@ describe('La etiqueta QR del equipo', () => {
     const usuario = userEvent.setup();
     mostrar();
 
-    await usuario.click(await screen.findByRole('button', { name: '🏷 Etiqueta QR' }));
+    await usuario.click(await screen.findByRole('button', { name: 'Etiqueta QR' }));
 
     expect(impresas).toEqual([{ titulo: 'Bomba de leche pasteurizador' }]);
     await waitFor(() =>

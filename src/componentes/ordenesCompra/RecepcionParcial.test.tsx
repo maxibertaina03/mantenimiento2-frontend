@@ -178,7 +178,7 @@ describe('ReclamarFaltante', () => {
     expect(screen.getByRole('listitem')).toHaveTextContent('Repuesto acrilico p/marea 2x36w — 10 u');
     expect(screen.queryByText(/Artefacto marea/)).not.toBeInTheDocument();
 
-    await usuario.click(screen.getByRole('button', { name: '✉ Reclamar por correo' }));
+    await usuario.click(screen.getByRole('button', { name: 'Reclamar por correo' }));
 
     expect(await screen.findByText(/Reclamo enviado a ventas@ferrero.com.ar/)).toBeInTheDocument();
     expect(apiRequestMock).toHaveBeenCalledWith('/ordenes-compra/oc-28/reclamar-correo', {
@@ -191,7 +191,7 @@ describe('ReclamarFaltante', () => {
     const abrir = vi.spyOn(window, 'open').mockImplementation(() => null);
     render(envolver(<ReclamarFaltante orden={parcial} onCerrar={() => {}} />));
 
-    await usuario.click(screen.getByRole('button', { name: '💬 Reclamar por WhatsApp' }));
+    await usuario.click(screen.getByRole('button', { name: 'Reclamar por WhatsApp' }));
 
     const url = decodeURIComponent(String(abrir.mock.calls[0][0]));
     expect(url).toContain('todavía no recibimos');

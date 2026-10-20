@@ -1,3 +1,8 @@
+import {
+  Check,
+  Mail,
+  MessageCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -97,7 +102,8 @@ export function ReclamarFaltante({
         <h3 className="subtitulo-form">Correo</h3>
         {enviadoA ? (
           <div className="alerta alerta-exito">
-            ✔ Reclamo enviado a {enviadoA.join(', ')}. Quedó registrado en los envíos de la orden.
+            <Check className="icono" aria-hidden />
+            Reclamo enviado a {enviadoA.join(', ')}. Quedó registrado en los envíos de la orden.
           </div>
         ) : sinCorreo ? (
           <div className="alerta alerta-aviso">
@@ -118,7 +124,8 @@ export function ReclamarFaltante({
                 onClick={porCorreo}
                 disabled={reclamarCorreo.isPending || !(tieneEmail || config?.mailAdministracion)}
               >
-                {reclamarCorreo.isPending ? 'Enviando…' : '✉ Reclamar por correo'}
+                <Mail className="icono" aria-hidden />
+                {reclamarCorreo.isPending ? 'Enviando…' : 'Reclamar por correo'}
               </button>
             </div>
             {reclamarCorreo.error && !sinCorreo && <MensajeError error={reclamarCorreo.error} />}
@@ -137,7 +144,8 @@ export function ReclamarFaltante({
             disabled={!urlWhatsapp || registrarWhatsapp.isPending}
             title={urlWhatsapp ? undefined : 'El proveedor no tiene un celular cargado'}
           >
-            💬 Reclamar por WhatsApp
+            <MessageCircle className="icono" aria-hidden />
+            Reclamar por WhatsApp
           </button>
         </div>
         {!urlWhatsapp && (
@@ -148,7 +156,9 @@ export function ReclamarFaltante({
           </p>
         )}
         {abiertoWhatsapp && !registrarWhatsapp.error && (
-          <p className="texto-suave texto-chico">✔ Reclamo por WhatsApp registrado.</p>
+          <p className="texto-suave texto-chico">
+            <Check className="icono" aria-hidden /> Reclamo por WhatsApp registrado.
+          </p>
         )}
         {registrarWhatsapp.error && <MensajeError error={registrarWhatsapp.error} />}
 

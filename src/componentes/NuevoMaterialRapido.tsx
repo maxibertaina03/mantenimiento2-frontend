@@ -1,3 +1,4 @@
+import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { useCategorias, useCrearCategoria } from '@/api/categorias';
 import { useCrearMaterial } from '@/api/materiales';
@@ -197,7 +198,8 @@ export function NuevoMaterialRapido({
         {repetido ? (
           <div className="aviso-repetido" role="alert">
             <p>
-              ⚠️ Ya existe un material llamado <strong>«{repetido}»</strong>. Es el mismo: usá ese,
+              <TriangleAlert className="icono" aria-hidden />
+              Ya existe un material llamado <strong>«{repetido}»</strong>. Es el mismo: usá ese,
               así el stock queda en una sola ficha.
             </p>
             <button
@@ -208,7 +210,7 @@ export function NuevoMaterialRapido({
             >
               {usandoExistente ? 'Trayéndolo…' : `Usar «${repetido}»`}
             </button>
-            {errorExistente && <div className="alerta alerta-error">⚠️ {errorExistente}</div>}
+            {errorExistente && <div className="alerta alerta-error">{errorExistente}</div>}
           </div>
         ) : (
           crear.error && <MensajeError error={crear.error} />

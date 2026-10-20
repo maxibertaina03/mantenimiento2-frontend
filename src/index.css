@@ -88,12 +88,23 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Los íconos (Lucide) se alinean con el texto que acompañan. */
+/* Los íconos (Lucide) se alinean con el texto que acompañan, con un
+   espacio a la derecha cuando van en medio de un texto. */
 .icono {
   width: 1.1em;
   height: 1.1em;
   flex: none;
   vertical-align: -0.18em;
+  margin-inline-end: 0.3em;
+}
+/* En botones, enlaces del menú y otros contenedores con `gap`, el espacio ya
+   lo pone el contenedor. */
+:where(.btn, .badge, .enlace-flecha, .sidebar nav a, [role='menuitem'], .hamburguesa,
+  .tarea-postergada, .accion-grande, .chip, .solapa, .barra-inferior a) > .icono {
+  margin-inline-end: 0;
+}
+.icono-ok {
+  color: var(--exito);
 }
 
 a {
@@ -572,7 +583,10 @@ h3 {
 }
 
 /* ── Buscador rápido ── */
+/* Puede partirse en renglones: en Servicios lleva cuatro botones de plazo, y
+   en el celular el último se salía de la pantalla. */
 .buscador {
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -604,15 +618,20 @@ h3 {
 }
 .combo input {
   width: 100%;
-  padding: 0.5rem 0.65rem;
-  border: 1px solid var(--color-borde);
+  padding: 0.55rem 0.7rem 0.55rem 2.3rem;
+  border: 1px solid var(--borde-fuerte);
   border-radius: var(--radio);
   font-size: var(--texto-md);
+  font-family: inherit;
+  background: var(--panel)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E")
+    no-repeat 0.75rem center;
+  transition: border-color 0.12s, box-shadow 0.12s;
 }
 .combo input:focus {
   outline: none;
-  border-color: var(--color-primario);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  border-color: var(--primario);
+  box-shadow: var(--anillo-foco);
 }
 /* Por que un escaneo no se pudo usar. Va pegado al campo, que es donde esta
    mirando quien tiene la pistola en la mano. */
@@ -775,11 +794,34 @@ button.combo-item:hover {
 
 /* ── Mensajes ── */
 .alerta {
-  padding: 0.75rem 1rem;
+  position: relative;
+  padding: 0.75rem 1rem 0.75rem 2.6rem;
   border-radius: var(--radio);
   margin-bottom: 1rem;
   border: 1px solid;
   font-size: var(--texto-base);
+}
+/* Cada cartel trae su ícono: así no hace falta un emoji en cada mensaje y
+   todos se ven iguales. */
+.alerta::before {
+  content: '';
+  position: absolute;
+  left: 0.9rem;
+  top: 0.85rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  background: currentColor;
+  -webkit-mask: var(--icono-cartel) no-repeat center / contain;
+  mask: var(--icono-cartel) no-repeat center / contain;
+}
+.alerta-aviso {
+  --icono-cartel: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3'/%3E%3Cpath d='M12 9v4M12 17h.01'/%3E%3C/svg%3E");
+}
+.alerta-error {
+  --icono-cartel: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m15 9-6 6M9 9l6 6'/%3E%3C/svg%3E");
+}
+.alerta-exito {
+  --icono-cartel: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E");
 }
 .alerta-aviso {
   background: var(--color-alerta-fondo);
@@ -809,19 +851,22 @@ button.combo-item:hover {
 .modal-fondo {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(17, 24, 39, 0.45);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 8vh 1rem 1rem;
+  padding: 7vh 1rem 1rem;
   z-index: 50;
+  animation: fundido 0.15s ease-out;
 }
 .modal {
-  background: var(--color-panel);
-  border-radius: var(--radio);
+  background: var(--panel);
+  border-radius: var(--radio-grande);
   width: 100%;
   max-width: 480px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--sombra-flotante);
+  animation: aparecer 0.18s ease-out;
   /* Cabecera fija + cuerpo con scroll: sin esto los formularios largos
      (alta de equipo) se estiraban mas alla de la pantalla. */
   display: flex;
@@ -891,6 +936,50 @@ button.combo-item:hover {
 .modal-titulo h2 {
   margin: 0;
   font-size: var(--texto-lg);
+}
+/* La ✕ de las ventanas: un ícono, sin caja. */
+.modal-titulo .btn {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--texto-suave);
+  padding: 0.35rem;
+}
+.modal-titulo .btn:hover {
+  background: var(--panel-suave);
+  color: var(--texto);
+}
+@keyframes fundido {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal, .modal-fondo { animation: none; }
+}
+/* En el celular la ventana sale desde abajo, como en las aplicaciones del
+   teléfono: ocupa todo el ancho y se alcanza con el pulgar. */
+@media (max-width: 640px) {
+  .modal-fondo {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .modal,
+  .modal-ancho {
+    max-width: none;
+    max-height: 92vh;
+    border-radius: var(--radio-grande) var(--radio-grande) 0 0;
+    animation: subir 0.22s ease-out;
+  }
+  .modal-titulo {
+    padding: 1rem 1.1rem 0.8rem;
+  }
+  .modal-cuerpo {
+    padding: 1rem 1.1rem calc(1.25rem + env(safe-area-inset-bottom));
+  }
+}
+@keyframes subir {
+  from { transform: translateY(24px); opacity: 0.6; }
+  to { transform: none; opacity: 1; }
 }
 .acciones {
   display: flex;
@@ -1333,14 +1422,23 @@ button.combo-item:hover {
     grid-template-columns: 1fr;
   }
 
-  /* Filtros apilados y a lo ancho. */
+  /* Filtros: el buscador a lo ancho, los desplegables de a dos y las
+     casillas como chips en fila. Apilados de a uno empujaban la lista media
+     pantalla hacia abajo. */
   .grilla-filtros {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
-  .grilla-filtros > input[type='search'],
+  .grilla-filtros > input[type='search'] {
+    flex: 1 1 100%;
+  }
   .grilla-filtros > select {
-    flex: 1 1 auto;
-    width: 100%;
+    flex: 1 1 calc(50% - 0.25rem);
+    min-width: 0;
+  }
+  .grilla-filtros > label.casilla {
+    flex: 0 0 auto;
   }
 
   /* Los botones de accion se estiran para ser tocables. */
@@ -3961,4 +4059,228 @@ tr:hover .nombre-material {
 }
 @media (prefers-reduced-motion: reduce) {
   .menu-desplegable-lista { animation: none; }
+}
+
+/* ─────────── Controles sueltos (fuera de .campo): todos con el mismo aspecto ─────────── */
+:where(select, textarea, input:not([type='checkbox'], [type='radio'], [type='file'], [type='range'], [type='color'])) {
+  font-family: inherit;
+  font-size: var(--texto-base);
+  color: var(--texto);
+  background-color: var(--panel);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio);
+  padding: 0.5rem 0.65rem;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+:where(select, textarea, input):focus-visible {
+  outline: none;
+  border-color: var(--primario);
+  box-shadow: var(--anillo-foco);
+}
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--primario);
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+/* Casillas de los filtros («Solo las mías», «En talleres externos»): chips que
+   se prenden en azul. Se tocan fácil con el dedo y se ve de un vistazo qué
+   filtro está puesto. */
+label.casilla {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 0.8rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-pildora);
+  background: var(--panel);
+  font-size: var(--texto-sm);
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+label.casilla:hover {
+  border-color: var(--borde-fuerte);
+}
+label.casilla:has(input:checked) {
+  background: var(--primario-suave);
+  border-color: var(--primario-borde);
+  color: var(--primario-texto);
+}
+label.casilla .icono {
+  margin: 0;
+}
+.grilla-filtros {
+  align-items: center;
+}
+
+/* Varios campos en una fila (filtros con etiqueta): en la compu de costado,
+   en el celular bajan solos cuando no entran. */
+.fila-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 0 1rem;
+}
+
+/* ─────────── Tablas: lo que no se parte ─────────── */
+/* El número de orden o el nombre en la primera columna, en un renglón. */
+.tabla td:first-child > strong {
+  white-space: nowrap;
+}
+.fila-acciones-celda {
+  flex-wrap: nowrap;
+}
+/* En la compu, las acciones de una fila van en un renglón («Ver» al lado
+   de «PDF», no uno arriba del otro). En el celular la tarjeta las reparte. */
+@media (min-width: 769px) {
+  .celda-acciones .fila-acciones {
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+  }
+}
+/* Las notas largas del historial no estiran cada fila a diez renglones. */
+.tabla td[data-etiqueta='Notas'] {
+  min-width: 14rem;
+  max-width: 24rem;
+  color: var(--texto-suave);
+  font-size: var(--texto-sm);
+}
+
+@media (max-width: 640px) {
+  /* Filtros: los desplegables de a dos, y las casillas como chips debajo. */
+  .grilla-filtros > select {
+    flex: 1 1 calc(50% - 0.6rem);
+    min-width: 0;
+  }
+  /* Una sola tarjeta de número no ocupa el ancho entero. */
+  .tarjetas-resumen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .tarjeta-resumen {
+    padding: 0.75rem 0.9rem;
+  }
+  .tarjeta-numero {
+    font-size: var(--texto-xl);
+  }
+}
+
+/* ─────────── Elegir el tipo de movimiento: tres botones grandes ─────────── */
+.selector-tipo {
+  border: none;
+  padding: 0;
+  margin: 0 0 0.9rem;
+  min-width: 0;
+}
+.selector-tipo legend {
+  font-weight: 600;
+  font-size: var(--texto-sm);
+  color: #374151;
+  margin-bottom: 0.35rem;
+  padding: 0;
+}
+.opciones-tipo {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+/* `.selector-tipo .opcion-tipo` y no solo `.opcion-tipo`: el fieldset lleva
+   la clase `campo`, y `.campo label` lo pisaba con display:block. */
+.selector-tipo .opcion-tipo {
+  --tono: var(--primario);
+  --tono-suave: var(--primario-suave);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.75rem 0.5rem;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio);
+  background: var(--panel);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.opcion-tipo .icono {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  color: var(--texto-tenue);
+}
+/* El radio queda para el teclado y los lectores de pantalla; se ve el botón. */
+.opcion-tipo input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.opcion-tipo:has(input:focus-visible) {
+  box-shadow: var(--anillo-foco);
+}
+.opcion-tipo:has(input:checked) {
+  border-color: var(--tono);
+  background: var(--tono-suave);
+  color: var(--tono);
+}
+.opcion-tipo:has(input:checked) .icono {
+  color: var(--tono);
+}
+.selector-tipo .tipo-entrada { --tono: var(--exito); --tono-suave: var(--exito-suave); }
+.selector-tipo .tipo-salida { --tono: var(--peligro); --tono-suave: var(--peligro-suave); }
+.selector-tipo .tipo-ajuste { --tono: var(--info); --tono-suave: var(--info-suave); }
+
+/* ─────────── Barra de abajo del celular ─────────── */
+.barra-inferior {
+  display: none;
+}
+@media (max-width: 768px) {
+  .barra-inferior {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    padding: 0.35rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--borde);
+    box-shadow: 0 -4px 16px rgba(16, 24, 40, 0.06);
+  }
+  .barra-inferior a,
+  .barra-inferior button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.35rem 0.1rem;
+    border: none;
+    border-radius: var(--radio);
+    background: none;
+    font: inherit;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--texto-suave);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .barra-inferior .icono {
+    width: 22px;
+    height: 22px;
+    margin: 0;
+  }
+  .barra-inferior .activo {
+    color: var(--primario);
+  }
+  .barra-inferior .activo .icono {
+    stroke-width: 2.4;
+  }
+  /* Lo de abajo de cada pantalla no queda tapado por la barra. */
+  .contenido {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
 }

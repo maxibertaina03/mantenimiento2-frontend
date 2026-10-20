@@ -1,3 +1,7 @@
+import {
+  FileText,
+  Plus,
+} from 'lucide-react';
 import { useRef, useState } from 'react';
 import {
   MAXIMO_BYTES_MANUAL,
@@ -111,7 +115,8 @@ export function ManualesEquipo({ equipoId }: { equipoId: string }) {
               onClick={() => entrada.current?.click()}
               disabled={subir.isPending}
             >
-              {subir.isPending ? 'Subiendo…' : '+ Subir manual (PDF)'}
+              <Plus className="icono" aria-hidden />
+              {subir.isPending ? 'Subiendo…' : 'Subir manual (PDF)'}
             </button>
           </>
         )}
@@ -133,7 +138,8 @@ export function ManualesEquipo({ equipoId }: { equipoId: string }) {
           {manuales.map((m) => (
             <li key={m.id}>
               <span>
-                📄 <strong>{m.nombre}</strong>
+                <FileText className="icono" aria-hidden />
+                <strong>{m.nombre}</strong>
                 <div className="texto-suave texto-chico">
                   {pesa(m.tamanoBytes)} · {formatearFecha(m.subidoEn)}
                   {m.subidoPor ? ` · ${m.subidoPor}` : ''}

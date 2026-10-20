@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCategorias } from '@/api/categorias';
@@ -40,7 +41,8 @@ export function InventarioPage() {
         </div>
         {puede(P.INVENTARIO_CONTAR) && (
           <button className="btn btn-primario" onClick={() => setAbriendo(true)}>
-            + Nueva toma
+            <Plus className="icono" aria-hidden />
+            Nueva toma
           </button>
         )}
       </div>

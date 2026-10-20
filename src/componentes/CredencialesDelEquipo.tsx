@@ -1,3 +1,4 @@
+import { Lock } from 'lucide-react';
 import { useCredenciales } from '@/api/credenciales';
 import { formatearFechaSola } from '@/lib/formato';
 import { P, usePuede } from '@/lib/permisos';
@@ -28,7 +29,9 @@ export function CredencialesDelEquipo({ equipoItId }: { equipoItId: string }) {
 
   return (
     <>
-      <h3 className="subtitulo-form">🔐 Contraseñas de este equipo</h3>
+      <h3 className="subtitulo-form">
+        <Lock className="icono" aria-hidden /> Contraseñas de este equipo
+      </h3>
 
       {isLoading && <Cargando />}
       {error && <MensajeError error={error} />}

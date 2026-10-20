@@ -1,3 +1,4 @@
+import { ArrowDownToLine, ArrowUpFromLine, Scale, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useCrearMovimiento } from '@/api/movimientos';
@@ -8,6 +9,8 @@ import { MensajeError } from '@/componentes/Estados';
 import { formatearNumero } from '@/lib/formato';
 import type { Material } from '@/tipos/material';
 import {
+  ETIQUETA_MOTIVO,
+  ETIQUETA_TIPO,
   MOTIVOS_POR_TIPO,
   TIPOS_MOVIMIENTO,
   type CrearMovimientoInput,
@@ -22,6 +25,13 @@ import {
  */
 type BorradorMovimiento = Omit<CrearMovimientoInput, 'cantidad'> & {
   cantidad?: number;
+};
+
+/** Cada tipo con su ícono y su color: se elige de un toque, sin desplegar nada. */
+const ICONO_TIPO: Record<TipoMovimiento, LucideIcon> = {
+  ENTRADA: ArrowDownToLine,
+  SALIDA: ArrowUpFromLine,
+  AJUSTE: Scale,
 };
 
 const FORM_INICIAL = (materialId: string): BorradorMovimiento => ({
@@ -78,7 +88,9 @@ export function NuevoMovimientoPage() {
     };
     crear.mutate(payload, {
       onSuccess: (mov) => {
-        setExito(`Movimiento registrado (${mov.tipo} de ${formatearNumero(mov.cantidad)}).`);
+        setExito(
+          `Movimiento registrado: ${ETIQUETA_TIPO[mov.tipo].toLowerCase()} de ${formatearNumero(mov.cantidad)}.`,
+        );
         setForm(FORM_INICIAL(form.materialId)); // conserva el material elegido
         setFechaLocal('');
       },
@@ -88,11 +100,14 @@ export function NuevoMovimientoPage() {
   return (
     <>
       <div className="cabecera-pagina">
-        <h1>Registrar movimiento</h1>
+        <div>
+          <h1>Registrar movimiento</h1>
+          <p>Lo que entra al pañol, lo que sale y las correcciones de stock.</p>
+        </div>
       </div>
 
       <div className="panel" style={{ maxWidth: 640 }}>
-        {exito && <div className="alerta alerta-exito">✅ {exito}</div>}
+        {exito && <div className="alerta alerta-exito">{exito}</div>}
         {crear.error && <MensajeError error={crear.error} />}
 
         <form onSubmit={enviar}>
@@ -106,33 +121,43 @@ export function NuevoMovimientoPage() {
             )}
           </div>
 
-          <div className="grilla-2">
-            <div className="campo">
-              <label>Tipo</label>
-              <select
-                value={form.tipo}
-                onChange={(e) => cambiarTipo(e.target.value as TipoMovimiento)}
-              >
-                {TIPOS_MOVIMIENTO.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+          {/* El tipo, en tres botones grandes: en el celular se elige con el
+              pulgar, sin abrir un desplegable. */}
+          <fieldset className="campo selector-tipo">
+            <legend>Tipo</legend>
+            <div className="opciones-tipo">
+              {TIPOS_MOVIMIENTO.map((t) => {
+                const Icono = ICONO_TIPO[t];
+                return (
+                  <label key={t} className={`opcion-tipo tipo-${t.toLowerCase()}`}>
+                    <input
+                      type="radio"
+                      name="tipo"
+                      value={t}
+                      checked={form.tipo === t}
+                      onChange={() => cambiarTipo(t)}
+                    />
+                    <Icono className="icono" aria-hidden />
+                    {ETIQUETA_TIPO[t]}
+                  </label>
+                );
+              })}
             </div>
-            <div className="campo">
-              <label>Motivo</label>
-              <select
-                value={form.motivo}
-                onChange={(e) => set('motivo', e.target.value as MotivoMovimiento)}
-              >
-                {motivosDisponibles.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </div>
+          </fieldset>
+
+          <div className="campo">
+            <label htmlFor="motivo-movimiento">Motivo</label>
+            <select
+              id="motivo-movimiento"
+              value={form.motivo}
+              onChange={(e) => set('motivo', e.target.value as MotivoMovimiento)}
+            >
+              {motivosDisponibles.map((m) => (
+                <option key={m} value={m}>
+                  {ETIQUETA_MOTIVO[m]}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="campo">

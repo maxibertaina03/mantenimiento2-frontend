@@ -76,7 +76,7 @@ export function ComboEquipoIt({ inicial = null, onCambio }: Props) {
     <div className="combo" ref={ref}>
       <input
         type="text"
-        placeholder={seleccionado ? seleccionado.nombre : '🔍 Buscar equipo, o escaneá su QR…'}
+        placeholder={seleccionado ? seleccionado.nombre : 'Buscar equipo, o escaneá su QR…'}
         value={abierto ? texto : (seleccionado?.nombre ?? '')}
         onFocus={() => {
           setAbierto(true);

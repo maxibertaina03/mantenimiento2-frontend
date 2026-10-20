@@ -1,3 +1,11 @@
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  History,
+  KeyRound,
+  Plus,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   TIPOS_CREDENCIAL,
@@ -172,7 +180,8 @@ export function CredencialesPage() {
       <div className="cabecera-pagina">
         <h1>Contraseñas</h1>
         <button className="btn btn-primario" onClick={abrirNueva}>
-          + Nueva credencial
+          <Plus className="icono" aria-hidden />
+          Nueva credencial
         </button>
       </div>
 
@@ -301,13 +310,16 @@ export function CredencialesPage() {
                     <td className="celda-acciones">
                       <div className="fila-acciones">
                         <button className="btn btn-sm" onClick={() => setViendo(c)}>
-                          👁 Ver
+                          <Eye className="icono" aria-hidden />
+                          Ver
                         </button>
                         <button className="btn btn-sm" onClick={() => setRotando(c)}>
-                          🔑 Cambiar
+                          <KeyRound className="icono" aria-hidden />
+                          Cambiar
                         </button>
                         <button className="btn btn-sm" onClick={() => setHistorial(c)}>
-                          🕘 Historial
+                          <History className="icono" aria-hidden />
+                          Historial
                         </button>
                         <button className="btn btn-sm" onClick={() => abrirEdicion(c)}>
                           Editar
@@ -350,7 +362,8 @@ export function CredencialesPage() {
               disabled={pagina <= 1}
               onClick={() => setPagina((p) => p - 1)}
             >
-              ← Anterior
+              <ChevronLeft className="icono" aria-hidden />
+              Anterior
             </button>
             <span className="texto-suave" style={{ padding: '0 0.5rem' }}>
               Página {pagina} de {totalPaginas}
@@ -360,7 +373,8 @@ export function CredencialesPage() {
               disabled={pagina >= totalPaginas}
               onClick={() => setPagina((p) => p + 1)}
             >
-              Siguiente →
+              Siguiente
+              <ChevronRight className="icono" aria-hidden />
             </button>
           </div>
         </div>

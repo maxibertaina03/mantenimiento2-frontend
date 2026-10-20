@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { describirDias, LUNES_A_VIERNES } from '@/lib/diasDeTrabajo';
 import { SelectorDias } from './SelectorDias';
@@ -51,7 +52,8 @@ export function PlanesEquipo({ equipo }: { equipo: Equipo }) {
       <div className="cabecera-historial">
         <h3 className="subtitulo-form">Mantenimiento programado</h3>
         <button className="btn btn-chico btn-primario" onClick={() => setCreando(true)}>
-          + Definir plan
+          <Plus className="icono" aria-hidden />
+          Definir plan
         </button>
       </div>
 

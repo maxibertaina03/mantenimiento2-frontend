@@ -1,3 +1,4 @@
+import { Printer, Truck } from 'lucide-react';
 import { useState } from 'react';
 import { useEditarOrdenTrabajo } from '@/api/ordenesTrabajo';
 import { apiRequest } from '@/lib/apiClient';
@@ -61,7 +62,8 @@ export function MandarATaller({ orden }: { orden: OrdenTrabajo }) {
       ) : (
         <div>
           <button type="button" className="btn btn-sm" onClick={() => setEligiendo(true)}>
-            🚚 Mandar a un servicio externo
+            <Truck className="icono" aria-hidden />
+            Mandar a un servicio externo
           </button>
         </div>
       )}
@@ -108,7 +110,8 @@ export function ImprimirOrdenTrabajo({ orden }: { orden: OrdenTrabajo }) {
 
   return (
     <button type="button" className="btn btn-sm" disabled={imprimiendo} onClick={imprimir}>
-      {imprimiendo ? 'Armando el PDF…' : '🖨 Imprimir orden'}
+      <Printer className="icono" aria-hidden />
+      {imprimiendo ? 'Armando el PDF…' : 'Imprimir orden'}
     </button>
   );
 }

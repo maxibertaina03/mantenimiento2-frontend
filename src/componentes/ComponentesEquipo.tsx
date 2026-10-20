@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import {
   useComponentes,
@@ -220,7 +221,8 @@ export function ComponentesEquipo({
             className="btn btn-chico btn-primario"
             onClick={() => setAbierto('agregar')}
           >
-            + Agregar componente
+            <Plus className="icono" aria-hidden />
+            Agregar componente
           </button>
         )}
       </div>

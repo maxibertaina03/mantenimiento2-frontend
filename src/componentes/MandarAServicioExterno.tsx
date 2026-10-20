@@ -1,3 +1,4 @@
+import { Check, Mail, Printer } from 'lucide-react';
 import { useState } from 'react';
 import { useCrearOrdenTrabajo } from '@/api/ordenesTrabajo';
 import { apiRequest } from '@/lib/apiClient';
@@ -78,7 +79,8 @@ export function MandarAServicioExterno({
       <Modal titulo="Mandar a servicio externo" abierto onCerrar={onCerrar}>
         <div className="formulario-modal">
           <div className="alerta alerta-exito">
-            ✔ Orden <strong>{creada.numero}</strong> abierta para{' '}
+            <Check className="icono" aria-hidden />
+            Orden <strong>{creada.numero}</strong> abierta para{' '}
             <strong>{creada.proveedorNombre ?? proveedor?.nombre}</strong>. Se descargó el PDF:
             imprimilo para que viaje con el equipo y firmen al entregarlo.
           </div>
@@ -93,10 +95,12 @@ export function MandarAServicioExterno({
           </p>
           <div className="acciones">
             <button type="button" className="btn" onClick={() => imprimir(creada)}>
-              🖨 Descargar el PDF de nuevo
+              <Printer className="icono" aria-hidden />
+              Descargar el PDF de nuevo
             </button>
             <button type="button" className="btn" onClick={() => setEnviando(true)}>
-              ✉ Mandársela al taller
+              <Mail className="icono" aria-hidden />
+              Mandársela al taller
             </button>
             <button type="button" className="btn btn-primario" onClick={onCerrar}>
               Listo
@@ -166,7 +170,8 @@ export function MandarAServicioExterno({
             className="btn btn-primario"
             disabled={crear.isPending || !proveedor || titulo.trim() === ''}
           >
-            {crear.isPending ? 'Abriendo…' : '🖨 Abrir orden e imprimir'}
+            <Printer className="icono" aria-hidden />
+            {crear.isPending ? 'Abriendo…' : 'Abrir orden e imprimir'}
           </button>
         </div>
       </form>

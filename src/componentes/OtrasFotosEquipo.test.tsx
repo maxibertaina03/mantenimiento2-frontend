@@ -103,7 +103,7 @@ describe('OtrasFotosEquipo', () => {
     servidor(['equipos.ver', 'equipos.editar']);
     mostrar();
 
-    await userEvent.click(await screen.findByRole('button', { name: '★ Principal' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Principal' }));
     await waitFor(() =>
       expect(apiRequestMock).toHaveBeenCalledWith('/equipos/eq/fotos/f-1/principal', {
         method: 'POST',
@@ -116,7 +116,7 @@ describe('OtrasFotosEquipo', () => {
     mostrar();
 
     await screen.findByRole('button', { name: /Ver grande/ });
-    expect(screen.queryByRole('button', { name: '★ Principal' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Principal' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Borrar/ })).not.toBeInTheDocument();
     expect(
       screen.queryByRole('combobox', { name: 'Qué se ve en la foto nueva' }),

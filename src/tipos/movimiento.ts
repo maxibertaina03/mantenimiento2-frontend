@@ -2,6 +2,20 @@ export type TipoMovimiento = 'ENTRADA' | 'SALIDA' | 'AJUSTE';
 export type MotivoMovimiento = 'COMPRA' | 'TRABAJO' | 'AJUSTE' | 'DEVOLUCION' | 'OTRO';
 
 export const TIPOS_MOVIMIENTO: TipoMovimiento[] = ['ENTRADA', 'SALIDA', 'AJUSTE'];
+
+/** Cómo se lee cada tipo y cada motivo en pantalla (en la base van en mayúsculas). */
+export const ETIQUETA_TIPO: Record<TipoMovimiento, string> = {
+  ENTRADA: 'Entrada',
+  SALIDA: 'Salida',
+  AJUSTE: 'Ajuste',
+};
+export const ETIQUETA_MOTIVO: Record<MotivoMovimiento, string> = {
+  COMPRA: 'Compra',
+  TRABAJO: 'Uso en un trabajo',
+  AJUSTE: 'Ajuste de inventario',
+  DEVOLUCION: 'Devolución',
+  OTRO: 'Otro',
+};
 export const MOTIVOS_MOVIMIENTO: MotivoMovimiento[] = [
   'COMPRA',
   'TRABAJO',

@@ -1,12 +1,16 @@
-/** Formatea una fecha ISO a dd/mm/aaaa hh:mm (es-AR). */
+/**
+ * Formatea una fecha ISO a «16/10/2026 10:26», en hora local y 24 horas.
+ *
+ * Antes salía «16/10/2026, 10:26 a. m.»: más largo, y en las tablas se partía
+ * en dos renglones.
+ */
 export function formatearFecha(iso: string): string {
-  return new Date(iso).toLocaleString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return (
+    `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ` +
+    `${pad(d.getHours())}:${pad(d.getMinutes())}`
+  );
 }
 
 /**

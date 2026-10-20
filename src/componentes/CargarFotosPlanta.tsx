@@ -1,3 +1,4 @@
+import { FolderOpen, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useCambiarFotoEquipo, useTodosLosEquipos } from '@/api/equipos';
 import { comprimirImagen } from '@/lib/comprimirImagen';
@@ -108,7 +109,8 @@ export function CargarFotosPlanta({ onCerrar }: { onCerrar: () => void }) {
             </p>
             <div className="acciones-envio">
               <button className="btn btn-primario" onClick={() => entrada.current?.click()}>
-                📁 Elegir la carpeta
+                <FolderOpen className="icono" aria-hidden />
+                Elegir la carpeta
               </button>
             </div>
             <input
@@ -236,7 +238,8 @@ export function CargarFotosPlanta({ onCerrar }: { onCerrar: () => void }) {
           </button>
           {resultado && !progreso && aSubir.length > 0 && (
             <button className="btn btn-primario" onClick={subir}>
-              ⬆ Subir {aSubir.length} fotos
+              <Upload className="icono" aria-hidden />
+              Subir {aSubir.length} fotos
             </button>
           )}
         </div>

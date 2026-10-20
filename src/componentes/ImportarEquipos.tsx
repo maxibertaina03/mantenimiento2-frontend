@@ -1,3 +1,4 @@
+import { Check, FileText } from 'lucide-react';
 import { useState } from 'react';
 import { useImportarEquipos } from '@/api/equiposIt';
 import { leerInventario, type FilaInventario } from '@/lib/csvImportacion';
@@ -78,18 +79,19 @@ export function ImportarEquipos({ abierto, onCerrar }: { abierto: boolean; onCer
 
             <SelectorArchivo
               accept=".csv,text/csv"
-              icono="📄"
+              icono={<FileText />}
               titulo="Elegí el archivo CSV del inventario"
               ayuda="El que se exporta de la planilla, con los encabezados en la primera fila"
               onElegir={(archivos) => elegirArchivo(archivos[0])}
             />
 
-            {errorLectura && <div className="alerta alerta-error">⚠️ {errorLectura}</div>}
+            {errorLectura && <div className="alerta alerta-error">{errorLectura}</div>}
 
             {filas.length > 0 && (
               <>
                 <div className="alerta alerta-exito">
-                  ✔ Se leyeron <strong>{filas.length} equipos</strong> de {nombreArchivo}.
+                  <Check className="icono" aria-hidden />
+                  Se leyeron <strong>{filas.length} equipos</strong> de {nombreArchivo}.
                 </div>
 
                 {ignoradas.length > 0 && (

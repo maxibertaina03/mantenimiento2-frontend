@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { describirDias, LUNES_A_VIERNES } from '@/lib/diasDeTrabajo';
 import { SelectorDias } from './SelectorDias';
@@ -83,7 +84,8 @@ export function RutinasDeTareas({ onCerrar }: { onCerrar: () => void }) {
             className="btn btn-primario alta-renglon-boton"
             disabled={crear.isPending || titulo.trim() === ''}
           >
-            + Agregar
+            <Plus className="icono" aria-hidden />
+            Agregar
           </button>
           <div className="alta-renglon-dias">
             <SelectorDias dias={diasSemana} onCambio={setDiasSemana} />

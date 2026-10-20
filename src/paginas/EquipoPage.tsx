@@ -1,3 +1,15 @@
+import {
+  ArrowLeft,
+  BookOpen,
+  Check,
+  History,
+  Mail,
+  Pencil,
+  Plus,
+  QrCode,
+  Settings,
+  Truck,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -176,7 +188,8 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
   return (
     <>
       <Link to={volverA} className="texto-suave volver">
-        ← Equipos y herramientas
+        <ArrowLeft className="icono" aria-hidden />
+        Equipos y herramientas
       </Link>
 
       {/* ── Encabezado: lo que se mira y lo que se hace todos los días ── */}
@@ -218,7 +231,8 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
         <div className="cabecera-equipo-acciones">
           {!dadoDeBaja && puede(P.TRABAJOS_EDITAR) && (
             <button type="button" className="btn btn-primario" onClick={() => setRegistrando(true)}>
-              + Registrar trabajo
+              <Plus className="icono" aria-hidden />
+              Registrar trabajo
             </button>
           )}
           {puedeMandarAfuera && (
@@ -228,12 +242,14 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
               title="Abrir una orden para un taller o proveedor de afuera e imprimirla"
               onClick={() => setMandandoAfuera(true)}
             >
-              🚚 Mandar a servicio externo
+              <Truck className="icono" aria-hidden />
+              Mandar a servicio externo
             </button>
           )}
           {puede(P.EQUIPOS_EDITAR) && (
             <button type="button" className="btn" onClick={() => setEditando(true)}>
-              ✎ Editar
+              <Pencil className="icono" aria-hidden />
+              Editar
             </button>
           )}
           {puede(P.EQUIPOS_EDITAR) && (
@@ -244,7 +260,8 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
               disabled={marcarQr.isPending}
               onClick={imprimirQr}
             >
-              🏷 Etiqueta QR
+              <QrCode className="icono" aria-hidden />
+              Etiqueta QR
             </button>
           )}
         </div>
@@ -254,13 +271,15 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
       {enTallerExterno.map((o) => (
         <div key={o.id} className="alerta alerta-aviso aviso-taller">
           <span>
-            🚚 Está en <strong>{o.proveedorNombre ?? 'un servicio externo'}</strong> desde el{' '}
+            <Truck className="icono" aria-hidden />
+            Está en <strong>{o.proveedorNombre ?? 'un servicio externo'}</strong> desde el{' '}
             {formatearFechaSola(o.abiertaEn)}: {o.titulo} ({o.numero}).
           </span>
           {puede(P.TRABAJOS_EDITAR) && (
             <span className="aviso-taller-acciones">
               <button type="button" className="btn btn-sm" onClick={() => setEnviandoAlTaller(o)}>
-                ✉ Mandarle la orden
+                <Mail className="icono" aria-hidden />
+                Mandarle la orden
               </button>
               {/* Lo cierra quien tiene el trabajo: es la regla de las órdenes. */}
               {yo?.id === o.asignadoAId ? (
@@ -269,7 +288,8 @@ function PaginaDelEquipo({ equipo }: { equipo: Equipo }) {
                   className="btn btn-sm btn-primario"
                   onClick={() => setVolviendo(o)}
                 >
-                  ✔ Volvió del taller
+                  <Check className="icono" aria-hidden />
+                  Volvió del taller
                 </button>
               ) : (
                 <span className="texto-chico">
@@ -414,22 +434,22 @@ function ModoRapido({
         )}
         {onMandarAfuera && (
           <button type="button" className="accion-grande" onClick={onMandarAfuera}>
-            <span aria-hidden="true">🚚</span>
+            <Truck className="icono" aria-hidden />
             Mandar a servicio externo
           </button>
         )}
         <button type="button" className="accion-grande" onClick={() => onIr('repuestos')}>
-          <span aria-hidden="true">⚙</span>
+          <Settings className="icono" aria-hidden />
           Repuestos
         </button>
         {verTrabajos && (
           <button type="button" className="accion-grande" onClick={() => onIr('trabajos')}>
-            <span aria-hidden="true">☰</span>
+            <History className="icono" aria-hidden />
             Historial
           </button>
         )}
         <button type="button" className="accion-grande" onClick={() => onIr('manuales')}>
-          <span aria-hidden="true">▤</span>
+          <BookOpen className="icono" aria-hidden />
           Manuales
         </button>
       </div>

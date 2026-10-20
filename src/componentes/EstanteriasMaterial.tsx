@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import {
   useActualizarEstanteria,
@@ -72,7 +73,8 @@ export function EstanteriasMaterial({
             onClick={agregar}
             disabled={!nombre.trim() || crear.isPending}
           >
-            {crear.isPending ? 'Agregando…' : '+ Agregar'}
+            <Plus className="icono" aria-hidden />
+            {crear.isPending ? 'Agregando…' : 'Agregar'}
           </button>
         </div>
 

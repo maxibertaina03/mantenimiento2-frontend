@@ -1,3 +1,4 @@
+import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { useRecibirOrden } from '@/api/ordenesCompra';
 import { CampoNumero } from '@/componentes/CampoNumero';
@@ -98,7 +99,8 @@ export function RecibirMercaderia({
 
       {pasados.length > 0 && (
         <div className="alerta alerta-error">
-          ⚠️ De «{nombreDelRenglon(pasados[0])}» faltan {formatearNumero(pasados[0].pendiente)}: no
+          <TriangleAlert className="icono" aria-hidden />
+          De «{nombreDelRenglon(pasados[0])}» faltan {formatearNumero(pasados[0].pendiente)}: no
           se puede recibir más de lo que se pidió.
         </div>
       )}
