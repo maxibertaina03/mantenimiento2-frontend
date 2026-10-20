@@ -194,7 +194,7 @@ export function EquiposPage() {
         <input
           type="search"
           inputMode="search"
-          placeholder="🔍 Buscar por nombre o código…"
+          placeholder="Buscar por nombre o código…"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
         />

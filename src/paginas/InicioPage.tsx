@@ -1,3 +1,13 @@
+import {
+  ArrowRight,
+  CircleAlert,
+  Factory,
+  Package,
+  Send,
+  Truck,
+  Wrench,
+  type LucideIcon,
+} from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useCoberturaAlertas, useMaterialesBajoStock } from '@/api/materiales';
@@ -19,6 +29,28 @@ const NO_OPERATIVOS = ['EN_REPARACION', 'FUERA_DE_SERVICIO'] as const;
 
 type Clave = 'parados' | 'servicios' | 'talleres' | 'reponer' | 'llegar' | 'sinEnviar';
 
+/** El color de cada tarjeta dice qué tan urgente es, antes de leer el número. */
+type Tono = 'rojo' | 'ambar' | 'azul' | 'verde' | 'gris' | 'violeta';
+
+const ICONO: Record<Clave, LucideIcon> = {
+  parados: CircleAlert,
+  servicios: Wrench,
+  talleres: Factory,
+  reponer: Package,
+  llegar: Truck,
+  sinEnviar: Send,
+};
+
+/** «martes 20 de octubre», para que la pantalla diga de qué día habla. */
+function hoyEnPalabras(): string {
+  const texto = new Date().toLocaleDateString('es-AR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
 /** Una tarjeta de arriba, y lo que se despliega al tocarla. */
 interface Tarjeta {
   clave: Clave;
@@ -29,6 +61,7 @@ interface Tarjeta {
   detalle?: string;
   /** Pide atención: se pinta distinto. */
   urgente?: boolean;
+  tono: Tono;
   /** La lista que se despliega abajo. */
   contenido: ReactNode;
   /** A dónde lleva «Ver todo». */
@@ -94,12 +127,13 @@ export function InicioPage() {
   const totalParados = parados.reduce((suma, x) => suma + x.cuantos, 0);
 
   // En orden de urgencia: lo parado frena la producción; lo sin enviar, nada todavía.
-  const tarjetas: Tarjeta[] = [
+  const tarjetas: Tarjeta[] = ([
     {
       clave: 'parados' as const,
       cuantos: totalParados,
       titulo: 'Equipos parados',
       urgente: true,
+      tono: 'rojo',
       ir: { a: '/equipos', texto: 'Ver los equipos' },
       contenido: (
         <ul className="lista-inicio">
@@ -122,6 +156,7 @@ export function InicioPage() {
       titulo: 'Mantenimiento',
       detalle: vencidos > 0 ? `${vencidos} vencidos` : 'por vencer',
       urgente: vencidos > 0,
+      tono: vencidos > 0 ? 'rojo' : 'ambar',
       ir: { a: '/servicios', texto: 'Ver todos los servicios' },
       contenido: (
         <ul className="lista-inicio">
@@ -140,6 +175,7 @@ export function InicioPage() {
       clave: 'talleres' as const,
       cuantos: talleres.data?.total ?? afuera.length,
       titulo: 'En talleres externos',
+      tono: 'violeta',
       ir: { a: '/ordenes-trabajo?afuera=1', texto: 'Ver las órdenes' },
       contenido: (
         <ul className="lista-inicio">
@@ -164,6 +200,7 @@ export function InicioPage() {
       cuantos: faltantes.length,
       titulo: 'Hay que reponer',
       detalle: 'bajo el mínimo',
+      tono: 'ambar',
       ir: { a: '/materiales', texto: `Ver los ${faltantes.length} materiales` },
       contenido: (
         <ul className="lista-inicio">
@@ -183,6 +220,7 @@ export function InicioPage() {
       clave: 'llegar' as const,
       cuantos: totalPorRecibir || porRecibir.length,
       titulo: 'Mercadería por llegar',
+      tono: 'verde',
       ir: { a: '/ordenes-compra', texto: 'Ir a órdenes de compra' },
       contenido: (
         <ul className="lista-inicio">
@@ -204,6 +242,7 @@ export function InicioPage() {
       clave: 'sinEnviar' as const,
       cuantos: borradores.data?.total ?? sinEnviar.length,
       titulo: 'Órdenes sin enviar',
+      tono: 'gris',
       ir: { a: '/ordenes-compra', texto: 'Ir a órdenes de compra' },
       contenido: (
         <>
@@ -221,7 +260,7 @@ export function InicioPage() {
         </>
       ),
     },
-  ].filter((t) => t.cuantos > 0);
+  ] satisfies Tarjeta[]).filter((t) => t.cuantos > 0);
 
   const claveAbierta = abierta === null ? tarjetas[0]?.clave : abierta;
   const actual = tarjetas.find((t) => t.clave === claveAbierta);
@@ -234,54 +273,76 @@ export function InicioPage() {
   return (
     <>
       <div className="cabecera-pagina">
-        <h1>Hoy</h1>
+        <div>
+          <h1>Hoy</h1>
+          <p>{hoyEnPalabras()}</p>
+        </div>
       </div>
 
-      {/* Primero lo que le toca a uno. Es el aviso de verdad: el correo puede
-          rebotar, esto se ve siempre que alguien entre. */}
-      <MisTareasDeHoy />
-
-      {tarjetas.length === 0 ? (
-        <div className="panel">
-          <p style={{ margin: 0 }}>
-            No hay nada pendiente: ningún equipo parado, ningún material bajo su mínimo y ninguna
-            orden esperando
-            {veServicios && ', y ningún service por vencer'}.
-          </p>
+      {/* En el celular va todo en columna, en este orden: primero lo que le
+          toca a uno, que es el aviso de verdad (el correo puede rebotar, esto
+          se ve siempre que alguien entre). En la compu, las tarjetas arriba a
+          lo ancho y debajo las tareas al lado del detalle. */}
+      <div className="hoy">
+        <div className="hoy-tareas">
+          <MisTareasDeHoy />
         </div>
-      ) : (
-        <>
-          <div className="tarjetas-hoy">
-            {tarjetas.map((t) => (
-              <button
-                key={t.clave}
-                type="button"
-                className={[
-                  'tarjeta-hoy',
-                  t.urgente ? 'tarjeta-hoy-urgente' : '',
-                  t.clave === claveAbierta ? 'activa' : '',
-                ].join(' ')}
-                aria-expanded={t.clave === claveAbierta}
-                onClick={() => setAbierta(t.clave === claveAbierta ? 'ninguna' : t.clave)}
-              >
-                <span className="tarjeta-hoy-numero">{t.cuantos}</span>
-                <span className="tarjeta-hoy-titulo">{t.titulo}</span>
-                {t.detalle && <span className="tarjeta-hoy-detalle">{t.detalle}</span>}
-              </button>
-            ))}
-          </div>
 
-          {actual && (
-            <div className="panel detalle-hoy">
-              <div className="cabecera-bloque">
-                <h2>{actual.titulo}</h2>
-              </div>
-              {actual.contenido}
-              <Link to={actual.ir.a}>{actual.ir.texto} →</Link>
+        {tarjetas.length === 0 ? (
+          <div className="panel hoy-detalle">
+            <p style={{ margin: 0 }}>
+              No hay nada pendiente: ningún equipo parado, ningún material bajo su mínimo y
+              ninguna orden esperando
+              {veServicios && ', y ningún service por vencer'}.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="tarjetas-hoy">
+              {tarjetas.map((t) => {
+                const Icono = ICONO[t.clave];
+                return (
+                  <button
+                    key={t.clave}
+                    type="button"
+                    className={[
+                      'tarjeta-hoy',
+                      `tono-${t.tono}`,
+                      t.urgente ? 'tarjeta-hoy-urgente' : '',
+                      t.clave === claveAbierta ? 'activa' : '',
+                    ].join(' ')}
+                    aria-expanded={t.clave === claveAbierta}
+                    onClick={() => setAbierta(t.clave === claveAbierta ? 'ninguna' : t.clave)}
+                  >
+                    <span className="tarjeta-hoy-icono" aria-hidden>
+                      <Icono />
+                    </span>
+                    <span className="tarjeta-hoy-textos">
+                      <span className="tarjeta-hoy-numero">{t.cuantos}</span>
+                      <span className="tarjeta-hoy-titulo">{t.titulo}</span>
+                      {t.detalle && <span className="tarjeta-hoy-detalle">{t.detalle}</span>}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-          )}
-        </>
-      )}
+
+            {actual && (
+              <section className="panel panel-lista detalle-hoy hoy-detalle">
+                <div className="panel-cabecera">
+                  <h2>{actual.titulo}</h2>
+                </div>
+                {actual.contenido}
+                <div className="panel-pie">
+                  <Link to={actual.ir.a} className="enlace-flecha">
+                    {actual.ir.texto} <ArrowRight className="icono" aria-hidden />
+                  </Link>
+                </div>
+              </section>
+            )}
+          </>
+        )}
+      </div>
 
       {hayHuecos && (
         <details className="panel panel-aviso huecos-hoy">

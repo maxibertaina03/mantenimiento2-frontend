@@ -255,7 +255,7 @@ export function TomaInventarioPage() {
         <input
           type="search"
           inputMode="search"
-          placeholder="🔍 Buscar material, o escanear su QR…"
+          placeholder="Buscar material, o escanear su QR…"
           value={buscar}
           onChange={(e) => {
             // Una pistola escribe la dirección de la etiqueta en el campo.

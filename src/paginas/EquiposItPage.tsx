@@ -139,7 +139,7 @@ export function EquiposItPage() {
       <div className="grilla-filtros">
         <input
           type="search"
-          placeholder="🔍 Buscar por código, marca, modelo, serie, IP o nombre de red…"
+          placeholder="Buscar por código, marca, modelo, serie, IP o nombre de red…"
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />

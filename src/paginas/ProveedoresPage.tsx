@@ -63,7 +63,7 @@ export function ProveedoresPage() {
         <input
           type="search"
           inputMode="search"
-          placeholder="🔍 Buscar proveedor por nombre o CUIT…"
+          placeholder="Buscar proveedor por nombre o CUIT…"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
           // Solo con mouse: en el celular abriría el teclado apenas se entra.

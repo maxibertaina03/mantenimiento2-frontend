@@ -83,7 +83,7 @@ export function OrdenesCompraPage() {
       <div className="grilla-filtros">
         <input
           type="search"
-          placeholder="🔍 Buscar por orden, proveedor, remito o factura…"
+          placeholder="Buscar por orden, proveedor, remito o factura…"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
         />

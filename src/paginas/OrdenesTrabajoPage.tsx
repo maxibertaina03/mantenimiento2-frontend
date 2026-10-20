@@ -91,7 +91,7 @@ export function OrdenesTrabajoPage() {
         <input
           type="search"
           inputMode="search"
-          placeholder="🔍 Buscar por número o por lo que se hizo…"
+          placeholder="Buscar por número o por lo que se hizo…"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
         />

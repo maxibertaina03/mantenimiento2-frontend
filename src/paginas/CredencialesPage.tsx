@@ -185,7 +185,7 @@ export function CredencialesPage() {
         <input
           type="search"
           inputMode="search"
-          placeholder="🔍 Buscar por nombre, usuario o notas…"
+          placeholder="Buscar por nombre, usuario o notas…"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
         />

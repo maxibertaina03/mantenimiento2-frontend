@@ -1,19 +1,78 @@
+/* ─────────────────────────── Diseño: la base ───────────────────────────
+   Todo color, tamaño, radio y sombra sale de acá. Antes había 53 colores y
+   33 tamaños de letra escritos a mano, y cada pantalla se veía un poco
+   distinta. Para cambiar el aspecto del sistema se tocan estas variables. */
 :root {
-  --color-fondo: #f4f6f8;
-  --color-panel: #ffffff;
-  --color-borde: #e2e6ea;
-  --color-texto: #1f2933;
-  --color-texto-suave: #6b7280;
-  --color-primario: #2563eb;
-  --color-primario-hover: #1d4ed8;
-  --color-peligro: #dc2626;
-  --color-exito: #16a34a;
-  --color-alerta-fondo: #fef3c7;
-  --color-alerta-borde: #fcd34d;
-  --color-alerta-texto: #92400e;
-  --radio: 8px;
-  --sombra: 0 1px 3px rgba(0, 0, 0, 0.08);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Neutros */
+  --fondo: #f6f7f9;
+  --panel: #ffffff;
+  --panel-suave: #f9fafb;
+  --borde: #e6e8ec;
+  --borde-fuerte: #d1d5db;
+  --texto: #111827;
+  --texto-suave: #6b7280;
+  --texto-tenue: #9ca3af;
+
+  /* Primario: el azul de las acciones */
+  --primario: #2563eb;
+  --primario-hover: #1d4ed8;
+  --primario-suave: #eff4ff;
+  --primario-borde: #bfd3fe;
+  --primario-texto: #1d4ed8;
+
+  /* Estados: fondo suave, borde y texto de cada uno */
+  --exito: #15803d;
+  --exito-suave: #e7f6ee;
+  --exito-borde: #a7e3c0;
+  --peligro: #b91c1c;
+  --peligro-fuerte: #dc2626;
+  --peligro-suave: #fdecec;
+  --peligro-borde: #f5b5b5;
+  --alerta: #b45309;
+  --alerta-texto: #92400e;
+  --alerta-suave: #fff4e0;
+  --alerta-borde: #f7d08a;
+  --info: #4338ca;
+  --info-suave: #eef0ff;
+  --info-borde: #c7cdfa;
+
+  /* Forma */
+  --radio-chico: 6px;
+  --radio: 10px;
+  --radio-grande: 14px;
+  --radio-pildora: 999px;
+  --sombra: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --sombra-hover: 0 6px 16px rgba(16, 24, 40, 0.08);
+  --sombra-flotante: 0 16px 40px rgba(16, 24, 40, 0.18);
+  --anillo-foco: 0 0 0 3px rgba(37, 99, 235, 0.18);
+
+  /* Tipografía: Inter, incluida en el sistema (no depende de Google). */
+  --fuente: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --texto-xs: 0.75rem;
+  --texto-sm: 0.8125rem;
+  --texto-base: 0.875rem;
+  --texto-md: 0.9375rem;
+  --texto-lg: 1.0625rem;
+  --texto-xl: 1.25rem;
+  --texto-2xl: 1.6rem;
+
+  /* Los nombres de antes, como alias: así lo que todavía los usa sigue igual. */
+  --color-fondo: var(--fondo);
+  --color-panel: var(--panel);
+  --color-borde: var(--borde);
+  --color-texto: var(--texto);
+  --color-texto-suave: var(--texto-suave);
+  --color-primario: var(--primario);
+  --color-primario-hover: var(--primario-hover);
+  --color-peligro: var(--peligro-fuerte);
+  --color-exito: var(--exito);
+  --color-alerta-fondo: var(--alerta-suave);
+  --color-alerta-borde: var(--alerta-borde);
+  --color-alerta-texto: var(--alerta-texto);
+
+  font-family: var(--fuente);
+  /* Los números de tablas y tarjetas, todos del mismo ancho: se alinean. */
+  font-feature-settings: 'cv11', 'ss01';
 }
 
 * {
@@ -22,9 +81,19 @@
 
 body {
   margin: 0;
-  background: var(--color-fondo);
-  color: var(--color-texto);
-  font-size: 14px;
+  background: var(--fondo);
+  color: var(--texto);
+  font-size: var(--texto-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Los íconos (Lucide) se alinean con el texto que acompañan. */
+.icono {
+  width: 1.1em;
+  height: 1.1em;
+  flex: none;
+  vertical-align: -0.18em;
 }
 
 a {
@@ -39,19 +108,20 @@ a:hover {
    pantallas parecidas entre si, el titulo es lo que le dice a alguien donde
    esta parado, y a 700 competia con el texto normal. */
 h1 {
-  font-size: 1.55rem;
-  font-weight: 800;
-  letter-spacing: -0.015em;
+  font-size: var(--texto-2xl);
+  font-weight: 700;
+  letter-spacing: -0.022em;
+  line-height: 1.2;
   margin: 0 0 0.25rem;
 }
 h2 {
-  font-size: 1.15rem;
-  font-weight: 750;
-  letter-spacing: -0.01em;
+  font-size: var(--texto-lg);
+  font-weight: 650;
+  letter-spacing: -0.012em;
   margin: 0 0 0.75rem;
 }
 h3 {
-  font-weight: 700;
+  font-weight: 650;
 }
 
 /* ── Layout ── */
@@ -60,47 +130,115 @@ h3 {
   min-height: 100vh;
 }
 .sidebar {
-  width: 220px;
-  background: var(--color-panel);
-  border-right: 1px solid var(--color-borde);
-  padding: 1.25rem 1rem;
+  width: 248px;
+  background: var(--panel);
+  border-right: 1px solid var(--borde);
+  padding: 1.1rem 0.8rem;
   flex-shrink: 0;
+  /* Queda fija mientras la página scrollea: el menú siempre a mano. */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.sesion-lateral {
+  margin-top: auto;
+  padding: 1rem 0.5rem 0.2rem;
+  border-top: 1px solid var(--borde);
 }
 .sidebar .marca {
   font-weight: 700;
-  font-size: 1.1rem;
-  margin-bottom: 1.5rem;
+  font-size: var(--texto-md);
+}
+/* Logo chico al lado del nombre, en vez de un logo grande arriba. */
+.marca-lateral {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.2rem 0.5rem 1rem;
+}
+.marca-lateral b {
+  display: block;
+  font-size: var(--texto-md);
+  letter-spacing: -0.01em;
+}
+.marca-lateral small {
+  display: block;
+  color: var(--texto-tenue);
+  font-size: var(--texto-xs);
+  font-weight: 500;
+}
+.grupo-menu {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--texto-tenue);
+  padding: 1rem 0.65rem 0.35rem;
 }
 .sidebar nav a {
-  display: block;
-  padding: 0.55rem 0.75rem;
-  border-radius: var(--radio);
-  color: var(--color-texto);
-  font-weight: 600;
-  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radio-chico);
+  color: #374151;
+  font-weight: 500;
+  font-size: var(--texto-base);
+  margin-bottom: 1px;
+  transition: background 0.12s, color 0.12s;
 }
-.sidebar nav a.activo {
-  background: var(--color-primario);
-  color: #fff;
+.sidebar nav a .icono {
+  width: 18px;
+  height: 18px;
+  color: var(--texto-tenue);
+  transition: color 0.12s;
 }
 .sidebar nav a:hover {
   text-decoration: none;
-  background: #eef2ff;
+  background: var(--panel-suave);
+  color: var(--texto);
 }
-.sidebar nav a.activo:hover {
-  background: var(--color-primario-hover);
+.sidebar nav a:hover .icono {
+  color: var(--texto-suave);
+}
+.sidebar nav a.activo {
+  background: var(--primario-suave);
+  color: var(--primario-texto);
+  font-weight: 600;
+}
+.sidebar nav a.activo .icono {
+  color: var(--primario);
 }
 .contenido {
   flex: 1;
-  padding: 1.75rem 2rem;
+  padding: 1.75rem 2rem 3rem;
   overflow-x: auto;
+  min-width: 0;
+}
+/* El contenido no se estira de más en pantallas muy anchas. */
+.contenido > * {
+  max-width: 1400px;
 }
 .cabecera-pagina {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 1.25rem;
-  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.4rem;
+  gap: 0.75rem 1rem;
+}
+.cabecera-pagina h1 {
+  margin: 0;
+}
+/* La línea que explica la pantalla, debajo del título. */
+.cabecera-pagina p,
+.subtitulo-pagina {
+  margin: 0.3rem 0 0;
+  color: var(--texto-suave);
+  font-size: var(--texto-base);
 }
 
 /* Los botones de la cabecera, para que no se peguen entre si. */
@@ -258,43 +396,49 @@ h3 {
 
 /* ── Panel / card ── */
 .panel {
-  background: var(--color-panel);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio);
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-grande);
   box-shadow: var(--sombra);
-  padding: 1.25rem;
+  padding: 1.25rem 1.35rem;
   margin-bottom: 1.25rem;
 }
 
 /* ── Tabla ── */
 .tabla {
   width: 100%;
-  border-collapse: collapse;
-  background: var(--color-panel);
-  border-radius: var(--radio);
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-grande);
   overflow: hidden;
   box-shadow: var(--sombra);
 }
 .tabla th,
 .tabla td {
   text-align: left;
-  padding: 0.7rem 0.85rem;
-  border-bottom: 1px solid var(--color-borde);
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--borde);
+}
+.tabla tbody tr:last-child td {
+  border-bottom: none;
 }
 .tabla th {
-  background: #f3f5f8;
-  /* Antes era gris claro a 600 y quedaba mas apagado que el contenido, asi que
-     costaba encontrar la columna. En mayusculas chicas hace falta separar las
-     letras o se empastan. */
-  font-weight: 700;
-  color: var(--color-texto);
-  font-size: 0.76rem;
-  letter-spacing: 0.045em;
+  background: var(--panel-suave);
+  /* En mayúsculas chicas hace falta separar las letras o se empastan. */
+  font-weight: 600;
+  color: var(--texto-suave);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.tabla tbody tr {
+  transition: background 0.1s;
 }
 .tabla tbody tr:hover {
-  background: #f9fafb;
+  background: #f8faff;
 }
 .tabla .num {
   text-align: right;
@@ -305,41 +449,71 @@ h3 {
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: center;
+  gap: 0.45rem;
   padding: 0.5rem 0.9rem;
-  border: 1px solid var(--color-borde);
+  border: 1px solid var(--borde);
   border-radius: var(--radio);
-  background: var(--color-panel);
-  color: var(--color-texto);
+  background: var(--panel);
+  color: var(--texto);
   cursor: pointer;
-  font-size: 0.875rem;
-  transition: background 0.12s;
+  font: inherit;
+  font-size: var(--texto-base);
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+  box-shadow: var(--sombra);
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
 }
 .btn:hover {
-  background: #f3f4f6;
+  text-decoration: none;
+  background: var(--panel-suave);
+  border-color: var(--borde-fuerte);
+}
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--anillo-foco);
+}
+.btn .icono {
+  width: 16px;
+  height: 16px;
 }
 .btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 .btn-primario {
-  background: var(--color-primario);
-  border-color: var(--color-primario);
+  background: var(--primario);
+  border-color: var(--primario);
   color: #fff;
 }
 .btn-primario:hover {
-  background: var(--color-primario-hover);
+  background: var(--primario-hover);
+  border-color: var(--primario-hover);
 }
 .btn-peligro {
-  color: var(--color-peligro);
-  border-color: #fca5a5;
+  color: var(--peligro);
+  border-color: var(--peligro-borde);
 }
 .btn-peligro:hover {
-  background: #fef2f2;
+  background: var(--peligro-suave);
+  border-color: var(--peligro-borde);
+}
+/* Sin borde ni fondo: acciones secundarias dentro de un bloque. */
+.btn-fantasma {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--texto-suave);
+}
+.btn-fantasma:hover {
+  background: var(--panel-suave);
+  border-color: transparent;
+  color: var(--texto);
 }
 .btn-sm {
-  padding: 0.3rem 0.6rem;
-  font-size: 0.8rem;
+  padding: 0.32rem 0.65rem;
+  font-size: var(--texto-sm);
 }
 
 /* ── Formularios ── */
@@ -349,25 +523,29 @@ h3 {
 .campo label {
   display: block;
   font-weight: 600;
-  margin-bottom: 0.3rem;
-  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+  font-size: var(--texto-sm);
+  color: #374151;
 }
 .campo input,
 .campo select,
 .campo textarea {
   width: 100%;
-  padding: 0.5rem 0.65rem;
-  border: 1px solid var(--color-borde);
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--borde-fuerte);
   border-radius: var(--radio);
-  font-size: 0.9rem;
+  font-size: var(--texto-base);
   font-family: inherit;
+  background: var(--panel);
+  color: var(--texto);
+  transition: border-color 0.12s, box-shadow 0.12s;
 }
 .campo input:focus,
 .campo select:focus,
 .campo textarea:focus {
   outline: none;
-  border-color: var(--color-primario);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  border-color: var(--primario);
+  box-shadow: var(--anillo-foco);
 }
 .grilla-2 {
   display: grid;
@@ -402,15 +580,22 @@ h3 {
 }
 .buscador input {
   flex: 1;
-  padding: 0.6rem 0.8rem;
-  border: 1px solid var(--color-borde);
+  min-width: 0;
+  padding: 0.6rem 0.85rem 0.6rem 2.4rem;
+  border: 1px solid var(--borde-fuerte);
   border-radius: var(--radio);
   font-size: 1rem; /* 16px: evita el zoom automático al enfocar en iOS */
+  font-family: inherit;
+  background: var(--panel)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E")
+    no-repeat 0.8rem center;
+  box-shadow: var(--sombra);
+  transition: border-color 0.12s, box-shadow 0.12s;
 }
 .buscador input:focus {
   outline: none;
-  border-color: var(--color-primario);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  border-color: var(--primario);
+  box-shadow: var(--anillo-foco);
 }
 
 /* ── Combo (buscador con autocompletado) ── */
@@ -422,7 +607,7 @@ h3 {
   padding: 0.5rem 0.65rem;
   border: 1px solid var(--color-borde);
   border-radius: var(--radio);
-  font-size: 1rem;
+  font-size: var(--texto-md);
 }
 .combo input:focus {
   outline: none;
@@ -433,7 +618,7 @@ h3 {
    mirando quien tiene la pistola en la mano. */
 .combo-aviso {
   margin: 0.25rem 0 0;
-  font-size: 0.8rem;
+  font-size: var(--texto-sm);
   color: var(--color-peligro);
 }
 .combo-lista {
@@ -458,10 +643,10 @@ h3 {
   border: none;
   border-bottom: 1px solid var(--color-borde);
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: var(--texto-base);
 }
 button.combo-item:hover {
-  background: #eef2ff;
+  background: var(--primario-suave);
 }
 /* Equipos con su foto chica: se reconoce la máquina sin leer el nombre. */
 .combo-entrada {
@@ -484,7 +669,7 @@ button.combo-item:hover {
   height: 44px;
   border-radius: 6px;
   object-fit: cover;
-  background: #f1f5f9;
+  background: var(--panel-suave);
   border: 1px solid var(--color-borde);
 }
 .combo-foto-vacia {
@@ -495,7 +680,7 @@ button.combo-item:hover {
   cursor: default;
 }
 .combo-item-con-foto:hover {
-  background: #eef2ff;
+  background: var(--primario-suave);
 }
 /* El nombre es el que elige: ocupa todo el resto del renglón. */
 .combo-item-elegir {
@@ -558,23 +743,30 @@ button.combo-item:hover {
 
 /* ── Badges / estados ── */
 .badge {
-  display: inline-block;
-  padding: 0.15rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--radio-pildora);
+  font-size: var(--texto-xs);
   font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  background: var(--panel-suave);
+  color: var(--texto-suave);
+  border: 1px solid transparent;
 }
 .badge-entrada {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--exito-suave);
+  color: var(--exito);
 }
 .badge-salida {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--peligro-suave);
+  color: var(--peligro);
 }
 .badge-ajuste {
-  background: #e0e7ff;
-  color: #3730a3;
+  background: var(--info-suave);
+  color: var(--info);
 }
 .badge-bajo {
   background: var(--color-alerta-fondo);
@@ -583,10 +775,11 @@ button.combo-item:hover {
 
 /* ── Mensajes ── */
 .alerta {
-  padding: 0.7rem 0.9rem;
+  padding: 0.75rem 1rem;
   border-radius: var(--radio);
   margin-bottom: 1rem;
   border: 1px solid;
+  font-size: var(--texto-base);
 }
 .alerta-aviso {
   background: var(--color-alerta-fondo);
@@ -594,13 +787,13 @@ button.combo-item:hover {
   color: var(--color-alerta-texto);
 }
 .alerta-error {
-  background: #fef2f2;
-  border-color: #fca5a5;
+  background: var(--peligro-suave);
+  border-color: var(--peligro-borde);
   color: var(--color-peligro);
 }
 .alerta-exito {
-  background: #f0fdf4;
-  border-color: #86efac;
+  background: var(--exito-suave);
+  border-color: var(--exito-borde);
   color: var(--color-exito);
 }
 .texto-suave {
@@ -646,11 +839,11 @@ button.combo-item:hover {
   align-items: flex-start;
   gap: 0.5rem;
   padding: 0.7rem 0.85rem;
-  border: 1px solid #f59e0b;
+  border: 1px solid var(--alerta-borde);
   border-radius: 8px;
-  background: #fffbeb;
-  color: #78350f;
-  font-size: 0.9rem;
+  background: var(--alerta-suave);
+  color: var(--alerta-texto);
+  font-size: var(--texto-base);
 }
 .aviso-repetido p {
   margin: 0;
@@ -692,12 +885,12 @@ button.combo-item:hover {
   gap: 1rem;
   /* Queda fija arriba mientras el cuerpo scrollea. */
   padding: 1.25rem 1.5rem 0.9rem;
-  border-bottom: 1px solid var(--color-borde, #e5e7eb);
+  border-bottom: 1px solid var(--color-borde, var(--borde));
   flex-shrink: 0;
 }
 .modal-titulo h2 {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: var(--texto-lg);
 }
 .acciones {
   display: flex;
@@ -745,13 +938,13 @@ button.combo-item:hover {
   }
   .barra-movil .marca {
     font-weight: 700;
-    font-size: 1.05rem;
+    font-size: var(--texto-md);
   }
   .hamburguesa {
     background: none;
     border: 1px solid var(--color-borde);
     border-radius: var(--radio);
-    font-size: 1.25rem;
+    font-size: var(--texto-xl);
     line-height: 1;
     padding: 0.3rem 0.6rem;
     cursor: pointer;
@@ -787,7 +980,7 @@ button.combo-item:hover {
     align-items: flex-start;
   }
   .cabecera-pagina h1 {
-    font-size: 1.25rem;
+    font-size: var(--texto-xl);
   }
 
   /* Formularios y paneles a una sola columna */
@@ -850,14 +1043,6 @@ button.combo-item:hover {
   border-radius: 8px;
 }
 
-.marca-lateral {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.6rem;
-  text-align: center;
-}
-
 /* ─────────── Pantalla de acceso (login / registro) ─────────── */
 .pantalla-acceso {
   min-height: 100vh;
@@ -885,7 +1070,7 @@ button.combo-item:hover {
 }
 .acceso-titulo h1 {
   margin: 0 0 0.15rem;
-  font-size: 1.6rem;
+  font-size: var(--texto-2xl);
 }
 .acceso-titulo p {
   margin: 0;
@@ -900,11 +1085,11 @@ button.combo-item:hover {
 }
 .acceso-cambio {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--texto-base);
 }
 
 .acceso-pie {
-  font-size: 0.8rem;
+  font-size: var(--texto-sm);
   text-align: center;
 }
 
@@ -922,14 +1107,14 @@ button.combo-item:hover {
 /* ─────────── Módulos IT y Órdenes de compra ─────────── */
 
 .texto-chico {
-  font-size: 0.78rem;
+  font-size: var(--texto-xs);
 }
 
 .subtitulo-form {
   margin: 1.1rem 0 0.5rem;
-  font-size: 0.95rem;
+  font-size: var(--texto-md);
   font-weight: 700;
-  border-bottom: 1px solid var(--color-borde, #e5e7eb);
+  border-bottom: 1px solid var(--color-borde, var(--borde));
   padding-bottom: 0.3rem;
   /* Una barrita del color de la marca al costado. Ubica las secciones de un
      vistazo sin agregar otra linea ni otro recuadro. */
@@ -972,7 +1157,7 @@ button.combo-item:hover {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  font-size: 0.88rem;
+  font-size: var(--texto-base);
 }
 
 /* Fila para armar un renglón de la orden de compra */
@@ -997,26 +1182,32 @@ button.combo-item:hover {
 
 /* Tarjetas de resumen del módulo IT */
 .tarjetas-resumen {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-  margin-bottom: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
 }
 .tarjeta-resumen {
-  background: var(--color-panel, #fff);
-  border: 1px solid var(--color-borde, #e5e7eb);
-  border-radius: 10px;
-  padding: 0.6rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-grande);
+  box-shadow: var(--sombra);
+  padding: 0.9rem 1.1rem;
   display: flex;
   flex-direction: column;
-  min-width: 104px;
+  gap: 0.1rem;
+  color: var(--texto-suave);
+  font-size: var(--texto-sm);
+  font-weight: 500;
 }
 .tarjeta-numero {
-  font-size: 1.5rem;
-  font-weight: 800;
-  line-height: 1.1;
-  /* El numero es el dato; la etiqueta de abajo solo lo explica. */
-  color: var(--color-primario);
+  font-size: 1.65rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  /* El número es el dato; la etiqueta de abajo solo lo explica. */
+  color: var(--texto);
 }
 
 /* Ficha de datos (detalle de equipo / orden) */
@@ -1041,7 +1232,7 @@ button.combo-item:hover {
   gap: 0.6rem;
 }
 .linea-tiempo li {
-  border-left: 3px solid var(--color-borde, #e5e7eb);
+  border-left: 3px solid var(--color-borde, var(--borde));
   padding-left: 0.7rem;
 }
 .linea-tiempo li strong {
@@ -1049,9 +1240,21 @@ button.combo-item:hover {
 }
 
 /* Badges que faltaban para estados */
-.badge-ok {
-  background: #dcfce7;
-  color: #166534;
+.badge-ok,
+.badge-entrada {
+  background: var(--exito-suave);
+  color: var(--exito);
+}
+.badge-ok::before,
+.badge-aviso::before,
+.badge-bajo::before,
+.badge-error::before,
+.badge-parcial::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 .badge-aviso {
   background: var(--color-alerta-fondo);
@@ -1060,12 +1263,12 @@ button.combo-item:hover {
 /* Recibida en parte: llegó algo, falta algo. Ni el amarillo de «esperando»
    ni el verde de «finalizada». */
 .badge-parcial {
-  background: #e0e7ff;
-  color: #3730a3;
+  background: var(--info-suave);
+  color: var(--info);
 }
 .badge-error {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--peligro-suave);
+  color: var(--peligro);
 }
 
 /* ─────────── Ajustes de formularios en modales ─────────── */
@@ -1075,7 +1278,7 @@ button.combo-item:hover {
   display: flex;
   flex-direction: column;
   gap: 0.28rem;
-  font-size: 0.88rem;
+  font-size: var(--texto-base);
   font-weight: 500;
 }
 .formulario-modal input,
@@ -1083,7 +1286,7 @@ button.combo-item:hover {
 .formulario-modal textarea {
   width: 100%;
   padding: 0.5rem 0.6rem;
-  border: 1px solid var(--color-borde, #d1d5db);
+  border: 1px solid var(--color-borde, var(--borde-fuerte));
   border-radius: 8px;
   font: inherit;
   font-weight: 400;
@@ -1093,7 +1296,7 @@ button.combo-item:hover {
 .formulario-modal input:focus,
 .formulario-modal select:focus,
 .formulario-modal textarea:focus {
-  outline: 2px solid var(--color-primario, #2563eb);
+  outline: 2px solid var(--color-primario, var(--primario));
   outline-offset: 1px;
 }
 
@@ -1106,7 +1309,7 @@ button.combo-item:hover {
   flex-wrap: wrap;
   margin-top: 0.4rem;
   padding-top: 0.9rem;
-  border-top: 1px solid var(--color-borde, #e5e7eb);
+  border-top: 1px solid var(--color-borde, var(--borde));
 }
 
 /* ─────────── Responsive (celular) ─────────── */
@@ -1179,9 +1382,9 @@ button.combo-item:hover {
   gap: 0.6rem;
   align-items: end;
   padding: 0.9rem;
-  border: 1px solid var(--color-borde, #e5e7eb);
+  border: 1px solid var(--color-borde, var(--borde));
   border-radius: 10px;
-  background: var(--color-fondo, #f8fafc);
+  background: var(--color-fondo, var(--panel-suave));
 }
 
 /* El alta de un equipo tiene un campo mas que la de un material —que es, y
@@ -1201,7 +1404,7 @@ button.combo-item:hover {
   display: flex;
   flex-direction: column;
   gap: 0.28rem;
-  font-size: 0.85rem;
+  font-size: var(--texto-sm);
   font-weight: 500;
   min-width: 0;
 }
@@ -1234,7 +1437,7 @@ button.combo-item:hover {
   padding: 0.5rem 0.7rem;
 }
 .marca-lateral span {
-  font-size: 1rem;
+  font-size: var(--texto-md);
   letter-spacing: 0.02em;
 }
 
@@ -1264,7 +1467,7 @@ button.combo-item:hover {
     justify-content: flex-start;
   }
   .acceso-titulo h1 {
-    font-size: 1.3rem;
+    font-size: var(--texto-xl);
   }
   .acceso-formulario {
     width: 100%;
@@ -1302,7 +1505,7 @@ button.combo-item:hover {
   box-shadow: 0 4px 14px rgb(0 0 0 / 0.22);
 }
 .panel-logo-boton:focus-visible {
-  outline: 2px solid var(--color-primario, #2563eb);
+  outline: 2px solid var(--color-primario, var(--primario));
   outline-offset: 3px;
 }
 
@@ -1340,8 +1543,8 @@ button.combo-item:hover {
   border-radius: 50%;
   border: none;
   background: rgb(255 255 255 / 0.92);
-  color: #111;
-  font-size: 1.1rem;
+  color: var(--texto);
+  font-size: var(--texto-lg);
   cursor: pointer;
 }
 .visor-logo-cerrar:hover {
@@ -1428,7 +1631,7 @@ button {
     width: auto;
   }
   .tabla-cards tr {
-    border: 1px solid var(--color-borde, #e5e7eb);
+    border: 1px solid var(--color-borde, var(--borde));
     border-radius: 10px;
     padding: 0.7rem 0.85rem;
     margin-bottom: 0.7rem;
@@ -1450,10 +1653,23 @@ button {
   .tabla-cards td::before {
     content: attr(data-etiqueta);
     font-weight: 600;
-    font-size: 0.78rem;
+    font-size: var(--texto-xs);
     color: var(--color-texto-suave);
     text-align: left;
     flex: 0 0 auto;
+  }
+  /* La primera celda es el título de la tarjeta: sin etiqueta, a la
+     izquierda y a lo ancho. Así cada tarjeta empieza diciendo qué es. */
+  .tabla-cards td:first-child {
+    justify-content: flex-start;
+    text-align: left;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
+    border-bottom: 1px solid var(--borde);
+    font-size: var(--texto-md);
+  }
+  .tabla-cards td:first-child::before {
+    content: none;
   }
   /* Celdas sin etiqueta (las de acciones): ocupan la fila completa. */
   .tabla-cards td[data-etiqueta='']::before,
@@ -1464,7 +1680,7 @@ button {
     justify-content: stretch;
     padding-top: 0.6rem;
     margin-top: 0.35rem;
-    border-top: 1px solid var(--color-borde, #e5e7eb);
+    border-top: 1px solid var(--color-borde, var(--borde));
   }
   .tabla-cards td.celda-acciones .fila-acciones {
     width: 100%;
@@ -1496,20 +1712,38 @@ button {
 /* ═══════════ Acciones de fila (ver / editar / eliminar) ═══════════ */
 .acciones-fila {
   display: flex;
-  gap: 0.35rem;
+  gap: 0.15rem;
   align-items: center;
+  justify-content: flex-end;
 }
 
 .btn-icono {
-  padding: 0.35rem 0.5rem;
+  padding: 0.4rem;
   line-height: 1;
-  font-size: 1rem;
-  min-width: 2.2rem;
+  font-size: var(--texto-md);
+  min-width: 2rem;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--texto-tenue);
+}
+.btn-icono:hover {
+  background: var(--panel-suave);
+  border-color: var(--borde);
+  color: var(--texto);
+}
+.btn-icono .icono {
+  width: 17px;
+  height: 17px;
+}
+/* En la fila que se apunta, los íconos se ven un poco más. */
+tr:hover .btn-icono {
+  color: var(--texto-suave);
 }
 .btn-icono-peligro:hover {
-  background: var(--color-peligro, #dc2626);
-  border-color: var(--color-peligro, #dc2626);
-  color: #fff;
+  background: var(--peligro-suave);
+  border-color: var(--peligro-borde);
+  color: var(--peligro);
 }
 
 /* La fila entera abre el detalle. El cursor lo anticipa. */
@@ -1517,7 +1751,7 @@ button {
   cursor: pointer;
 }
 .fila-clickeable:focus-visible {
-  outline: 2px solid var(--color-primario, #2563eb);
+  outline: 2px solid var(--color-primario, var(--primario));
   outline-offset: -2px;
 }
 
@@ -1531,7 +1765,7 @@ button {
   .tabla-cards .btn-icono {
     flex: 1 1 auto;
     min-height: 40px;
-    font-size: 1.05rem;
+    font-size: var(--texto-md);
   }
 }
 
@@ -1594,7 +1828,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  font-size: 0.85rem;
+  font-size: var(--texto-sm);
   color: var(--color-texto-suave);
 }
 .filtros-pie {
@@ -1611,7 +1845,7 @@ button {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  font-size: 0.9rem;
+  font-size: var(--texto-base);
   cursor: pointer;
 }
 .filtro-check input {
@@ -1624,14 +1858,14 @@ button {
   display: inline-block;
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
-  font-size: 0.78rem;
+  font-size: var(--texto-xs);
   font-weight: 600;
   white-space: nowrap;
 }
-.estado-operativo { background: #dcfce7; color: #166534; }
+.estado-operativo { background: var(--exito-suave); color: var(--exito); }
 .estado-en_reparacion { background: var(--color-alerta-fondo); color: var(--color-alerta-texto); }
-.estado-fuera_de_servicio { background: #fee2e2; color: #991b1b; }
-.estado-dado_de_baja { background: #e5e7eb; color: #4b5563; }
+.estado-fuera_de_servicio { background: var(--peligro-suave); color: var(--peligro); }
+.estado-dado_de_baja { background: var(--borde); color: var(--texto-suave); }
 .etiqueta-aviso { background: var(--color-alerta-fondo); color: var(--color-alerta-texto); }
 
 /* Resumen de la detección al importar equipos. */
@@ -1643,11 +1877,11 @@ button {
   border-top: 1px solid var(--color-borde);
   border-bottom: 1px solid var(--color-borde);
   color: var(--color-texto-suave);
-  font-size: 0.9rem;
+  font-size: var(--texto-base);
 }
 .cifras-importacion b {
   color: var(--color-texto);
-  font-size: 1.15rem;
+  font-size: var(--texto-lg);
   margin-right: 0.25rem;
 }
 .fila-inactiva { opacity: 0.55; }
@@ -1665,7 +1899,7 @@ button {
 /* Las otras fotos de un equipo: la chapa, el tablero. */
 .otras-fotos-titulo {
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--texto-base);
 }
 .galeria-fotos {
   list-style: none;
@@ -1701,7 +1935,7 @@ button {
   border-color: var(--color-primario);
 }
 .galeria-foto-nombre {
-  font-size: 0.85rem;
+  font-size: var(--texto-sm);
   overflow-wrap: anywhere;
 }
 .galeria-foto-acciones,
@@ -1756,16 +1990,47 @@ button {
 .nombre-con-foto {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  color: var(--texto);
+}
+.nombre-material {
+  color: var(--texto);
+}
+.nombre-material:hover,
+tr:hover .nombre-material {
+  color: var(--primario);
+}
+/* El nombre y, abajo, dónde está guardado: se encuentra sin abrir la ficha. */
+.nombre-y-lugar {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.nombre-material {
+  font-weight: 600;
+}
+.lugar-material {
+  font-size: var(--texto-xs);
+  color: var(--texto-suave);
 }
 .miniatura-material {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   flex: none;
   object-fit: cover;
-  border: 1px solid var(--color-borde);
-  border-radius: 6px;
-  background: var(--color-fondo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--panel-suave);
+}
+/* Sin foto: un recuadro con un ícono tenue, así la columna queda pareja. */
+.miniatura-vacia {
+  display: grid;
+  place-items: center;
+  color: var(--borde-fuerte);
+}
+.miniatura-vacia svg {
+  width: 17px;
+  height: 17px;
 }
 
 .foto-material {
@@ -1783,7 +2048,7 @@ button {
   place-items: center;
   min-height: 120px;
   color: var(--color-texto-suave);
-  font-size: 0.9rem;
+  font-size: var(--texto-base);
 }
 
 /* Historial de intervenciones. */
@@ -1802,11 +2067,11 @@ button {
   border-top: 1px solid var(--color-borde);
   border-bottom: 1px solid var(--color-borde);
   color: var(--color-texto-suave);
-  font-size: 0.88rem;
+  font-size: var(--texto-base);
 }
 .resumen-mantenimiento b {
   color: var(--color-texto);
-  font-size: 1.05rem;
+  font-size: var(--texto-md);
   margin-right: 0.2rem;
 }
 .linea-tiempo {
@@ -1835,9 +2100,9 @@ button {
   margin-bottom: 0.35rem;
 }
 .hito-descripcion { margin: 0 0 0.25rem; white-space: pre-wrap; }
-.tipo-correctivo { background: #fee2e2; color: #991b1b; }
-.tipo-preventivo { background: #dcfce7; color: #166534; }
-.tipo-mejora { background: #dbeafe; color: #1e40af; }
+.tipo-correctivo { background: var(--peligro-suave); color: var(--peligro); }
+.tipo-preventivo { background: var(--exito-suave); color: var(--exito); }
+.tipo-mejora { background: var(--primario-suave); color: var(--primario-texto); }
 
 /* Planes de mantenimiento. */
 .lista-planes {
@@ -1865,9 +2130,9 @@ button {
 .plan-al_dia { border-left-color: var(--color-exito); }
 .plan-datos { flex: 1 1 260px; min-width: 0; }
 .plan-acciones { display: flex; align-items: center; gap: 0.4rem; }
-.plan-etq-vencido { background: #fee2e2; color: #991b1b; }
+.plan-etq-vencido { background: var(--peligro-suave); color: var(--peligro); }
 .plan-etq-por_vencer { background: var(--color-alerta-fondo); color: var(--color-alerta-texto); }
-.plan-etq-al_dia { background: #dcfce7; color: #166534; }
+.plan-etq-al_dia { background: var(--exito-suave); color: var(--exito); }
 .sugerencias-periodicidad {
   display: flex;
   flex-wrap: wrap;
@@ -1879,7 +2144,7 @@ button {
    mano no se mira la tabla entera: se mira este renglon para saber que entro. */
 .aviso-escaneo {
   margin: 0.35rem 0 0;
-  font-size: 0.85rem;
+  font-size: var(--texto-sm);
   color: var(--color-exito);
 }
 .aviso-escaneo.es-error {
@@ -1892,7 +2157,7 @@ button {
   padding: 0.3rem 0.4rem;
   border: 1px solid var(--color-borde);
   border-radius: var(--radio);
-  font-size: 0.95rem;
+  font-size: var(--texto-md);
 }
 .celda-editable input:focus {
   outline: none;
@@ -1901,39 +2166,30 @@ button {
 }
 .celda-editable .texto-suave {
   margin-left: 0.35rem;
-  font-size: 0.85rem;
+  font-size: var(--texto-sm);
 }
 /* Un renglón de una orden ya emitida que salió sin precio: es lo que hay que
    completar para volver a mandarle la orden al proveedor. */
 .renglon-sin-precio {
-  color: #92400e;
+  color: var(--alerta-texto);
   font-weight: 600;
 }
 .renglon-sin-cantidad input {
   border-color: var(--color-peligro);
-  background: #fef2f2;
+  background: var(--peligro-suave);
 }
 
 /* Una tarea de «Lo que hay que hacer»: el texto y, a la derecha, el botón. */
-.fila-tarea-hoy {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-.fila-tarea-hoy > span {
-  min-width: 0;
-}
-.fila-tarea-hoy .btn {
-  flex: none;
-}
 .etiqueta.etiqueta-sin-responsable {
-  white-space: normal;
-  display: inline-block;
+  align-self: flex-start;
   margin-top: 0.2rem;
-  font-size: 0.75rem;
-  background: #fef3c7;
-  color: #92400e;
+  padding: 0.05rem 0.5rem;
+  border: 1px dashed var(--borde-fuerte);
+  border-radius: var(--radio-pildora);
+  background: transparent;
+  color: var(--texto-suave);
+  font-size: var(--texto-xs);
+  font-weight: 500;
 }
 
 /* ── Repuestos de un equipo ── */
@@ -1967,7 +2223,7 @@ button {
   text-decoration: underline;
 }
 .repuesto-editando {
-  background: #f8fafc;
+  background: var(--panel-suave);
 }
 .repuesto-editando .acciones {
   margin-top: 0;
@@ -1976,17 +2232,17 @@ button {
   flex: none;
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
-  font-size: 0.78rem;
+  font-size: var(--texto-xs);
   font-weight: 600;
   white-space: nowrap;
 }
-.chip-stock-ok { background: #dcfce7; color: #166534; }
+.chip-stock-ok { background: var(--exito-suave); color: var(--exito); }
 .chip-stock-bajo { background: var(--color-alerta-fondo); color: var(--color-alerta-texto); }
-.chip-stock-sin { background: #fee2e2; color: #991b1b; }
-.chip-stock-fuera { background: #f1f5f9; color: var(--color-texto-suave); }
+.chip-stock-sin { background: var(--peligro-suave); color: var(--peligro); }
+.chip-stock-fuera { background: var(--panel-suave); color: var(--color-texto-suave); }
 .aviso-repuestos {
   margin: 0 0 0.5rem;
-  font-size: 0.82rem;
+  font-size: var(--texto-sm);
   color: var(--color-alerta-texto);
 }
 
@@ -2016,23 +2272,23 @@ button {
   align-items: center;
   gap: 0.4rem;
   padding: 0.3rem 0.65rem;
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--primario-borde);
   border-radius: 999px;
-  background: #eff6ff;
-  color: #1e40af;
+  background: var(--primario-suave);
+  color: var(--primario-texto);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: var(--texto-sm);
   cursor: pointer;
 }
 .atajo-repuesto:hover:not(:disabled) {
-  background: #dbeafe;
+  background: var(--primario-suave);
 }
 .atajo-repuesto:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 .atajo-repuesto-cantidad {
-  font-size: 0.75rem;
+  font-size: var(--texto-xs);
   color: var(--color-texto-suave);
 }
 
@@ -2057,7 +2313,7 @@ button {
 }
 .equipo-de-material:hover {
   border-color: var(--color-primario);
-  background: #f8fafc;
+  background: var(--panel-suave);
 }
 
 /* ═══════════ La página de un equipo (/equipos/:id) ═══════════ */
@@ -2085,13 +2341,13 @@ button {
   border-radius: 10px;
   object-fit: cover;
   border: 1px solid var(--color-borde);
-  background: #f1f5f9;
+  background: var(--panel-suave);
 }
 .cabecera-equipo-foto-vacia {
   display: grid;
   place-items: center;
   flex: none;
-  font-size: 0.75rem;
+  font-size: var(--texto-xs);
   color: var(--color-texto-suave);
 }
 .cabecera-equipo-datos {
@@ -2102,7 +2358,7 @@ button {
 }
 .cabecera-equipo-datos h1 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: var(--texto-2xl);
   line-height: 1.2;
 }
 .cabecera-equipo-linea {
@@ -2157,10 +2413,10 @@ button {
   outline-offset: -2px;
 }
 .contador-pestana {
-  font-size: 0.72rem;
+  font-size: var(--texto-xs);
   padding: 0 0.45rem;
   border-radius: 999px;
-  background: #e6eefc;
+  background: var(--primario-suave);
   color: var(--color-primario);
 }
 .contador-pestana-alerta {
@@ -2232,7 +2488,7 @@ button {
     height: 64px;
   }
   .cabecera-equipo-datos h1 {
-    font-size: 1.25rem;
+    font-size: var(--texto-xl);
   }
   .cabecera-equipo-acciones {
     flex-basis: 100%;
@@ -2262,14 +2518,14 @@ button {
   border-radius: 14px;
   background: var(--color-panel);
   font: inherit;
-  font-size: 1rem;
+  font-size: var(--texto-md);
   font-weight: 600;
   color: var(--color-texto);
   cursor: pointer;
   box-shadow: var(--sombra);
 }
 .accion-grande span {
-  font-size: 1.6rem;
+  font-size: var(--texto-2xl);
   line-height: 1;
   color: var(--color-primario);
 }
@@ -2289,15 +2545,15 @@ button {
    Una zona para tocar o arrastrar, en vez del «Seleccionar archivo» gris del
    navegador, que se ve distinto en cada uno y no dice qué se espera. */
 .selector-archivo {
-  border: 2px dashed #bfd0f5;
+  border: 2px dashed var(--primario-borde);
   border-radius: 12px;
-  background: #f5f8ff;
+  background: var(--primario-suave);
   transition: border-color 0.15s, background 0.15s;
 }
 .selector-archivo:hover:not(.selector-archivo-inactivo),
 .selector-archivo-encima {
   border-color: var(--color-primario);
-  background: #eaf1ff;
+  background: var(--primario-suave);
 }
 .selector-archivo-boton {
   width: 100%;
@@ -2326,7 +2582,7 @@ button {
   border-radius: 10px;
   background: var(--color-primario);
   color: #fff;
-  font-size: 1.25rem;
+  font-size: var(--texto-xl);
   box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
 }
 .selector-archivo-texto {
@@ -2339,7 +2595,7 @@ button {
   color: var(--color-primario);
 }
 .selector-archivo-ayuda {
-  font-size: 0.8rem;
+  font-size: var(--texto-sm);
   color: var(--color-texto-suave);
   overflow-wrap: anywhere;
 }
@@ -2364,7 +2620,7 @@ button {
   width: 1.8rem;
   height: 1.8rem;
   border-radius: 999px;
-  font-size: 0.95rem;
+  font-size: var(--texto-md);
   box-shadow: none;
 }
 .foto-equipo + .selector-archivo-compacto {
@@ -2386,7 +2642,7 @@ button {
 }
 .pantalla-error h1 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: var(--texto-xl);
 }
 .pantalla-error p {
   margin: 0;
@@ -2497,7 +2753,7 @@ button {
   padding: 0.4rem;
   text-align: center;
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: var(--texto-sm);
   color: var(--color-texto-suave);
 }
 .calendario-dia {
@@ -2554,7 +2810,7 @@ button {
   cursor: pointer;
   color: var(--color-primario);
   font: inherit;
-  font-size: 0.74rem;
+  font-size: var(--texto-xs);
   font-weight: 600;
   text-align: left;
   padding: 0.1rem 0.2rem;
@@ -2574,7 +2830,7 @@ button {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.78rem;
+  font-size: var(--texto-xs);
   color: var(--color-texto-suave);
 }
 .calendario-agregar {
@@ -2582,7 +2838,7 @@ button {
   background: none;
   cursor: pointer;
   color: var(--color-primario);
-  font-size: 1rem;
+  font-size: var(--texto-md);
   line-height: 1;
   padding: 0 0.2rem;
   opacity: 0;
@@ -2603,7 +2859,7 @@ button {
   padding: 0.25rem 0.35rem;
   cursor: pointer;
   font: inherit;
-  font-size: 0.78rem;
+  font-size: var(--texto-xs);
 }
 .calendario-tarea:hover {
   filter: brightness(0.97);
@@ -2656,7 +2912,7 @@ button {
   border-radius: 999px;
   padding: 0.35rem 0.85rem;
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--texto-sm);
   font-weight: 600;
   cursor: pointer;
 }
@@ -2673,7 +2929,7 @@ button {
   color: var(--color-texto-suave);
   border-radius: 999px;
   padding: 0.05rem 0.45rem;
-  font-size: 0.78rem;
+  font-size: var(--texto-xs);
 }
 .pestania.activa .pestania-cuenta {
   background: rgb(255 255 255 / 0.25);
@@ -2693,7 +2949,7 @@ button {
   flex-wrap: wrap;
   gap: 0.35rem 0.9rem;
   margin: 0 0 0.6rem;
-  font-size: 0.78rem;
+  font-size: var(--texto-xs);
   color: var(--color-texto-suave);
 }
 .calendario-referencia {
@@ -2709,7 +2965,7 @@ button {
 }
 .calendario-marca-sin-asignar {
   background: transparent;
-  border: 2px dashed #b45309;
+  border: 2px dashed var(--alerta);
 }
 
 /* ─────────── Impresión ─────────── */
@@ -2813,7 +3069,7 @@ button {
 .impreso-pie {
   margin: 2mm 0 0;
   font-size: 7.5pt;
-  color: #555;
+  color: var(--texto-suave);
 }
 .impreso-referencias {
   display: flex;
@@ -2833,13 +3089,13 @@ button {
   border-radius: 0.6mm;
 }
 .impreso-marca-sin-asignar {
-  border: 0.5mm dashed #b45309;
+  border: 0.5mm dashed var(--alerta);
 }
 .impreso-cantidad {
   margin-left: auto;
   font-weight: 400;
   font-size: 7.5pt;
-  color: #555;
+  color: var(--texto-suave);
 }
 
 /* Un renglón: casilla para tildar, el título y debajo dónde y quién. */
@@ -2855,7 +3111,7 @@ button {
   display: flex;
   gap: 1.2mm;
   padding: 0.8mm 1.2mm;
-  border: 0.2mm solid #999;
+  border: 0.2mm solid var(--texto-tenue);
   border-left: 1.2mm solid;
   break-inside: avoid;
 }
@@ -2874,12 +3130,12 @@ button {
 }
 .impreso-tarea-datos {
   font-size: 7.5pt;
-  color: #444;
+  color: var(--texto-suave);
 }
 .impreso-hecha strong,
 .impreso-mes-titulo.impreso-hecha {
   text-decoration: line-through;
-  color: #666;
+  color: var(--texto-suave);
 }
 
 /* La misma tarea en varias máquinas: el título una vez, y un renglón corto
@@ -2907,7 +3163,7 @@ button {
 }
 .impreso-sub.impreso-hecha .impreso-tarea-datos {
   text-decoration: line-through;
-  color: #666;
+  color: var(--texto-suave);
 }
 
 /* La semana: siete columnas, una sola fila. Un día cargado crece hacia abajo
@@ -2915,10 +3171,10 @@ button {
 .impreso-semana-grilla {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  border: 0.3mm solid #888;
+  border: 0.3mm solid var(--texto-tenue);
 }
 .impreso-dia {
-  border-left: 0.3mm solid #888;
+  border-left: 0.3mm solid var(--texto-tenue);
   padding: 1.2mm;
   min-height: 150mm;
 }
@@ -2932,34 +3188,34 @@ button {
   font-size: 10pt;
   margin: 0 0 1.5mm;
   padding-bottom: 1mm;
-  border-bottom: 0.3mm solid #888;
+  border-bottom: 0.3mm solid var(--texto-tenue);
 }
 
 /* El mes: casillas de alto fijo, que entra siempre en una hoja. */
 .impreso-mes-grilla {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  border-top: 0.3mm solid #888;
-  border-left: 0.3mm solid #888;
+  border-top: 0.3mm solid var(--texto-tenue);
+  border-left: 0.3mm solid var(--texto-tenue);
 }
 .impreso-mes-cabecera,
 .impreso-mes-dia {
-  border-right: 0.3mm solid #888;
-  border-bottom: 0.3mm solid #888;
+  border-right: 0.3mm solid var(--texto-tenue);
+  border-bottom: 0.3mm solid var(--texto-tenue);
   padding: 0.8mm 1.2mm;
 }
 .impreso-mes-cabecera {
   font-weight: 700;
   text-align: center;
-  background: #eee;
+  background: var(--borde);
 }
 .impreso-mes-dia {
   height: 27mm;
   overflow: hidden;
 }
 .impreso-otro-mes {
-  background: #f3f3f3;
-  color: #999;
+  background: var(--panel-suave);
+  color: var(--texto-tenue);
 }
 .impreso-mes-numero {
   display: flex;
@@ -2978,7 +3234,7 @@ button {
 .impreso-mes-mas {
   margin-top: 0.6mm;
   font-size: 7.5pt;
-  color: #555;
+  color: var(--texto-suave);
 }
 
 /* Día por día: en hoja aparte, a dos columnas. */
@@ -3011,7 +3267,7 @@ button {
   align-items: baseline;
   margin: 0 0 1.2mm;
   font-size: 10pt;
-  border-bottom: 0.3mm solid #888;
+  border-bottom: 0.3mm solid var(--texto-tenue);
   break-after: avoid;
 }
 
@@ -3055,7 +3311,7 @@ button {
   background-color: var(--color-panel);
   color: inherit;
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: var(--texto-base);
 }
 .grilla-filtros > select,
 .tabla td > select {
@@ -3101,16 +3357,20 @@ button {
   /* Los botones de la cabecera, de a dos por fila y con el principal arriba y
      a lo ancho. Apilados de a uno, en Materiales eran siete botones que
      empujaban la lista casi una pantalla entera hacia abajo. */
-  .cabecera-pagina .fila-acciones {
+  .cabecera-pagina .fila-acciones,
+  .cabecera-pagina .acciones-cabecera {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.5rem;
   }
-  .cabecera-pagina .fila-acciones .btn {
+  .cabecera-pagina .fila-acciones .btn,
+  .cabecera-pagina .acciones-cabecera .btn,
+  .cabecera-pagina .acciones-cabecera .menu-desplegable {
     width: 100%;
     min-width: 0;
   }
-  .cabecera-pagina .fila-acciones .btn-primario {
+  .cabecera-pagina .fila-acciones .btn-primario,
+  .cabecera-pagina .acciones-cabecera .btn-primario {
     grid-column: 1 / -1;
     order: -1;
   }
@@ -3132,7 +3392,7 @@ button {
     padding: 0.6rem 0.7rem;
   }
   .calendario-numero {
-    font-size: 0.95rem;
+    font-size: var(--texto-md);
     font-weight: 700;
     color: var(--color-texto);
   }
@@ -3145,12 +3405,12 @@ button {
   /* En una pantalla táctil no hay "pasar por encima": el + tiene que verse. */
   .calendario-agregar {
     opacity: 1;
-    font-size: 1.4rem;
+    font-size: var(--texto-xl);
     min-width: 44px;
     min-height: 36px;
   }
   .calendario-tarea {
-    font-size: 0.92rem;
+    font-size: var(--texto-base);
     padding: 0.45rem 0.6rem;
   }
   /* Con todo el ancho, el título entra entero: nada de puntos suspensivos. */
@@ -3168,11 +3428,11 @@ button {
   min-width: 7.5rem;
 }
 .renglon-falta {
-  color: #b45309;
+  color: var(--alerta);
   font-weight: 600;
 }
 .renglon-completo {
-  color: #166534;
+  color: var(--exito);
 }
 .entregas-lista {
   margin: 0;
@@ -3184,7 +3444,7 @@ button {
 .texto-reclamo {
   white-space: pre-wrap;
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--texto-sm);
   padding: 0.6rem 0.75rem;
   background: var(--color-fondo);
   border-radius: 8px;
@@ -3207,12 +3467,12 @@ button {
   gap: 0.5rem 0.75rem;
 }
 .detalle-oc-proveedor {
-  font-size: 1.05rem;
+  font-size: var(--texto-md);
 }
 .detalle-oc-total {
   margin-left: auto;
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: var(--texto-md);
 }
 .detalle-oc-datos {
   display: flex;
@@ -3264,65 +3524,256 @@ button {
 
 /* ─────────── Hoy: una tarjeta por cada cosa pendiente ───────────
    Tocando una se despliega su lista abajo. Todo entra en una pantalla. */
+/* ─────────── Hoy ───────────
+   En el celular, todo en columna y en el orden del HTML: primero las tareas
+   de cada uno. En la compu, las tarjetas arriba a lo ancho y debajo las
+   tareas al lado del detalle de la tarjeta elegida. */
+.hoy {
+  display: grid;
+  gap: 1.1rem;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'tareas' 'tarjetas' 'detalle';
+  align-items: start;
+}
+.hoy-tareas { grid-area: tareas; }
+.hoy-tareas:empty { display: none; }
+.hoy .tarjetas-hoy { grid-area: tarjetas; }
+.hoy-detalle { grid-area: detalle; }
+.hoy > .panel,
+.hoy-tareas > .panel { margin-bottom: 0; }
+@media (min-width: 1100px) {
+  .hoy {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    grid-template-areas: 'tarjetas tarjetas' 'tareas detalle';
+  }
+  /* Sin tareas propias, el detalle usa todo el ancho. */
+  .hoy:has(.hoy-tareas:empty) {
+    grid-template-areas: 'tarjetas tarjetas' 'detalle detalle';
+  }
+}
+
+/* Las tarjetas de números: ícono con el color de la urgencia, número y qué es. */
 .tarjetas-hoy {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 0.6rem;
-  margin-bottom: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.85rem;
 }
 .tarjeta-hoy {
+  --tono: var(--primario);
+  --tono-suave: var(--primario-suave);
   display: flex;
-  flex-direction: column;
   align-items: flex-start;
-  gap: 0.1rem;
-  padding: 0.7rem 0.85rem;
-  border: 1px solid var(--color-borde);
-  border-radius: 12px;
-  background: var(--color-panel);
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-grande);
+  background: var(--panel);
+  box-shadow: var(--sombra);
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 .tarjeta-hoy:hover {
-  border-color: var(--color-primario);
+  box-shadow: var(--sombra-hover);
+  transform: translateY(-1px);
+}
+.tarjeta-hoy:focus-visible {
+  outline: none;
+  box-shadow: var(--anillo-foco);
 }
 .tarjeta-hoy.activa {
-  border-color: var(--color-primario);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primario) 25%, transparent);
+  border-color: var(--tono);
+  box-shadow: 0 0 0 1px var(--tono), var(--sombra-hover);
+}
+.tono-rojo { --tono: var(--peligro); --tono-suave: var(--peligro-suave); }
+.tono-ambar { --tono: var(--alerta); --tono-suave: var(--alerta-suave); }
+.tono-azul { --tono: var(--primario); --tono-suave: var(--primario-suave); }
+.tono-verde { --tono: var(--exito); --tono-suave: var(--exito-suave); }
+.tono-violeta { --tono: var(--info); --tono-suave: var(--info-suave); }
+.tono-gris { --tono: var(--texto-suave); --tono-suave: var(--panel-suave); }
+.tarjeta-hoy-icono {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radio);
+  display: grid;
+  place-items: center;
+  flex: none;
+  background: var(--tono-suave);
+  color: var(--tono);
+}
+.tarjeta-hoy-icono svg {
+  width: 20px;
+  height: 20px;
+}
+.tarjeta-hoy-textos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 .tarjeta-hoy-numero {
-  font-size: 1.6rem;
-  font-weight: 800;
-  line-height: 1.1;
-  color: var(--color-primario);
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--texto);
 }
-.tarjeta-hoy-urgente .tarjeta-hoy-numero {
-  color: var(--color-peligro);
+/* Lo urgente se lee rojo antes de leer la etiqueta. */
+.tarjeta-hoy-urgente .tarjeta-hoy-numero,
+.tono-ambar .tarjeta-hoy-numero {
+  color: var(--tono);
 }
 .tarjeta-hoy-titulo {
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: var(--texto-base);
+  margin-top: 0.2rem;
 }
 .tarjeta-hoy-detalle {
-  font-size: 0.78rem;
-  color: var(--color-texto-suave);
+  font-size: var(--texto-xs);
+  color: var(--texto-suave);
 }
-.detalle-hoy .lista-inicio {
-  margin-bottom: 0.5rem;
+.huecos-hoy {
+  margin-top: 1.1rem;
 }
 .huecos-hoy summary {
   cursor: pointer;
 }
 @media (max-width: 600px) {
   .tarjetas-hoy {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+  .tarjeta-hoy {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.85rem;
+  }
+  .tarjeta-hoy-icono {
+    width: 34px;
+    height: 34px;
   }
   .tarjeta-hoy-numero {
-    font-size: 1.35rem;
+    font-size: var(--texto-xl);
+  }
+}
+
+/* ─────────── Panel con lista: cabecera, renglones de borde a borde y pie ─────────── */
+.panel-lista {
+  padding: 0;
+  overflow: hidden;
+}
+.panel-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem 0.85rem;
+}
+.panel-cabecera h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--texto-md);
+}
+.panel-pie {
+  padding: 0.6rem 1.25rem;
+  border-top: 1px solid var(--borde);
+}
+.panel-lista .lista-inicio {
+  margin: 0;
+}
+.panel-lista .lista-inicio li {
+  padding: 0.7rem 1.25rem;
+  border-bottom: none;
+  border-top: 1px solid var(--borde);
+}
+.panel-lista > p {
+  padding: 0 1.25rem;
+}
+.enlace-flecha {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+  font-size: var(--texto-sm);
+}
+
+/* Tareas de Hoy: la fecha en un cuadradito, rojo si ya venció. */
+.lista-tareas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.fila-tarea-hoy {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--borde);
+}
+.cuadro-fecha {
+  width: 46px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.3rem 0;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--panel);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.cuadro-fecha b {
+  font-size: var(--texto-lg);
+}
+.cuadro-fecha small {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--texto-suave);
+}
+.cuadro-fecha.vencida {
+  border-color: var(--peligro-borde);
+  background: var(--peligro-suave);
+  color: var(--peligro);
+}
+.cuadro-fecha.hoy {
+  border-color: var(--primario-borde);
+  background: var(--primario-suave);
+  color: var(--primario-texto);
+}
+.cuadro-fecha.hoy b {
+  font-size: var(--texto-sm);
+  padding: 0.35rem 0;
+}
+.tarea-que {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.tarea-postergada {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.4rem;
+}
+.fila-tarea-hoy .fila-acciones {
+  flex: none;
+}
+@media (max-width: 600px) {
+  .fila-tarea-hoy {
+    flex-wrap: wrap;
+    padding: 0.75rem 1rem;
+  }
+  .fila-tarea-hoy .fila-acciones {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 
@@ -3383,7 +3834,7 @@ button {
   margin-bottom: 1rem;
 }
 .grupo-toma-titulo {
-  font-size: 0.95rem;
+  font-size: var(--texto-md);
   margin: 0.75rem 0 0.4rem;
   color: var(--color-texto-suave);
 }
@@ -3417,7 +3868,7 @@ button {
 .renglon-toma-conteo input {
   width: 7rem;
   text-align: right;
-  font-size: 1.05rem;
+  font-size: var(--texto-md);
   padding: 0.45rem 0.6rem;
 }
 .renglon-toma-valor {
@@ -3450,4 +3901,64 @@ button {
     flex: 1;
     max-width: 10rem;
   }
+}
+
+/* ─────────── Menú desplegable (Exportar, Configurar…) ─────────── */
+.menu-desplegable {
+  position: relative;
+  display: inline-flex;
+}
+.menu-desplegable .icono-flecha {
+  width: 14px;
+  height: 14px;
+  margin-left: -0.1rem;
+  color: var(--texto-tenue);
+}
+.menu-desplegable-lista {
+  position: absolute;
+  top: calc(100% + 6px);
+  z-index: 40;
+  min-width: 200px;
+  padding: 0.3rem;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra-flotante);
+  display: flex;
+  flex-direction: column;
+  animation: aparecer 0.12s ease-out;
+}
+.menu-desplegable-lista.hacia-derecha { right: 0; }
+.menu-desplegable-lista.hacia-izquierda { left: 0; }
+.menu-desplegable-lista button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: none;
+  border-radius: var(--radio-chico);
+  background: none;
+  font: inherit;
+  font-size: var(--texto-base);
+  color: var(--texto);
+  text-align: left;
+  cursor: pointer;
+}
+.menu-desplegable-lista button:hover,
+.menu-desplegable-lista button:focus-visible {
+  outline: none;
+  background: var(--panel-suave);
+}
+.menu-desplegable-lista button .icono {
+  width: 16px;
+  height: 16px;
+  color: var(--texto-suave);
+}
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu-desplegable-lista { animation: none; }
 }
