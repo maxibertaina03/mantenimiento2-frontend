@@ -74,19 +74,19 @@ describe('MisTareasDeHoy', () => {
   it('el service muestra primero el equipo, y las rutinas van juntas y plegadas', async () => {
     tareas = [
       tarea('s1', { titulo: 'Purga', equipoId: 'e1', equipoNombre: 'Compresor 1', planId: 'p1' }),
-      tarea('r1', { titulo: 'Recorrida de tableros', rutinaId: 'rut1' }),
-      tarea('r2', { titulo: 'Limpiar filtros', rutinaId: 'rut2' }),
+      tarea('r1', { titulo: 'Recorrida de tableros', planId: 'p-diario', cadaDias: 1 }),
+      tarea('r2', { titulo: 'Limpiar filtros', rutinaId: 'rut2', cadaDias: 1 }),
     ];
     mostrar();
 
     expect(await screen.findByText('Compresor 1')).toBeInTheDocument();
     expect(screen.getByText('Purga')).toBeInTheDocument();
     // Las rutinas no se listan una por una: un solo renglón con cuántas son.
-    expect(screen.getByText('Rutinas de todos los días')).toBeInTheDocument();
+    expect(screen.getByText('Tareas de todos los días')).toBeInTheDocument();
     expect(screen.getByText(/2 pendientes/)).toBeInTheDocument();
     expect(screen.queryByText('Recorrida de tableros')).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: /Rutinas de todos los días/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Tareas de todos los días/ }));
     expect(screen.getByText('Recorrida de tableros')).toBeInTheDocument();
     expect(screen.getByText('Limpiar filtros')).toBeInTheDocument();
   });
@@ -95,6 +95,6 @@ describe('MisTareasDeHoy', () => {
     tareas = [tarea('m1', { titulo: 'Cambiar lámpara del pasillo' })];
     mostrar();
     expect(await screen.findByText('Cambiar lámpara del pasillo')).toBeInTheDocument();
-    expect(screen.queryByText('Rutinas de todos los días')).not.toBeInTheDocument();
+    expect(screen.queryByText('Tareas de todos los días')).not.toBeInTheDocument();
   });
 });

@@ -190,7 +190,11 @@ export function InicioPage() {
       clave: 'pendientes' as const,
       cuantos: pendientes.length,
       titulo: 'Pendientes',
-      detalle: pendientesUrgentes > 0 ? `${pendientesUrgentes} urgentes` : 'anotados',
+      detalle: pendientesUrgentes === 1
+          ? '1 urgente'
+          : pendientesUrgentes > 1
+            ? `${pendientesUrgentes} urgentes`
+            : 'anotados',
       urgente: pendientesUrgentes > 0,
       tono: 'azul',
       ir: { a: '/pendientes', texto: 'Ver todos los pendientes' },

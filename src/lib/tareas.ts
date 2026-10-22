@@ -18,7 +18,13 @@ export function encabezadoTarea(t: Pick<Tarea, 'titulo' | 'equipoNombre' | 'equi
     : { principal: t.titulo, secundario: null };
 }
 
-/** Las rutinas de todos los días van aparte para no tapar lo importante. */
-export function esRutina(t: Pick<Tarea, 'rutinaId'>): boolean {
-  return t.rutinaId !== null;
+/**
+ * Lo que se repite todos los días va aparte, para no tapar lo importante.
+ *
+ * Se mira la frecuencia y no si viene de una rutina: en la planta, las tareas
+ * diarias («Purga», todos los días, en cada compresor) son planes de
+ * mantenimiento de «cada 1 día», no rutinas.
+ */
+export function esDeTodosLosDias(t: Pick<Tarea, 'cadaDias'>): boolean {
+  return t.cadaDias === 1;
 }

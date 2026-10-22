@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useMisTareas } from '@/api/calendario';
 import { vencio } from '@/lib/diaDeTarea';
 import { P, usePuede } from '@/lib/permisos';
-import { encabezadoTarea, esRutina } from '@/lib/tareas';
+import { encabezadoTarea, esDeTodosLosDias } from '@/lib/tareas';
 import type { Tarea } from '@/tipos/tarea';
 import { CompletarTarea } from './CompletarTarea';
 import { PostergarTarea } from './PostergarTarea';
@@ -44,8 +44,8 @@ function cuando(iso: string): string {
  * Incluye lo que venció y no se hizo. Esconderlo no lo resuelve: lo deja
  * pendiente y además invisible.
  *
- * Las rutinas de todos los días van juntas en un solo renglón que se
- * despliega. Listadas una por una ocupaban la pantalla, y un service o una
+ * Lo de todos los días (las purgas diarias, las rutinas) va junto en un solo
+ * renglón que se despliega. Listadas una por una ocupaban la pantalla, y un service o una
  * tarea importante quedaba perdido entre ellas.
  */
 export function MisTareasDeHoy() {
@@ -66,8 +66,8 @@ export function MisTareasDeHoy() {
   // ocupa lugar para no decir nada.
   if (!isLoading && !error && tareas.length === 0) return null;
 
-  const importantes = tareas.filter((t) => !esRutina(t));
-  const rutinas = tareas.filter(esRutina);
+  const importantes = tareas.filter((t) => !esDeTodosLosDias(t));
+  const rutinas = tareas.filter(esDeTodosLosDias);
   const rutinasAtrasadas = rutinas.filter((t) => !partesDeFecha(t.fecha).esHoy).length;
   const vencidas = importantes.filter((t) => vencio(t.fecha));
   // Las primeras, para que la pantalla de entrada no se haga larga; el resto, a pedido.
@@ -131,7 +131,7 @@ export function MisTareasDeHoy() {
               <Repeat />
             </span>
             <span className="tarea-que">
-              <strong>Rutinas de todos los días</strong>
+              <strong>Tareas de todos los días</strong>
               <span className="texto-suave texto-chico">
                 {rutinas.length === 1 ? '1 pendiente' : `${rutinas.length} pendientes`}
                 {rutinasAtrasadas > 0 &&
@@ -177,7 +177,7 @@ function FilaTarea({
       <span className="tarea-que">
         <strong>{principal}</strong>
         <span className="texto-suave texto-chico">
-          {[secundario, t.descripcion].filter(Boolean).join(' · ')}
+          {[...new Set([secundario, t.descripcion].filter(Boolean))].join(' · ')}
           {t.fechaOriginal && (
             <span className="tarea-postergada">
               <Clock className="icono" aria-hidden /> postergada, era el {cuando(t.fechaOriginal)}

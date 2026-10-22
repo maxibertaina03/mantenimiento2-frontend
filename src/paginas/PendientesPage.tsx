@@ -20,7 +20,7 @@ import type { Pendiente } from '@/tipos/pendiente';
 type Filtro = 'todos' | 'mios' | 'urgentes';
 
 /** «hoy», «ayer», «hace 3 días». */
-export function haceCuanto(iso: string): string {
+function haceCuanto(iso: string): string {
   const dias = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
   if (dias <= 0) return 'hoy';
   if (dias === 1) return 'ayer';

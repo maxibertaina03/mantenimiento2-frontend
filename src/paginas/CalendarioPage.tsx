@@ -18,7 +18,7 @@ import { CalendarioImpreso, type ModoImpresion } from '@/componentes/CalendarioI
 import { CompletarTarea } from '@/componentes/CompletarTarea';
 import { PostergarTarea } from '@/componentes/PostergarTarea';
 import { vencio } from '@/lib/diaDeTarea';
-import { encabezadoTarea, esRutina } from '@/lib/tareas';
+import { encabezadoTarea, esDeTodosLosDias } from '@/lib/tareas';
 import { formatearFechaSola } from '@/lib/formato';
 import { ElegirImpresion } from '@/componentes/ElegirImpresion';
 import { NuevaTarea } from '@/componentes/NuevaTarea';
@@ -52,16 +52,16 @@ export function CalendarioPage() {
   const puede = usePuede();
   const { data: yo } = useUsuarioActual();
 
-  // Las rutinas de todos los días van en su propia pestaña: mezcladas con los
-  // services y lo programado a mano, una tarea importante se perdía entre
-  // diez «Purga». Se recuerda en la dirección (?vista=rutinas).
+  // Lo de todos los días va en su propia pestaña: mezclado con los services
+  // y lo programado a mano, una tarea importante se perdía entre diez
+  // «Purga». Se recuerda en la dirección (?vista=diarias).
   const [params, setParams] = useSearchParams();
-  const vista: 'tareas' | 'rutinas' = params.get('vista') === 'rutinas' ? 'rutinas' : 'tareas';
+  const vista: 'tareas' | 'rutinas' = params.get('vista') === 'diarias' ? 'rutinas' : 'tareas';
   const cambiarVista = (v: 'tareas' | 'rutinas') =>
     setParams(
       (actual) => {
         const nuevos = new URLSearchParams(actual);
-        if (v === 'rutinas') nuevos.set('vista', 'rutinas');
+        if (v === 'rutinas') nuevos.set('vista', 'diarias');
         else nuevos.delete('vista');
         return nuevos;
       },
@@ -137,15 +137,15 @@ export function CalendarioPage() {
 
   /** Las tareas de la pestaña abierta. Las cuentas de abajo usan solo estas. */
   const tareasDeLaVista = useMemo(
-    () => (data?.tareas ?? []).filter((t) => esRutina(t) === (vista === 'rutinas')),
+    () => (data?.tareas ?? []).filter((t) => esDeTodosLosDias(t) === (vista === 'rutinas')),
     [data, vista],
   );
   /** Cuántas pendientes hay en cada pestaña, para mostrarlo en la solapa. */
   const pendientesPorVista = useMemo(() => {
     const pend = (data?.tareas ?? []).filter((t) => t.estado === 'PENDIENTE');
     return {
-      tareas: pend.filter((t) => !esRutina(t)).length,
-      rutinas: pend.filter((t) => esRutina(t)).length,
+      tareas: pend.filter((t) => !esDeTodosLosDias(t)).length,
+      rutinas: pend.filter((t) => esDeTodosLosDias(t)).length,
     };
   }, [data]);
 
@@ -190,7 +190,7 @@ export function CalendarioPage() {
           <h1>Calendario</h1>
           <p className="texto-suave">
             {vista === 'rutinas'
-              ? 'Lo que se repite todos los días, aparte para que no tape lo importante.'
+              ? 'Lo que se hace todos los días (purgas, recorridas), aparte para que no tape lo importante.'
               : 'Los services que vencen y lo que se programó a mano, cada cosa con su responsable.'}
           </p>
         </div>
@@ -238,12 +238,20 @@ export function CalendarioPage() {
           onClick={() => cambiarVista('rutinas')}
         >
           <Repeat className="icono" aria-hidden />
-          Rutinas diarias
+          Todos los días
           {pendientesPorVista.rutinas > 0 && (
             <span className="contador-pestana">{pendientesPorVista.rutinas}</span>
           )}
         </button>
       </div>
+
+      {data && tareasDeLaVista.length === 0 && (
+        <p className="texto-suave no-imprimir">
+          {vista === 'rutinas'
+            ? 'Este mes no hay nada que se repita todos los días.'
+            : 'Este mes no hay services ni tareas programadas.'}
+        </p>
+      )}
 
       <div className="barra-calendario no-imprimir">
         <button className="btn btn-sm" onClick={() => mover(-1)}>

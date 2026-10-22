@@ -315,7 +315,7 @@ describe('CalendarioPage', () => {
   });
 });
 
-describe('CalendarioPage: equipo primero y rutinas aparte', () => {
+describe('CalendarioPage: equipo primero y lo de todos los días aparte', () => {
   const service: Tarea = {
     ...TAREA,
     id: '22222222-2222-4222-8222-222222222222',
@@ -325,12 +325,14 @@ describe('CalendarioPage: equipo primero y rutinas aparte', () => {
     planId: 'plan-1',
     planNombre: 'Purga semanal',
   };
+  // Lo de todos los días se reconoce por la frecuencia: un plan de cada 1 día.
   const rutina: Tarea = {
     ...TAREA,
     id: '33333333-3333-4333-8333-333333333333',
     titulo: 'Recorrida de tableros',
-    rutinaId: 'rut-1',
-    rutinaTitulo: 'Recorrida de tableros',
+    planId: 'plan-diario',
+    planNombre: 'Recorrida diaria',
+    cadaDias: 1,
   };
 
   it('en un service se lee primero el equipo y abajo qué hacerle', async () => {
@@ -341,7 +343,7 @@ describe('CalendarioPage: equipo primero y rutinas aparte', () => {
     expect(screen.getByText('Purga')).toHaveClass('calendario-tarea-que');
   });
 
-  it('las rutinas van en su pestaña y no se mezclan con lo demás', async () => {
+  it('lo de todos los días va en su pestaña y no se mezcla con lo demás', async () => {
     const usuario = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     tareas = [service, rutina];
     mostrar();
@@ -349,10 +351,10 @@ describe('CalendarioPage: equipo primero y rutinas aparte', () => {
     expect(await screen.findByText('Compresor 1')).toBeInTheDocument();
     expect(screen.queryByText('Recorrida de tableros')).not.toBeInTheDocument();
 
-    await usuario.click(screen.getByRole('tab', { name: /Rutinas diarias/ }));
+    await usuario.click(screen.getByRole('tab', { name: /Todos los días/ }));
     expect(await screen.findByText('Recorrida de tableros')).toBeInTheDocument();
     expect(screen.queryByText('Compresor 1')).not.toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /Rutinas diarias/ })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: /Todos los días/ })).toHaveAttribute(
       'aria-selected',
       'true',
     );

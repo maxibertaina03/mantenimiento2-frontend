@@ -409,7 +409,7 @@ describe('InicioPage: la tarjeta del anotador de pendientes', () => {
     });
     mostrar();
     const tarjeta = await screen.findByRole('button', { name: /2\s*Pendientes/ });
-    expect(tarjeta).toHaveTextContent('1 urgentes');
+    expect(tarjeta).toHaveTextContent('1 urgente');
     // La primera tarjeta ya viene abierta; si no lo está, se toca.
     if (tarjeta.getAttribute('aria-expanded') !== 'true') await userEvent.click(tarjeta);
     expect(await screen.findByText('Comprar rulemanes 6204')).toBeInTheDocument();

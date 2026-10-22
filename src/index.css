@@ -331,6 +331,9 @@ h3 {
   flex-wrap: wrap;
 }
 .solapa {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
@@ -4176,6 +4179,7 @@ input[type='radio'] {
    se prenden en azul. Se tocan fácil con el dedo y se ve de un vistazo qué
    filtro está puesto. */
 label.casilla {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -4191,6 +4195,19 @@ label.casilla {
 }
 label.casilla:hover {
   border-color: var(--borde-fuerte);
+}
+/* Un filtro de «uno de estos» (radio) es el chip entero: el puntito sobra.
+   Se esconde a la vista pero sigue ahí para el teclado y el lector. */
+label.casilla input[type='radio'] {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+label.casilla:has(input[type='radio']:focus-visible) {
+  outline: 2px solid var(--primario);
+  outline-offset: 2px;
 }
 label.casilla:has(input:checked) {
   background: var(--primario-suave);
