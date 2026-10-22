@@ -4,6 +4,33 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.7.0] — 2026-10-22
+
+### Agregado
+
+- **Pendientes**, en el menú de Mantenimiento: un anotador compartido para lo que quedó por
+  hacer («comprar rulemanes», «mandar a reparar la válvula»). Se escribe y Enter; si hace
+  falta, urgente, a quién le toca y el equipo. Filtros Todos · Míos · Urgentes, y los hechos de
+  los últimos 60 días con la opción de reabrirlos.
+  - Tocar el círculo **pregunta antes** («¿Ya está hecho?»).
+  - Si le toca a alguien, solo esa persona (o un administrador) lo da por hecho.
+  - Si es sobre un equipo, **«Registrar el trabajo»** abre el formulario de la ficha con el
+    texto ya puesto, y queda la orden de trabajo realizada, que se abre desde «Hechos». También
+    se puede cerrar sin orden.
+- **Tarjeta «Pendientes» en Hoy**, con cuántos hay y cuántos son urgentes.
+
+### Cambiado
+
+- **Calendario: primero el equipo, abajo la tarea** («Compresor 1» y debajo «Purga de agua»),
+  en el calendario y en Hoy.
+- **Lo de todos los días va aparte:** el calendario tiene dos pestañas, «Services y tareas» y
+  «Todos los días», y en Hoy las diarias van juntas en un renglón que se despliega.
+
+### Arreglado
+
+- En pantallas anchas, el fondo gris de las ventanas cubre toda la pantalla (quedaba una franja
+  blanca a la derecha).
+
 ## [1.6.1] — 2026-10-20
 
 ### Arreglado
@@ -142,6 +169,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.7.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.7.0
 [1.6.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.6.1
 [1.6.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.6.0
 [1.5.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.5.1

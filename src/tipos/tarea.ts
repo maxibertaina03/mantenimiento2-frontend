@@ -33,6 +33,11 @@ export interface Tarea {
   planNombre: string | null;
   rutinaId: string | null;
   rutinaTitulo: string | null;
+  /**
+   * Cada cuántos días se repite (la del plan o la de la rutina). Vacía si se
+   * programó a mano. Con 1, es de todos los días.
+   */
+  cadaDias?: number | null;
   ordenTrabajoId: string | null;
   ordenTrabajoNumero: string | null;
   creadaPorId: string | null;

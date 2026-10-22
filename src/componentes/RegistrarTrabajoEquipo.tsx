@@ -8,7 +8,7 @@ import { MensajeError } from './Estados';
 import { Modal } from './Modal';
 import { formatearNumero } from '@/lib/formato';
 import { ETIQUETA_TIPO_TRABAJO, TIPOS_TRABAJO } from '@/tipos/ordenTrabajo';
-import type { TipoTrabajo } from '@/tipos/ordenTrabajo';
+import type { OrdenTrabajo, TipoTrabajo } from '@/tipos/ordenTrabajo';
 import {
   DATOS_DEL_TRABAJO_VACIOS,
   faltaElProveedor,
@@ -26,6 +26,10 @@ interface Props {
   equipoNombre: string;
   /** Los planes de la máquina, para decir a cuál responde el trabajo. */
   planes?: { id: string; nombre: string }[];
+  /** Lo que ya se sabe de qué se hizo, por ejemplo el texto de un pendiente. */
+  tituloInicial?: string;
+  /** Avisa la orden creada, antes de cerrar (el anotador la guarda en el pendiente). */
+  onRegistrado?: (orden: OrdenTrabajo) => void;
   onCerrar: () => void;
 }
 
@@ -53,6 +57,8 @@ export function RegistrarTrabajoEquipo({
   equipoItId,
   equipoNombre,
   planes = [],
+  tituloInicial = '',
+  onRegistrado,
   onCerrar,
 }: Props) {
   // Los ejemplos de los campos cambian según qué se esté arreglando. Un
@@ -61,7 +67,7 @@ export function RegistrarTrabajoEquipo({
   const esInformatica = Boolean(equipoItId);
   const crear = useCrearOrdenTrabajo();
 
-  const [titulo, setTitulo] = useState('');
+  const [titulo, setTitulo] = useState(tituloInicial);
   const [tipo, setTipo] = useState<TipoTrabajo>('CORRECTIVO');
   const [resolucion, setResolucion] = useState('');
   const [fecha, setFecha] = useState('');
@@ -85,7 +91,7 @@ export function RegistrarTrabajoEquipo({
 
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
-    await crear.mutateAsync({
+    const orden = await crear.mutateAsync({
       titulo,
       tipo,
       equipoId,
@@ -97,6 +103,7 @@ export function RegistrarTrabajoEquipo({
       ...paraEnviar(masDatos),
       materiales: materiales.map((m) => ({ materialId: m.materialId, cantidad: m.cantidad })),
     });
+    onRegistrado?.(orden);
     onCerrar();
   };
 

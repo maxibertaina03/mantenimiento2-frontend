@@ -229,8 +229,10 @@ h3 {
   overflow-x: auto;
   min-width: 0;
 }
-/* El contenido no se estira de más en pantallas muy anchas. */
-.contenido > * {
+/* El contenido no se estira de más en pantallas muy anchas. Los fondos que
+   tapan la pantalla (ventanas, visores de fotos) quedan afuera: con el tope,
+   en un monitor ancho cubrían 1400px y el resto quedaba blanco. */
+.contenido > :not(.modal-fondo, .visor-foto, .visor-logo) {
   max-width: 1400px;
 }
 .cabecera-pagina {
@@ -331,6 +333,9 @@ h3 {
   flex-wrap: wrap;
 }
 .solapa {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
@@ -344,6 +349,18 @@ h3 {
   color: var(--color-primario);
   border-bottom-color: var(--color-primario);
   font-weight: 600;
+}
+/* Dos pestañas que se reparten el ancho: en el celular van una al lado de la
+   otra, en vez de una abajo de la otra. */
+@media (max-width: 640px) {
+  .solapas-parejas { flex-wrap: nowrap; }
+  .solapas-parejas .solapa {
+    flex: 1 1 0;
+    justify-content: center;
+    padding: 0.55rem 0.3rem;
+    font-size: var(--texto-sm);
+    white-space: nowrap;
+  }
 }
 
 /* Alta rapida de un item de catalogo: un campo y un boton. */
@@ -3838,6 +3855,54 @@ tr:hover .nombre-material {
   font-size: var(--texto-sm);
 }
 
+/* Las rutinas de todos los días, juntas en un renglón que se despliega. */
+.grupo-rutinas {
+  border-top: 1px solid var(--borde);
+}
+.grupo-rutinas-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  background: var(--panel-suave);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.grupo-rutinas-cabecera:hover {
+  background: var(--primario-suave);
+}
+.grupo-rutinas-icono {
+  width: 46px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radio);
+  background: var(--info-suave);
+  color: var(--info);
+}
+.grupo-rutinas-icono svg {
+  width: 20px;
+  height: 20px;
+}
+.flecha-grupo {
+  margin-left: auto;
+  color: var(--texto-suave);
+  transition: transform 0.15s;
+}
+.flecha-grupo.abierta {
+  transform: rotate(180deg);
+}
+.lista-rutinas .fila-tarea-hoy {
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+  background: var(--panel-suave);
+}
+
 /* Tareas de Hoy: la fecha en un cuadradito, rojo si ya venció. */
 .lista-tareas {
   list-style: none;
@@ -4128,6 +4193,7 @@ input[type='radio'] {
    se prenden en azul. Se tocan fácil con el dedo y se ve de un vistazo qué
    filtro está puesto. */
 label.casilla {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -4143,6 +4209,19 @@ label.casilla {
 }
 label.casilla:hover {
   border-color: var(--borde-fuerte);
+}
+/* Un filtro de «uno de estos» (radio) es el chip entero: el puntito sobra.
+   Se esconde a la vista pero sigue ahí para el teclado y el lector. */
+label.casilla input[type='radio'] {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+label.casilla:has(input[type='radio']:focus-visible) {
+  outline: 2px solid var(--primario);
+  outline-offset: 2px;
 }
 label.casilla:has(input:checked) {
   background: var(--primario-suave);
@@ -4283,6 +4362,112 @@ label.casilla .icono {
 .selector-tipo .tipo-entrada { --tono: var(--exito); --tono-suave: var(--exito-suave); }
 .selector-tipo .tipo-salida { --tono: var(--peligro); --tono-suave: var(--peligro-suave); }
 .selector-tipo .tipo-ajuste { --tono: var(--info); --tono-suave: var(--info-suave); }
+
+/* ─────────── Anotador de pendientes ─────────── */
+.anotador {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem 1.1rem;
+}
+.anotador-linea {
+  display: flex;
+  gap: 0.5rem;
+}
+.anotador-linea input {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--texto-md);
+  padding: 0.6rem 0.8rem;
+}
+.anotador-opciones {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.anotador .fila-campos .campo {
+  margin-bottom: 0;
+}
+.lista-pendientes {
+  list-style: none;
+  margin: 0 0 1rem;
+}
+.fila-pendiente {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 0.8rem 1.15rem;
+  border-top: 1px solid var(--borde);
+}
+.fila-pendiente:first-child {
+  border-top: none;
+}
+.fila-pendiente.urgente {
+  box-shadow: inset 3px 0 0 var(--peligro);
+}
+/* El círculo para tildar: grande para el dedo, se llena de verde al pasar. */
+.tilde-pendiente {
+  width: 22px;
+  height: 22px;
+  margin-top: 0.1rem;
+  flex: none;
+  border: 2px solid var(--borde-fuerte);
+  border-radius: 50%;
+  background: var(--panel);
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.tilde-pendiente:hover,
+.tilde-pendiente:focus-visible {
+  outline: none;
+  border-color: var(--exito);
+  background: var(--exito-suave);
+}
+.tilde-pendiente.tildado {
+  border-color: var(--exito);
+  background: var(--exito) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 5 5L20 7'/%3E%3C/svg%3E") no-repeat center / 14px;
+  cursor: default;
+}
+.pendiente-cuerpo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.pendiente-texto {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.fila-pendiente.hecho .pendiente-texto {
+  text-decoration: line-through;
+  color: var(--texto-suave);
+}
+.pendiente-datos {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+}
+.pendiente-dato {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--texto-sm);
+  color: var(--texto-suave);
+}
+.pendiente-dato .icono {
+  margin: 0;
+}
+.hechos-pendientes {
+  margin-top: 0.5rem;
+}
+@media (max-width: 640px) {
+  .anotador-linea .btn {
+    padding-inline: 0.8rem;
+  }
+}
 
 /* ─────────── Barra de abajo del celular ─────────── */
 .barra-inferior {

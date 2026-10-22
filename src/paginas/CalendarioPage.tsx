@@ -4,8 +4,10 @@ import {
   Plus,
   Printer,
   Repeat,
+  Wrench,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { flushSync } from 'react-dom';
 import { useAsignarTarea, useCalendario, useCancelarTarea } from '@/api/calendario';
 import { useAsignables } from '@/api/ordenesTrabajo';
@@ -16,6 +18,7 @@ import { CalendarioImpreso, type ModoImpresion } from '@/componentes/CalendarioI
 import { CompletarTarea } from '@/componentes/CompletarTarea';
 import { PostergarTarea } from '@/componentes/PostergarTarea';
 import { vencio } from '@/lib/diaDeTarea';
+import { encabezadoTarea, esDeTodosLosDias } from '@/lib/tareas';
 import { formatearFechaSola } from '@/lib/formato';
 import { ElegirImpresion } from '@/componentes/ElegirImpresion';
 import { NuevaTarea } from '@/componentes/NuevaTarea';
@@ -48,6 +51,22 @@ const TAREAS_VISIBLES = 3;
 export function CalendarioPage() {
   const puede = usePuede();
   const { data: yo } = useUsuarioActual();
+
+  // Lo de todos los días va en su propia pestaña: mezclado con los services
+  // y lo programado a mano, una tarea importante se perdía entre diez
+  // «Purga». Se recuerda en la dirección (?vista=diarias).
+  const [params, setParams] = useSearchParams();
+  const vista: 'tareas' | 'rutinas' = params.get('vista') === 'diarias' ? 'rutinas' : 'tareas';
+  const cambiarVista = (v: 'tareas' | 'rutinas') =>
+    setParams(
+      (actual) => {
+        const nuevos = new URLSearchParams(actual);
+        if (v === 'rutinas') nuevos.set('vista', 'diarias');
+        else nuevos.delete('vista');
+        return nuevos;
+      },
+      { replace: true },
+    );
 
   const [ancla, setAncla] = useState(() => new Date());
   const [soloMias, setSoloMias] = useState(false);
@@ -116,29 +135,43 @@ export function CalendarioPage() {
     [padron],
   );
 
+  /** Las tareas de la pestaña abierta. Las cuentas de abajo usan solo estas. */
+  const tareasDeLaVista = useMemo(
+    () => (data?.tareas ?? []).filter((t) => esDeTodosLosDias(t) === (vista === 'rutinas')),
+    [data, vista],
+  );
+  /** Cuántas pendientes hay en cada pestaña, para mostrarlo en la solapa. */
+  const pendientesPorVista = useMemo(() => {
+    const pend = (data?.tareas ?? []).filter((t) => t.estado === 'PENDIENTE');
+    return {
+      tareas: pend.filter((t) => !esDeTodosLosDias(t)).length,
+      rutinas: pend.filter((t) => esDeTodosLosDias(t)).length,
+    };
+  }, [data]);
+
   /** Las tareas de cada día, para no recorrer la lista entera por casilla. */
   const porDia = useMemo(() => {
     const mapa = new Map<string, Tarea[]>();
-    for (const t of data?.tareas ?? []) {
+    for (const t of tareasDeLaVista) {
       const clave = t.fecha.slice(0, 10);
       if (!mapa.has(clave)) mapa.set(clave, []);
       mapa.get(clave)!.push(t);
     }
     return mapa;
-  }, [data]);
+  }, [tareasDeLaVista]);
 
   /** La referencia lleva solo a quien tenga algo este mes: si no, son nombres sueltos. */
   const personasConTareas = useMemo(() => {
     const nombres = new Map<string, string>();
-    for (const t of data?.tareas ?? []) {
+    for (const t of tareasDeLaVista) {
       if (t.asignadoAId) nombres.set(t.asignadoAId, t.asignadoANombre ?? 'sin nombre');
     }
     return [...nombres.entries()]
       .map(([id, nombre]) => ({ id, nombre, color: colorDeTarea(id, colores).color }))
       .sort((a, b) => a.nombre.localeCompare(b.nombre));
-  }, [data, colores]);
+  }, [tareasDeLaVista, colores]);
 
-  const hayHuerfanas = (data?.tareas ?? []).some((t) => !t.asignadoAId);
+  const hayHuerfanas = tareasDeLaVista.some((t) => !t.asignadoAId);
 
   const mover = (meses: number) => {
     const siguiente = new Date(ancla);
@@ -147,7 +180,7 @@ export function CalendarioPage() {
   };
 
   const hoy = aIso(new Date());
-  const pendientes = (data?.tareas ?? []).filter((t) => t.estado === 'PENDIENTE');
+  const pendientes = tareasDeLaVista.filter((t) => t.estado === 'PENDIENTE');
   const sinRepartir = pendientes.filter((t) => t.asignadoAId === null);
 
   return (
@@ -156,17 +189,20 @@ export function CalendarioPage() {
         <div>
           <h1>Calendario</h1>
           <p className="texto-suave">
-            Los services que vencen, las rutinas del día y lo que se programó a mano. Todo junto,
-            y cada cosa con su responsable.
+            {vista === 'rutinas'
+              ? 'Lo que se hace todos los días (purgas, recorridas), aparte para que no tape lo importante.'
+              : 'Los services que vencen y lo que se programó a mano, cada cosa con su responsable.'}
           </p>
         </div>
         <div className="fila-acciones">
           {puede(P.TAREAS_EDITAR) && (
             <>
-              <button className="btn" onClick={() => setVerRutinas(true)}>
-                <Repeat className="icono" aria-hidden />
-                Rutinas
-              </button>
+              {vista === 'rutinas' && (
+                <button className="btn" onClick={() => setVerRutinas(true)}>
+                  <Repeat className="icono" aria-hidden />
+                  Administrar rutinas
+                </button>
+              )}
               <button className="btn btn-primario" onClick={() => setDiaElegido(hoy)}>
                 <Plus className="icono" aria-hidden />
                 Nueva tarea
@@ -179,6 +215,43 @@ export function CalendarioPage() {
           </button>
         </div>
       </div>
+
+      <div className="solapas solapas-parejas no-imprimir" role="tablist" aria-label="Qué ver en el calendario">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={vista === 'tareas'}
+          className={`solapa ${vista === 'tareas' ? 'activa' : ''}`}
+          onClick={() => cambiarVista('tareas')}
+        >
+          <Wrench className="icono" aria-hidden />
+          Services y tareas
+          {pendientesPorVista.tareas > 0 && (
+            <span className="contador-pestana">{pendientesPorVista.tareas}</span>
+          )}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={vista === 'rutinas'}
+          className={`solapa ${vista === 'rutinas' ? 'activa' : ''}`}
+          onClick={() => cambiarVista('rutinas')}
+        >
+          <Repeat className="icono" aria-hidden />
+          Todos los días
+          {pendientesPorVista.rutinas > 0 && (
+            <span className="contador-pestana">{pendientesPorVista.rutinas}</span>
+          )}
+        </button>
+      </div>
+
+      {data && tareasDeLaVista.length === 0 && (
+        <p className="texto-suave no-imprimir">
+          {vista === 'rutinas'
+            ? 'Este mes no hay nada que se repita todos los días.'
+            : 'Este mes no hay services ni tareas programadas.'}
+        </p>
+      )}
 
       <div className="barra-calendario no-imprimir">
         <button className="btn btn-sm" onClick={() => mover(-1)}>
@@ -285,30 +358,14 @@ export function CalendarioPage() {
                 )}
               </div>
 
-              {tareas.slice(0, TAREAS_VISIBLES).map((t) => {
-                const { color, sinAsignar } = colorDeTarea(t.asignadoAId, colores);
-                return (
-                <button
+              {tareas.slice(0, TAREAS_VISIBLES).map((t) => (
+                <TareaEnCalendario
                   key={t.id}
-                  className={[
-                    'calendario-tarea',
-                    `estado-${t.estado.toLowerCase()}`,
-                    sinAsignar ? 'sin-asignar' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  style={{ borderLeftColor: color }}
-                  onClick={() => setTareaAbierta(t)}
-                >
-                  <span className="calendario-tarea-titulo">{t.titulo}</span>
-                  <span className="texto-suave texto-chico">
-                    {t.asignadoANombre ?? 'sin repartir'}
-                    {t.equipoNombre ? ` · ${t.equipoNombre}` : ''}
-                    {t.equipoItNombre ? ` · ${t.equipoItNombre}` : ''}
-                  </span>
-                </button>
-                );
-              })}
+                  tarea={t}
+                  colores={colores}
+                  onAbrir={() => setTareaAbierta(t)}
+                />
+              ))}
 
               {tareas.length > TAREAS_VISIBLES && (
                 <button
@@ -377,6 +434,52 @@ export function CalendarioPage() {
   );
 }
 
+// ─────────────────────── Una tarea en el calendario ───────────────────────
+
+/**
+ * Una tarea en la casilla del día o en la ventana del día entero.
+ *
+ * Primero el equipo y abajo qué hay que hacerle: «Compresor 1» y debajo
+ * «Purga · Facundo». Con el título arriba se leía «Purga, Purga, Purga…» y no
+ * se sabía de qué máquina era cada una sin acercarse.
+ */
+function TareaEnCalendario({
+  tarea: t,
+  colores,
+  onAbrir,
+}: {
+  tarea: Tarea;
+  colores: Map<string, string>;
+  onAbrir: () => void;
+}) {
+  const { color, sinAsignar } = colorDeTarea(t.asignadoAId, colores);
+  const { principal, secundario } = encabezadoTarea(t);
+  return (
+    <button
+      className={[
+        'calendario-tarea',
+        `estado-${t.estado.toLowerCase()}`,
+        sinAsignar ? 'sin-asignar' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      style={{ borderLeftColor: color }}
+      onClick={onAbrir}
+    >
+      <span className="calendario-tarea-titulo">{principal}</span>
+      <span className="texto-suave texto-chico">
+        {secundario && (
+          <>
+            <span className="calendario-tarea-que">{secundario}</span>
+            {' · '}
+          </>
+        )}
+        {t.asignadoANombre ?? 'sin repartir'}
+      </span>
+    </button>
+  );
+}
+
 // ─────────────────────── Detalle de una tarea ───────────────────────
 
 /**
@@ -415,30 +518,14 @@ function TareasDelDia({
         </p>
 
         <div className="lista-tareas-dia">
-          {tareas.map((t) => {
-            const { color, sinAsignar } = colorDeTarea(t.asignadoAId, colores);
-            return (
-              <button
-                key={t.id}
-                className={[
-                  'calendario-tarea',
-                  `estado-${t.estado.toLowerCase()}`,
-                  sinAsignar ? 'sin-asignar' : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                style={{ borderLeftColor: color }}
-                onClick={() => onAbrirTarea(t)}
-              >
-                <span className="calendario-tarea-titulo">{t.titulo}</span>
-                <span className="texto-suave texto-chico">
-                  {t.asignadoANombre ?? 'sin repartir'}
-                  {t.equipoNombre ? ` · ${t.equipoNombre}` : ''}
-                  {t.equipoItNombre ? ` · ${t.equipoItNombre}` : ''}
-                </span>
-              </button>
-            );
-          })}
+          {tareas.map((t) => (
+            <TareaEnCalendario
+              key={t.id}
+              tarea={t}
+              colores={colores}
+              onAbrir={() => onAbrirTarea(t)}
+            />
+          ))}
         </div>
 
         <div className="acciones">

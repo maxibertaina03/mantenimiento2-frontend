@@ -6,6 +6,7 @@ import {
   History,
   House,
   KeyRound,
+  ListTodo,
   Menu,
   MoreHorizontal,
   Monitor,
@@ -79,6 +80,7 @@ const GRUPOS: { titulo: string | null; opciones: Opcion[] }[] = [
     titulo: 'Mantenimiento',
     opciones: [
       { a: '/calendario', texto: 'Calendario', Icono: CalendarDays, permiso: P.TAREAS_VER },
+      { a: '/pendientes', texto: 'Pendientes', Icono: ListTodo, permiso: P.PENDIENTES_VER },
       {
         a: '/ordenes-trabajo',
         texto: 'Órdenes de trabajo',
