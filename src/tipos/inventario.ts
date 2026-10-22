@@ -36,6 +36,7 @@ export interface RenglonToma {
   materialId: string;
   materialNombre: string;
   unidad: string;
+  estanteriaId: string | null;
   estanteriaNombre: string | null;
   fila: number | null;
   /** Lo que se contó; null mientras no se cuenta. */
@@ -59,10 +60,25 @@ export interface ResumenToma {
   recontar: number;
 }
 
+/** Un material que se cambió de lugar durante la toma. */
+export interface Reubicacion {
+  id: string;
+  materialId: string;
+  materialNombre: string;
+  desdeEstanteria: string | null;
+  desdeFila: number | null;
+  haciaEstanteria: string | null;
+  haciaFila: number | null;
+  hechaEn: string;
+  hechaPorNombre: string | null;
+}
+
 export interface DetalleToma {
   toma: TomaInventario;
   renglones: RenglonToma[];
   resumen: ResumenToma;
+  /** Lo que se cambió de lugar durante la toma. */
+  reubicaciones: Reubicacion[];
 }
 
 export interface ResultadoConfirmacion extends DetalleToma {

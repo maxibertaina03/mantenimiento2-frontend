@@ -4062,6 +4062,17 @@ tr:hover .nombre-material {
   min-width: 0;
   flex: 1 1 14rem;
 }
+.renglon-toma-material .btn-enlace {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: inherit;
+}
+.renglon-toma-material .btn-enlace .icono { width: 13px; height: 13px; }
+/* Lo que se cambió de lugar en la toma, al final de la lista. */
+.reubicados-toma { margin-top: 1rem; padding: 0.9rem 1.1rem; }
+.reubicados-toma h2 { font-size: var(--texto-base); margin: 0 0 0.5rem; }
+.reubicados-toma ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.25rem; }
 .renglon-toma-conteo {
   display: flex;
   align-items: center;

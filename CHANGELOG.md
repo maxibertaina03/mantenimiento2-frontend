@@ -4,6 +4,15 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.8.0] — 2026-10-22
+
+### Agregado
+
+- **Reubicar materiales desde la toma de inventario.** En cada material de una toma abierta,
+  «Reubicar» deja elegir la estantería y la fila donde está de verdad: queda así en todo el
+  sistema. Al final de la toma se listan los reubicados, y el informe PDF suma la tabla
+  «Reubicados durante la toma» (de dónde a dónde, quién y cuándo).
+
 ## [1.7.1] — 2026-10-22
 
 ### Documentación
@@ -177,6 +186,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.8.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.8.0
 [1.7.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.7.1
 [1.7.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.7.0
 [1.6.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.6.1

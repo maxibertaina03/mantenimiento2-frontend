@@ -1,6 +1,6 @@
 {
   "name": "mantenimiento2-frontend",
-  "version": "1.7.1",
+  "version": "1.8.0",
   "description": "Frontend de gestión de mantenimiento (stock de materiales) - React + Vite",
   "private": true,
   "type": "module",

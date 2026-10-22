@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Printer, X } from 'lucide-react';
+import { ArrowLeft, Check, MapPin, Printer, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
@@ -6,14 +6,21 @@ import {
   useCerrarToma,
   useConfirmarToma,
   useContar,
+  useReubicar,
   useToma,
 } from '@/api/inventario';
+import { useEstanterias } from '@/api/estanterias';
 import { Cargando, MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
 import { leerEscaneo, useEscaneoSuelto } from '@/lib/escaneo';
 import { formatearFecha, formatearNumero } from '@/lib/formato';
 import { P, usePuede } from '@/lib/permisos';
-import { descargarInforme, descargarPlanilla, ubicacionDe } from '@/lib/pdfTomaInventario';
+import {
+  descargarInforme,
+  descargarPlanilla,
+  filasReubicados,
+  ubicacionDe,
+} from '@/lib/pdfTomaInventario';
 import {
   alcanceDeToma,
   ETIQUETA_ESTADO_TOMA,
@@ -69,6 +76,7 @@ export function TomaInventarioPage() {
   const [soloMaterial, setSoloMaterial] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState(false);
   const [resultado, setResultado] = useState<ResultadoConfirmacion | null>(null);
+  const [reubicando, setReubicando] = useState<RenglonToma | null>(null);
 
   // Escanear la etiqueta de un material (con el cursor fuera de un campo) lo trae.
   useEscaneoSuelto(Boolean(data), (escaneo) => {
@@ -308,10 +316,31 @@ export function TomaInventarioPage() {
               // Lo que figura recién se muestra cuando ya se contó: el que cuenta
               // escribe lo que ve, no lo que espera ver.
               mostrarFigura={r.contado !== null}
+              // Cambiarlo de lugar se puede aunque ya esté confirmado: la
+              // ubicación no tiene que ver con el stock.
+              onReubicar={puedeContar ? () => setReubicando(r) : undefined}
             />
           ))}
         </div>
       ))}
+
+      {data.reubicaciones.length > 0 && (
+        <section className="panel reubicados-toma">
+          <h2>Reubicados en esta toma · {data.reubicaciones.length}</h2>
+          <ul>
+            {filasReubicados(data.reubicaciones).map(([material, desde, hacia, quien], i) => (
+              <li key={data.reubicaciones[i].id} className="texto-chico">
+                <strong>{material}</strong>: {desde} → {hacia}
+                <span className="texto-suave"> · {quien}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {reubicando && (
+        <ReubicarMaterial tomaId={id} renglon={reubicando} onCerrar={() => setReubicando(null)} />
+      )}
 
       {confirmando && (
         <ConfirmarToma
@@ -341,11 +370,14 @@ function RenglonConteo({
   renglon,
   editable,
   mostrarFigura,
+  onReubicar,
 }: {
   tomaId: string;
   renglon: RenglonToma;
   editable: boolean;
   mostrarFigura: boolean;
+  /** Si se puede cambiar de lugar (toma abierta y permiso de contar). */
+  onReubicar?: () => void;
 }) {
   const contar = useContar(tomaId);
   const guardado = renglon.contado === null ? '' : String(renglon.contado);
@@ -374,6 +406,20 @@ function RenglonConteo({
         <span className="texto-suave texto-chico">
           {ubicacionDe(renglon)} · {renglon.unidad}
           {renglon.contadoPorNombre && ` · contó ${renglon.contadoPorNombre}`}
+          {onReubicar && (
+            <>
+              {' '}
+              <button
+                type="button"
+                className="btn-enlace"
+                aria-label={`Reubicar ${renglon.materialNombre}`}
+                onClick={onReubicar}
+              >
+                <MapPin className="icono" aria-hidden />
+                Reubicar
+              </button>
+            </>
+          )}
         </span>
         {mostrarFigura && renglon.stockAlContar !== null && (
           <span className="texto-chico">
@@ -423,6 +469,88 @@ function RenglonConteo({
       </div>
       {contar.error && <MensajeError error={contar.error} />}
     </div>
+  );
+}
+
+/**
+ * Cambiar de lugar un material: al recorrer el pañol pasa seguido que algo
+ * está en otro estante. Queda ahí en todo el sistema, y la toma lo registra.
+ */
+function ReubicarMaterial({
+  tomaId,
+  renglon,
+  onCerrar,
+}: {
+  tomaId: string;
+  renglon: RenglonToma;
+  onCerrar: () => void;
+}) {
+  const { data: estanterias } = useEstanterias(true);
+  const reubicar = useReubicar(tomaId);
+  const [estanteriaId, setEstanteriaId] = useState(renglon.estanteriaId ?? '');
+  const [fila, setFila] = useState(renglon.fila === null ? '' : String(renglon.fila));
+
+  const filaNumero = fila.trim() === '' ? null : Number(fila);
+  const filaValida =
+    filaNumero === null || (Number.isInteger(filaNumero) && filaNumero >= 1 && filaNumero <= 99);
+  const mismoLugar = estanteriaId === (renglon.estanteriaId ?? '') && filaNumero === renglon.fila;
+
+  const guardar = (e: React.FormEvent) => {
+    e.preventDefault();
+    reubicar.mutate(
+      { renglonId: renglon.id, estanteriaId, fila: filaNumero },
+      { onSuccess: onCerrar },
+    );
+  };
+
+  return (
+    <Modal titulo={`Reubicar ${renglon.materialNombre}`} abierto onCerrar={onCerrar}>
+      <form className="formulario-modal" onSubmit={guardar}>
+        <p className="texto-suave">
+          Ahora figura en <strong>{ubicacionDe(renglon)}</strong>. Elegí dónde está: queda así en
+          todo el sistema y la toma lo anota.
+        </p>
+        <div className="fila-campos">
+          <label className="campo">
+            Estantería
+            <select value={estanteriaId} onChange={(e) => setEstanteriaId(e.target.value)} required>
+              <option value="">Elegí una…</option>
+              {(estanterias ?? []).map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.nombre}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="campo">
+            Fila (opcional)
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={99}
+              value={fila}
+              onChange={(e) => setFila(e.target.value)}
+            />
+          </label>
+        </div>
+        {!filaValida && <div className="alerta alerta-error">La fila va de 1 a 99.</div>}
+        {reubicar.error && <MensajeError error={reubicar.error} />}
+        <div className="acciones">
+          <button type="button" className="btn" onClick={onCerrar}>
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="btn btn-primario"
+            disabled={!estanteriaId || !filaValida || mismoLugar || reubicar.isPending}
+          >
+            <MapPin className="icono" aria-hidden />
+            {reubicar.isPending ? 'Guardando…' : 'Reubicar'}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

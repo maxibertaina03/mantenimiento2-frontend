@@ -22,6 +22,7 @@ const renglon = (id: string, nombre: string, extra: Partial<RenglonToma> = {}): 
   materialId: `mat-${id}`,
   materialNombre: nombre,
   unidad: 'u',
+  estanteriaId: 'est-a',
   estanteriaNombre: 'A',
   fila: 1,
   contado: null,
@@ -65,6 +66,7 @@ const DETALLE: DetalleToma = {
     sinDiferencia: 0,
     recontar: 0,
   },
+  reubicaciones: [],
 };
 
 function mostrar() {
@@ -93,6 +95,13 @@ beforeEach(() => {
         });
       }
       if (ruta === '/tomas-inventario/toma-1') return Promise.resolve(DETALLE);
+      if (ruta === '/estanterias-material') {
+        return Promise.resolve([
+          { id: 'est-a', nombre: 'A', orden: 1, activo: true, materiales: 3 },
+          { id: 'est-b', nombre: 'B', orden: 2, activo: true, materiales: 0 },
+        ]);
+      }
+      if (ruta.endsWith('/reubicar')) return Promise.resolve(renglon('r1', 'Cable 2,5 mm'));
       if (config?.method === 'PATCH') {
         const contado = (config.body as { contado: number }).contado;
         return Promise.resolve(renglon('r1', 'Cable 2,5 mm', { contado, stockAlContar: 10 }));
@@ -118,6 +127,60 @@ describe('TomaInventarioPage', () => {
     expect(await screen.findByText('Cable 2,5 mm')).toBeInTheDocument();
     expect(screen.queryByText('Cinta aisladora')).not.toBeInTheDocument(); // ya contada
     expect(screen.queryByText(/Figuraba/)).not.toBeInTheDocument();
+  });
+
+  it('se puede reubicar un material: elige estantería y fila, y se guarda', async () => {
+    const usuario = userEvent.setup();
+    mostrar();
+    await usuario.click(await screen.findByRole('button', { name: 'Reubicar Cable 2,5 mm' }));
+    const ventana = await screen.findByRole('dialog');
+    // Al mismo lugar no deja guardar.
+    expect(within(ventana).getByRole('button', { name: /^Reubicar$/ })).toBeDisabled();
+
+    await usuario.selectOptions(await within(ventana).findByRole('combobox'), 'est-b');
+    const fila = within(ventana).getByRole('spinbutton');
+    await usuario.clear(fila);
+    await usuario.type(fila, '4');
+    await usuario.click(within(ventana).getByRole('button', { name: /^Reubicar$/ }));
+
+    await waitFor(() =>
+      expect(apiRequestMock).toHaveBeenCalledWith(
+        '/tomas-inventario/toma-1/renglones/r1/reubicar',
+        { method: 'POST', body: { estanteriaId: 'est-b', fila: 4 } },
+      ),
+    );
+  });
+
+  it('lo reubicado se lista en la toma', async () => {
+    apiRequestMock.mockImplementation((ruta: string) => {
+      if (ruta.startsWith('/permisos/mios')) {
+        return Promise.resolve({ rol: 'ADMIN', permisos: ['inventario.ver'] });
+      }
+      if (ruta === '/tomas-inventario/toma-1') {
+        return Promise.resolve({
+          ...DETALLE,
+          reubicaciones: [
+            {
+              id: 'x1',
+              materialId: 'mat-r1',
+              materialNombre: 'Cable 2,5 mm',
+              desdeEstanteria: 'A',
+              desdeFila: 1,
+              haciaEstanteria: 'B',
+              haciaFila: 4,
+              hechaEn: '2026-10-22T12:00:00.000Z',
+              hechaPorNombre: 'Facundo',
+            },
+          ],
+        });
+      }
+      return Promise.resolve(null);
+    });
+    mostrar();
+    expect(await screen.findByText(/Reubicados en esta toma · 1/)).toBeInTheDocument();
+    expect(screen.getByText(/A · fila 1 → B · fila 4/)).toBeInTheDocument();
+    // Sin permiso de contar, no aparece el botón.
+    expect(screen.queryByRole('button', { name: /^Reubicar / })).not.toBeInTheDocument();
   });
 
   it('lo contado se guarda al salir del campo', async () => {

@@ -80,6 +80,33 @@ export function useContar(tomaId: string) {
   });
 }
 
+/**
+ * Cambiar de lugar un material durante la toma. Se vuelve a pedir la toma
+ * entera: el renglón cambia de grupo y se suma al registro de reubicados.
+ */
+export function useReubicar(tomaId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      renglonId,
+      estanteriaId,
+      fila,
+    }: {
+      renglonId: string;
+      estanteriaId: string;
+      fila: number | null;
+    }) =>
+      apiRequest<RenglonToma>(`/tomas-inventario/${tomaId}/renglones/${renglonId}/reubicar`, {
+        method: 'POST',
+        body: { estanteriaId, fila },
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: clavesInventario.detalle(tomaId) });
+      void qc.invalidateQueries({ queryKey: clavesMateriales.base });
+    },
+  });
+}
+
 /** Confirmar ajusta stock: se refresca también el pañol. */
 export function useConfirmarToma(tomaId: string) {
   const qc = useQueryClient();
