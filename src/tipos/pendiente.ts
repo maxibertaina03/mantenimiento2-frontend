@@ -16,6 +16,9 @@ export interface Pendiente {
   /** Vacío: sigue pendiente. */
   hechaEn: string | null;
   hechaPorNombre: string | null;
+  /** Si era sobre una máquina, la orden de trabajo que se registró al hacerlo. */
+  ordenTrabajoId: string | null;
+  ordenTrabajoNumero: string | null;
 }
 
 export interface DatosPendiente {

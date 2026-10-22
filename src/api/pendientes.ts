@@ -45,8 +45,14 @@ export const useEditarPendiente = () =>
     apiRequest<Pendiente>(`/pendientes/${id}`, { method: 'PATCH', body: datos }),
   );
 
+/** Con `ordenTrabajoId` si se registró el trabajo en la máquina. */
 export const useMarcarHecho = () =>
-  useCambio((id: string) => apiRequest<Pendiente>(`/pendientes/${id}/hecho`, { method: 'POST' }));
+  useCambio(({ id, ordenTrabajoId }: { id: string; ordenTrabajoId?: string }) =>
+    apiRequest<Pendiente>(`/pendientes/${id}/hecho`, {
+      method: 'POST',
+      body: ordenTrabajoId ? { ordenTrabajoId } : {},
+    }),
+  );
 
 export const useReabrirPendiente = () =>
   useCambio((id: string) => apiRequest<Pendiente>(`/pendientes/${id}/reabrir`, { method: 'POST' }));

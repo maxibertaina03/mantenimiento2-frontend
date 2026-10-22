@@ -1,4 +1,14 @@
-import { ChevronDown, Factory, Pencil, Plus, RotateCcw, Trash2, User } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  ClipboardCheck,
+  Factory,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Trash2,
+  User,
+} from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -14,6 +24,8 @@ import { useUsuarioActual } from '@/api/usuarios';
 import { ComboEquipo } from '@/componentes/ComboEquipo';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
+import { RegistrarTrabajoEquipo } from '@/componentes/RegistrarTrabajoEquipo';
+import { ModalDetalleOrden } from '@/componentes/ordenesTrabajo/ModalDetalleOrden';
 import { P, usePuede } from '@/lib/permisos';
 import type { Pendiente } from '@/tipos/pendiente';
 
@@ -42,6 +54,10 @@ export function PendientesPage() {
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [verHechos, setVerHechos] = useState(false);
   const [editando, setEditando] = useState<Pendiente | null>(null);
+  // El círculo no tilda directo: primero se confirma, y si es sobre una
+  // máquina, se registra el trabajo.
+  const [confirmando, setConfirmando] = useState<Pendiente | null>(null);
+  const [registrando, setRegistrando] = useState<Pendiente | null>(null);
 
   const marcar = useMarcarHecho();
   const borrar = useBorrarPendiente();
@@ -52,6 +68,8 @@ export function PendientesPage() {
   const urgentes = (abiertos ?? []).filter((p) => p.urgente).length;
   const mios = (abiertos ?? []).filter((p) => yo && p.asignadoAId === yo.id).length;
   const esAdmin = yo?.rol === 'ADMIN' || !yo;
+  // Si le toca a alguien, solo esa persona (o un administrador) lo da por hecho.
+  const puedeDarPorHecho = (p: Pendiente) => !p.asignadoAId || esAdmin || p.asignadoAId === yo?.id;
 
   return (
     <>
@@ -110,9 +128,13 @@ export function PendientesPage() {
                   type="button"
                   className="tilde-pendiente"
                   aria-label={`Marcar como hecho: ${p.texto}`}
-                  title="Marcar como hecho"
+                  title={
+                    puedeDarPorHecho(p)
+                      ? 'Marcar como hecho'
+                      : `Le toca a ${p.asignadoANombre ?? 'otra persona'}`
+                  }
                   disabled={marcar.isPending}
-                  onClick={() => marcar.mutate(p.id)}
+                  onClick={() => setConfirmando(p)}
                 />
               )}
               <div className="pendiente-cuerpo">
@@ -184,7 +206,115 @@ export function PendientesPage() {
       </section>
 
       {editando && <EditarPendiente pendiente={editando} onCerrar={() => setEditando(null)} />}
+
+      {confirmando && (
+        <ConfirmarHecho
+          pendiente={confirmando}
+          puedeDarlo={puedeDarPorHecho(confirmando)}
+          puedeRegistrarTrabajo={puede(P.TRABAJOS_EDITAR)}
+          onCerrar={() => setConfirmando(null)}
+          onHecho={() => {
+            marcar.mutate({ id: confirmando.id });
+            setConfirmando(null);
+          }}
+          onRegistrar={() => {
+            setRegistrando(confirmando);
+            setConfirmando(null);
+          }}
+        />
+      )}
+
+      {registrando?.equipoId && (
+        <RegistrarTrabajoEquipo
+          equipoId={registrando.equipoId}
+          equipoNombre={registrando.equipoNombre ?? 'el equipo'}
+          tituloInicial={registrando.texto}
+          onRegistrado={(orden) => marcar.mutate({ id: registrando.id, ordenTrabajoId: orden.id })}
+          onCerrar={() => setRegistrando(null)}
+        />
+      )}
     </>
+  );
+}
+
+/**
+ * Antes de sacarlo de la lista, se pregunta: un toque sin querer en el
+ * círculo no tiene que hacer desaparecer un pendiente.
+ *
+ * Si es sobre una máquina, lo normal es registrar lo que se hizo: así queda la
+ * orden de trabajo en el historial del equipo. Se puede igual darlo por hecho
+ * sin orden (por ejemplo, «comprar el filtro del compresor» no es un trabajo
+ * sobre el compresor).
+ */
+function ConfirmarHecho({
+  pendiente: p,
+  puedeDarlo,
+  puedeRegistrarTrabajo,
+  onCerrar,
+  onHecho,
+  onRegistrar,
+}: {
+  pendiente: Pendiente;
+  puedeDarlo: boolean;
+  puedeRegistrarTrabajo: boolean;
+  onCerrar: () => void;
+  onHecho: () => void;
+  onRegistrar: () => void;
+}) {
+  if (!puedeDarlo) {
+    const quien = p.asignadoANombre ?? 'otra persona';
+    return (
+      <Modal titulo={`Le toca a ${quien}`} abierto onCerrar={onCerrar}>
+        <p>
+          «{p.texto}» está a nombre de <strong>{quien}</strong>: solo esa persona (o un
+          administrador) lo puede dar por hecho.
+        </p>
+        <p className="texto-suave">Si ya está resuelto, avisale para que lo tilde.</p>
+        <div className="acciones">
+          <button type="button" className="btn btn-primario" onClick={onCerrar}>
+            Entendido
+          </button>
+        </div>
+      </Modal>
+    );
+  }
+
+  const conTrabajo = Boolean(p.equipoId) && puedeRegistrarTrabajo;
+  return (
+    <Modal titulo="¿Ya está hecho?" abierto onCerrar={onCerrar}>
+      <p>
+        <strong>{p.texto}</strong>
+      </p>
+      {conTrabajo ? (
+        <p className="texto-suave">
+          Es sobre <strong>{p.equipoNombre}</strong>. Registrá lo que se hizo y queda la orden de
+          trabajo en el historial del equipo.
+        </p>
+      ) : (
+        <p className="texto-suave">Confirmá que ya se hizo: sale de la lista y pasa a «Hechos».</p>
+      )}
+      <div className="acciones">
+        <button type="button" className="btn" onClick={onCerrar}>
+          Todavía no
+        </button>
+        {conTrabajo ? (
+          <>
+            <button type="button" className="btn btn-fantasma" onClick={onHecho}>
+              Hecho, sin orden de trabajo
+            </button>
+            <button type="button" className="btn btn-primario" onClick={onRegistrar}>
+              <ClipboardCheck className="icono" aria-hidden />
+              Registrar el trabajo
+            </button>
+          </>
+        ) : (
+          <button type="button" className="btn btn-primario" onClick={onHecho}>
+            <Check className="icono" aria-hidden />
+            Sí, ya está hecho
+          </button>
+        )}
+      </div>
+    </Modal>
   );
 }
 
@@ -284,37 +414,58 @@ function AnotarPendiente() {
 function PendientesHechos({ puedeEditar }: { puedeEditar: boolean }) {
   const { data, isLoading, error } = usePendientes('hechos');
   const reabrir = useReabrirPendiente();
+  const puedeVerOrdenes = usePuede()(P.TRABAJOS_VER);
+  const [orden, setOrden] = useState<string | null>(null);
   if (isLoading) return <Cargando />;
   if (error) return <MensajeError error={error} />;
   if (!data || data.length === 0) {
     return <EstadoVacio>No se terminó ningún pendiente en los últimos 60 días.</EstadoVacio>;
   }
   return (
-    <ul className="panel panel-lista lista-pendientes">
-      {data.map((p) => (
-        <li key={p.id} className="fila-pendiente hecho">
-          <span className="tilde-pendiente tildado" aria-hidden />
-          <div className="pendiente-cuerpo">
-            <span className="pendiente-texto">{p.texto}</span>
-            <span className="texto-suave texto-chico">
-              Hecho {p.hechaEn ? haceCuanto(p.hechaEn) : ''}
-              {p.hechaPorNombre ? ` por ${p.hechaPorNombre}` : ''}
-            </span>
-          </div>
-          {puedeEditar && (
-            <button
-              type="button"
-              className="btn btn-fantasma btn-sm"
-              disabled={reabrir.isPending}
-              onClick={() => reabrir.mutate(p.id)}
-            >
-              <RotateCcw className="icono" aria-hidden />
-              Reabrir
-            </button>
-          )}
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="panel panel-lista lista-pendientes">
+        {data.map((p) => (
+          <li key={p.id} className="fila-pendiente hecho">
+            <span className="tilde-pendiente tildado" aria-hidden />
+            <div className="pendiente-cuerpo">
+              <span className="pendiente-texto">{p.texto}</span>
+              <span className="texto-suave texto-chico">
+                Hecho {p.hechaEn ? haceCuanto(p.hechaEn) : ''}
+                {p.hechaPorNombre ? ` por ${p.hechaPorNombre}` : ''}
+                {p.ordenTrabajoId && p.ordenTrabajoNumero && (
+                  <>
+                    {' · '}
+                    {puedeVerOrdenes ? (
+                      <button
+                        type="button"
+                        className="btn-enlace"
+                        onClick={() => setOrden(p.ordenTrabajoId)}
+                      >
+                        {p.ordenTrabajoNumero}
+                      </button>
+                    ) : (
+                      p.ordenTrabajoNumero
+                    )}
+                  </>
+                )}
+              </span>
+            </div>
+            {puedeEditar && (
+              <button
+                type="button"
+                className="btn btn-fantasma btn-sm"
+                disabled={reabrir.isPending}
+                onClick={() => reabrir.mutate(p.id)}
+              >
+                <RotateCcw className="icono" aria-hidden />
+                Reabrir
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+      {orden && <ModalDetalleOrden id={orden} onCerrar={() => setOrden(null)} />}
+    </>
   );
 }
 

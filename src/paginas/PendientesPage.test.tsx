@@ -30,6 +30,8 @@ const pendiente = (id: string, texto: string, extra: Partial<Pendiente> = {}): P
   creadoEn: new Date().toISOString(),
   hechaEn: null,
   hechaPorNombre: null,
+  ordenTrabajoId: null,
+  ordenTrabajoNumero: null,
   ...extra,
 });
 
@@ -51,11 +53,14 @@ beforeEach(() => {
       if (ruta.startsWith('/permisos/mios')) {
         return Promise.resolve({
           rol: 'MANTENIMIENTO',
-          permisos: ['pendientes.ver', 'pendientes.editar'],
+          permisos: ['pendientes.ver', 'pendientes.editar', 'trabajos.ver', 'trabajos.editar'],
         });
       }
       if (ruta.startsWith('/usuarios/me')) {
         return Promise.resolve({ id: 'u2', nombre: 'Leandro', rol: 'MANTENIMIENTO' });
+      }
+      if (ruta === '/ordenes-trabajo' && config?.method === 'POST') {
+        return Promise.resolve({ id: 'ot-1', numero: 'OT-2026-0001' });
       }
       if (ruta === '/pendientes' && config?.method === 'POST') {
         return Promise.resolve(pendiente('p3', 'nuevo'));
@@ -110,15 +115,62 @@ describe('PendientesPage', () => {
     );
   });
 
-  it('se tilda como hecho de un toque', async () => {
+  it('el círculo pregunta antes de darlo por hecho', async () => {
     const usuario = userEvent.setup();
     mostrar();
     await usuario.click(
       await screen.findByRole('button', { name: 'Marcar como hecho: Comprar rulemanes 6204' }),
     );
-    await waitFor(() =>
-      expect(apiRequestMock).toHaveBeenCalledWith('/pendientes/p1/hecho', { method: 'POST' }),
+    // «Todavía no» no hace nada.
+    await usuario.click(screen.getByRole('button', { name: 'Todavía no' }));
+    expect(apiRequestMock).not.toHaveBeenCalledWith('/pendientes/p1/hecho', expect.anything());
+
+    await usuario.click(
+      screen.getByRole('button', { name: 'Marcar como hecho: Comprar rulemanes 6204' }),
     );
+    await usuario.click(screen.getByRole('button', { name: /Sí, ya está hecho/ }));
+    await waitFor(() =>
+      expect(apiRequestMock).toHaveBeenCalledWith('/pendientes/p1/hecho', {
+        method: 'POST',
+        body: {},
+      }),
+    );
+  });
+
+  it('si es sobre una máquina, se registra el trabajo y el pendiente guarda la orden', async () => {
+    const usuario = userEvent.setup();
+    mostrar();
+    await usuario.click(
+      await screen.findByRole('button', {
+        name: 'Marcar como hecho: Mandar a rebobinar el motor',
+      }),
+    );
+    await usuario.click(screen.getByRole('button', { name: /Registrar el trabajo/ }));
+
+    // El formulario de la ficha, con el texto del pendiente ya puesto.
+    expect(await screen.findByDisplayValue('Mandar a rebobinar el motor')).toBeInTheDocument();
+    await usuario.type(screen.getByLabelText(/¿Qué se hizo\?/), 'Se rebobinó en el taller');
+    await usuario.click(screen.getByRole('button', { name: 'Registrar trabajo' }));
+
+    await waitFor(() =>
+      expect(apiRequestMock).toHaveBeenCalledWith('/pendientes/p2/hecho', {
+        method: 'POST',
+        body: { ordenTrabajoId: 'ot-1' },
+      }),
+    );
+  });
+
+  it('si le toca a otro, no lo puede dar por hecho', async () => {
+    const usuario = userEvent.setup();
+    abiertos = [
+      pendiente('p9', 'Cambiar el retén', { asignadoAId: 'u7', asignadoANombre: 'Facundo' }),
+    ];
+    mostrar();
+    await usuario.click(
+      await screen.findByRole('button', { name: 'Marcar como hecho: Cambiar el retén' }),
+    );
+    expect(screen.getByText(/solo esa persona/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Sí, ya está hecho/ })).not.toBeInTheDocument();
   });
 
   it('«Míos» deja solo los que le tocan a uno', async () => {
