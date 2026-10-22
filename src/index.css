@@ -348,6 +348,18 @@ h3 {
   border-bottom-color: var(--color-primario);
   font-weight: 600;
 }
+/* Dos pestañas que se reparten el ancho: en el celular van una al lado de la
+   otra, en vez de una abajo de la otra. */
+@media (max-width: 640px) {
+  .solapas-parejas { flex-wrap: nowrap; }
+  .solapas-parejas .solapa {
+    flex: 1 1 0;
+    justify-content: center;
+    padding: 0.55rem 0.3rem;
+    font-size: var(--texto-sm);
+    white-space: nowrap;
+  }
+}
 
 /* Alta rapida de un item de catalogo: un campo y un boton. */
 .alta-rapida {

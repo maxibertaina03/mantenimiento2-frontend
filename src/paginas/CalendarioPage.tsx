@@ -216,7 +216,7 @@ export function CalendarioPage() {
         </div>
       </div>
 
-      <div className="solapas no-imprimir" role="tablist" aria-label="Qué ver en el calendario">
+      <div className="solapas solapas-parejas no-imprimir" role="tablist" aria-label="Qué ver en el calendario">
         <button
           type="button"
           role="tab"

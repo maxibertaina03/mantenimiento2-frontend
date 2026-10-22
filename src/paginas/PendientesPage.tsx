@@ -223,7 +223,7 @@ function AnotarPendiente() {
         <input
           type="text"
           aria-label="Qué quedó pendiente"
-          placeholder="Anotar algo pendiente… (Enter para guardar)"
+          placeholder="Anotar algo pendiente…"
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           maxLength={500}
