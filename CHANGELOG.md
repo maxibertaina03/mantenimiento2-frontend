@@ -4,6 +4,14 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.7.1] — 2026-10-22
+
+### Documentación
+
+- **Manual:** sección nueva «Calendario y pendientes» (las dos pestañas, primero el equipo, el
+  anotador y cómo se da por hecho un pendiente), con sus capturas en `capturar.mjs`.
+- **README:** Hoy, Calendario y Pendientes al día.
+
 ## [1.7.0] — 2026-10-22
 
 ### Agregado
@@ -169,6 +177,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.7.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.7.1
 [1.7.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.7.0
 [1.6.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.6.1
 [1.6.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.6.0

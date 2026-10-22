@@ -79,6 +79,8 @@ const PANTALLAS = [
       await p.waitForSelector('form', { timeout: 10000 });
     },
   },
+  { archivo: 'calendario', ruta: '/calendario', esperar: 'h1' },
+  { archivo: 'pendientes', ruta: '/pendientes', esperar: 'h1' },
   { archivo: 'usuarios', ruta: '/usuarios', esperar: 'table' },
   { archivo: 'permisos', ruta: '/permisos', esperar: 'h1' },
 ];

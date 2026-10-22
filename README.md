@@ -18,9 +18,10 @@ Todo pasa por la API, que vive en otro repo:
 
 | Pantalla | Para qué |
 |---|---|
-| **Hoy** | Las tareas de cada uno y una tarjeta por cada cosa pendiente: equipos parados, services, talleres externos, reponer, mercadería por llegar. |
+| **Hoy** | Las tareas de cada uno (lo de todos los días, junto en un renglón) y una tarjeta por cada cosa pendiente: equipos parados, services, pendientes anotados, talleres externos, reponer, mercadería por llegar. |
 | **Materiales, Historial, Nuevo movimiento** | El pañol: stock, entradas y salidas (también con lector de QR), correcciones auditadas. |
-| **Calendario** | Tareas por persona, rutinas que se repiten; se imprime por semana o por mes. |
+| **Calendario** | Tareas por persona, primero el equipo y abajo la tarea; dos pestañas, «Services y tareas» y «Todos los días»; se imprime por semana o por mes. |
+| **Pendientes** | El anotador de mantenimiento: lo que quedó por hacer (comprar, mandar a reparar), con urgente, a quién le toca y equipo. Se confirma antes de darlo por hecho y, si es sobre una máquina, se registra su orden de trabajo. |
 | **Órdenes de trabajo** | Abrir, cargar materiales, cerrar; mandar a un taller de afuera y registrar la vuelta. |
 | **Órdenes de compra** | Armar, enviar al proveedor, recibir en partes, reclamar lo que falta, PDF. |
 | **Equipos y herramientas, Servicios** | La ficha de cada máquina (fotos, manuales, repuestos, componentes, planes) y lo que vence. |
