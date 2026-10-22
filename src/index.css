@@ -3838,6 +3838,54 @@ tr:hover .nombre-material {
   font-size: var(--texto-sm);
 }
 
+/* Las rutinas de todos los días, juntas en un renglón que se despliega. */
+.grupo-rutinas {
+  border-top: 1px solid var(--borde);
+}
+.grupo-rutinas-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  background: var(--panel-suave);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.grupo-rutinas-cabecera:hover {
+  background: var(--primario-suave);
+}
+.grupo-rutinas-icono {
+  width: 46px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radio);
+  background: var(--info-suave);
+  color: var(--info);
+}
+.grupo-rutinas-icono svg {
+  width: 20px;
+  height: 20px;
+}
+.flecha-grupo {
+  margin-left: auto;
+  color: var(--texto-suave);
+  transition: transform 0.15s;
+}
+.flecha-grupo.abierta {
+  transform: rotate(180deg);
+}
+.lista-rutinas .fila-tarea-hoy {
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+  background: var(--panel-suave);
+}
+
 /* Tareas de Hoy: la fecha en un cuadradito, rojo si ya venció. */
 .lista-tareas {
   list-style: none;

@@ -1,9 +1,10 @@
-import { CalendarDays, Check, Clock } from 'lucide-react';
+import { CalendarDays, Check, ChevronDown, Clock, Repeat } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMisTareas } from '@/api/calendario';
 import { vencio } from '@/lib/diaDeTarea';
 import { P, usePuede } from '@/lib/permisos';
+import { encabezadoTarea, esRutina } from '@/lib/tareas';
 import type { Tarea } from '@/tipos/tarea';
 import { CompletarTarea } from './CompletarTarea';
 import { PostergarTarea } from './PostergarTarea';
@@ -42,6 +43,10 @@ function cuando(iso: string): string {
  *
  * Incluye lo que venció y no se hizo. Esconderlo no lo resuelve: lo deja
  * pendiente y además invisible.
+ *
+ * Las rutinas de todos los días van juntas en un solo renglón que se
+ * despliega. Listadas una por una ocupaban la pantalla, y un service o una
+ * tarea importante quedaba perdido entre ellas.
  */
 export function MisTareasDeHoy() {
   const puede = usePuede();
@@ -51,6 +56,7 @@ export function MisTareasDeHoy() {
   const [completando, setCompletando] = useState<Tarea | null>(null);
   const [postergando, setPostergando] = useState<Tarea | null>(null);
   const [todas, setTodas] = useState(false);
+  const [rutinasAbiertas, setRutinasAbiertas] = useState(false);
   const puedeHacerlas = puede(P.TAREAS_EDITAR);
 
   if (!habilitado) return null;
@@ -60,9 +66,22 @@ export function MisTareasDeHoy() {
   // ocupa lugar para no decir nada.
   if (!isLoading && !error && tareas.length === 0) return null;
 
-  const vencidas = tareas.filter((t) => vencio(t.fecha));
+  const importantes = tareas.filter((t) => !esRutina(t));
+  const rutinas = tareas.filter(esRutina);
+  const rutinasAtrasadas = rutinas.filter((t) => !partesDeFecha(t.fecha).esHoy).length;
+  const vencidas = importantes.filter((t) => vencio(t.fecha));
   // Las primeras, para que la pantalla de entrada no se haga larga; el resto, a pedido.
-  const visibles = todas ? tareas : tareas.slice(0, TAREAS_A_LA_VISTA);
+  const visibles = todas ? importantes : importantes.slice(0, TAREAS_A_LA_VISTA);
+
+  const fila = (t: Tarea) => (
+    <FilaTarea
+      key={t.id}
+      tarea={t}
+      puedeHacerla={puedeHacerlas}
+      onPostergar={() => setPostergando(t)}
+      onCompletar={() => setCompletando(t)}
+    />
+  );
 
   return (
     <section className="panel panel-lista">
@@ -74,7 +93,7 @@ export function MisTareasDeHoy() {
               {vencidas.length === 1 ? '1 vencida' : `${vencidas.length} vencidas`}
             </span>
           ) : (
-            tareas.length > 0 && <span className="badge">{tareas.length}</span>
+            importantes.length > 0 && <span className="badge">{importantes.length}</span>
           )}
         </h2>
         <Link to="/calendario" className="btn btn-fantasma btn-sm">
@@ -86,81 +105,112 @@ export function MisTareasDeHoy() {
       {isLoading && <Cargando />}
       {error && <MensajeError error={error} />}
 
-      <ul className="lista-tareas">
-        {visibles.map((t) => {
-          const vencida = vencio(t.fecha);
-          const { dia, mes, esHoy } = partesDeFecha(t.fecha);
-          return (
-            <li key={t.id} className="fila-tarea-hoy">
-              <span
-                className={`cuadro-fecha ${vencida ? 'vencida' : esHoy ? 'hoy' : ''}`}
-                title={vencida ? 'Ya venció' : undefined}
-              >
-                <b>{esHoy ? 'Hoy' : dia}</b>
-                {!esHoy && <small>{mes}</small>}
-              </span>
-              <span className="tarea-que">
-                <strong>{t.titulo}</strong>
-                <span className="texto-suave texto-chico">
-                  {t.equipoNombre ?? t.descripcion ?? ''}
-                  {t.equipoNombre && t.descripcion ? ` · ${t.descripcion}` : ''}
-                  {t.fechaOriginal && (
-                    <span className="tarea-postergada">
-                      <Clock className="icono" aria-hidden /> postergada, era el{' '}
-                      {cuando(t.fechaOriginal)}
-                    </span>
-                  )}
-                </span>
-                {/* Sin responsable la puede hacer cualquiera: se dice, para que
-                    nadie piense que la ve por error. */}
-                {t.asignadoAId === null && (
-                  <span className="etiqueta etiqueta-sin-responsable">
-                    Sin responsable: la puede hacer cualquiera
-                  </span>
-                )}
-              </span>
-              {puedeHacerlas && (
-                <span className="fila-acciones">
-                  {/* Lo vencido no se posterga: se hace. */}
-                  {!vencida && (
-                    <button
-                      type="button"
-                      className="btn btn-fantasma btn-sm"
-                      onClick={() => setPostergando(t)}
-                    >
-                      Postergar
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className="btn btn-sm"
-                    aria-label="Darla por hecha"
-                    onClick={() => setCompletando(t)}
-                  >
-                    <Check className="icono" aria-hidden />
-                    Hecha
-                  </button>
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      {importantes.length > 0 && <ul className="lista-tareas">{visibles.map(fila)}</ul>}
 
-      {tareas.length > TAREAS_A_LA_VISTA && (
+      {importantes.length > TAREAS_A_LA_VISTA && (
         <div className="panel-pie">
           <button
             type="button"
             className="btn btn-fantasma btn-sm"
             onClick={() => setTodas((v) => !v)}
           >
-            {todas ? 'Ver menos' : `Ver las ${tareas.length}`}
+            {todas ? 'Ver menos' : `Ver las ${importantes.length}`}
           </button>
+        </div>
+      )}
+
+      {rutinas.length > 0 && (
+        <div className="grupo-rutinas">
+          <button
+            type="button"
+            className="grupo-rutinas-cabecera"
+            aria-expanded={rutinasAbiertas}
+            onClick={() => setRutinasAbiertas((v) => !v)}
+          >
+            <span className="grupo-rutinas-icono" aria-hidden>
+              <Repeat />
+            </span>
+            <span className="tarea-que">
+              <strong>Rutinas de todos los días</strong>
+              <span className="texto-suave texto-chico">
+                {rutinas.length === 1 ? '1 pendiente' : `${rutinas.length} pendientes`}
+                {rutinasAtrasadas > 0 &&
+                  ` · ${rutinasAtrasadas === 1 ? '1 es' : `${rutinasAtrasadas} son`} de días anteriores`}
+              </span>
+            </span>
+            <ChevronDown className={`icono flecha-grupo ${rutinasAbiertas ? 'abierta' : ''}`} />
+          </button>
+          {rutinasAbiertas && <ul className="lista-tareas lista-rutinas">{rutinas.map(fila)}</ul>}
         </div>
       )}
 
       {completando && <CompletarTarea tarea={completando} onCerrar={() => setCompletando(null)} />}
       {postergando && <PostergarTarea tarea={postergando} onCerrar={() => setPostergando(null)} />}
     </section>
+  );
+}
+
+/** Un renglón: la fecha en un cuadradito, primero el equipo y abajo la tarea. */
+function FilaTarea({
+  tarea: t,
+  puedeHacerla,
+  onPostergar,
+  onCompletar,
+}: {
+  tarea: Tarea;
+  puedeHacerla: boolean;
+  onPostergar: () => void;
+  onCompletar: () => void;
+}) {
+  const vencida = vencio(t.fecha);
+  const { dia, mes, esHoy } = partesDeFecha(t.fecha);
+  const { principal, secundario } = encabezadoTarea(t);
+  return (
+    <li className="fila-tarea-hoy">
+      <span
+        className={`cuadro-fecha ${vencida ? 'vencida' : esHoy ? 'hoy' : ''}`}
+        title={vencida ? 'Ya venció' : undefined}
+      >
+        <b>{esHoy ? 'Hoy' : dia}</b>
+        {!esHoy && <small>{mes}</small>}
+      </span>
+      <span className="tarea-que">
+        <strong>{principal}</strong>
+        <span className="texto-suave texto-chico">
+          {[secundario, t.descripcion].filter(Boolean).join(' · ')}
+          {t.fechaOriginal && (
+            <span className="tarea-postergada">
+              <Clock className="icono" aria-hidden /> postergada, era el {cuando(t.fechaOriginal)}
+            </span>
+          )}
+        </span>
+        {/* Sin responsable la puede hacer cualquiera: se dice, para que
+            nadie piense que la ve por error. */}
+        {t.asignadoAId === null && (
+          <span className="etiqueta etiqueta-sin-responsable">
+            Sin responsable: la puede hacer cualquiera
+          </span>
+        )}
+      </span>
+      {puedeHacerla && (
+        <span className="fila-acciones">
+          {/* Lo vencido no se posterga: se hace. */}
+          {!vencida && (
+            <button type="button" className="btn btn-fantasma btn-sm" onClick={onPostergar}>
+              Postergar
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn btn-sm"
+            aria-label="Darla por hecha"
+            onClick={onCompletar}
+          >
+            <Check className="icono" aria-hidden />
+            Hecha
+          </button>
+        </span>
+      )}
+    </li>
   );
 }

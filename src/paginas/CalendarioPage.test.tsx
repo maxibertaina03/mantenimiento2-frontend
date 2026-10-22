@@ -314,3 +314,47 @@ describe('CalendarioPage', () => {
     imprimir.mockRestore();
   });
 });
+
+describe('CalendarioPage: equipo primero y rutinas aparte', () => {
+  const service: Tarea = {
+    ...TAREA,
+    id: '22222222-2222-4222-8222-222222222222',
+    titulo: 'Purga',
+    equipoId: 'eq-1',
+    equipoNombre: 'Compresor 1',
+    planId: 'plan-1',
+    planNombre: 'Purga semanal',
+  };
+  const rutina: Tarea = {
+    ...TAREA,
+    id: '33333333-3333-4333-8333-333333333333',
+    titulo: 'Recorrida de tableros',
+    rutinaId: 'rut-1',
+    rutinaTitulo: 'Recorrida de tableros',
+  };
+
+  it('en un service se lee primero el equipo y abajo qué hacerle', async () => {
+    tareas = [service];
+    mostrar();
+    const principal = await screen.findByText('Compresor 1');
+    expect(principal).toHaveClass('calendario-tarea-titulo');
+    expect(screen.getByText('Purga')).toHaveClass('calendario-tarea-que');
+  });
+
+  it('las rutinas van en su pestaña y no se mezclan con lo demás', async () => {
+    const usuario = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    tareas = [service, rutina];
+    mostrar();
+
+    expect(await screen.findByText('Compresor 1')).toBeInTheDocument();
+    expect(screen.queryByText('Recorrida de tableros')).not.toBeInTheDocument();
+
+    await usuario.click(screen.getByRole('tab', { name: /Rutinas diarias/ }));
+    expect(await screen.findByText('Recorrida de tableros')).toBeInTheDocument();
+    expect(screen.queryByText('Compresor 1')).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Rutinas diarias/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+  });
+});
