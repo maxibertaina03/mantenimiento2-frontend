@@ -2,6 +2,7 @@ import {
   ArrowRight,
   CircleAlert,
   Factory,
+  ListTodo,
   Package,
   Send,
   Truck,
@@ -13,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { useCoberturaAlertas, useMaterialesBajoStock } from '@/api/materiales';
 import { useOrdenes } from '@/api/ordenesCompra';
 import { useOrdenesTrabajo } from '@/api/ordenesTrabajo';
+import { usePendientes } from '@/api/pendientes';
 import { usePlanesQueVencen, useResumenEquipos } from '@/api/equipos';
 import { Cargando } from '@/componentes/Estados';
 import { textoVencimiento } from '@/componentes/PlanesEquipo';
@@ -27,7 +29,14 @@ const MAXIMO_EN_LISTA = 6;
 /** Los estados que significan que el equipo no está trabajando. */
 const NO_OPERATIVOS = ['EN_REPARACION', 'FUERA_DE_SERVICIO'] as const;
 
-type Clave = 'parados' | 'servicios' | 'talleres' | 'reponer' | 'llegar' | 'sinEnviar';
+type Clave =
+  | 'parados'
+  | 'servicios'
+  | 'pendientes'
+  | 'talleres'
+  | 'reponer'
+  | 'llegar'
+  | 'sinEnviar';
 
 /** El color de cada tarjeta dice qué tan urgente es, antes de leer el número. */
 type Tono = 'rojo' | 'ambar' | 'azul' | 'verde' | 'gris' | 'violeta';
@@ -35,6 +44,7 @@ type Tono = 'rojo' | 'ambar' | 'azul' | 'verde' | 'gris' | 'violeta';
 const ICONO: Record<Clave, LucideIcon> = {
   parados: CircleAlert,
   servicios: Wrench,
+  pendientes: ListTodo,
   talleres: Factory,
   reponer: Package,
   llegar: Truck,
@@ -90,6 +100,7 @@ export function InicioPage() {
   const veServicios = puede(P.SERVICIOS_VER);
   const veEquipos = puede(P.EQUIPOS_VER);
   const veTrabajos = puede(P.TRABAJOS_VER);
+  const vePendientes = puede(P.PENDIENTES_VER);
   /** La tarjeta abierta. `null`: la primera; 'ninguna': se cerró a propósito. */
   const [abierta, setAbierta] = useState<Clave | 'ninguna' | null>(null);
 
@@ -102,6 +113,8 @@ export function InicioPage() {
   // Equipos es solo para admins: a un operario el pedido le daría 403.
   const servicios = usePlanesQueVencen(7, veServicios);
   const equipos = useResumenEquipos(veEquipos);
+  // El anotador de mantenimiento: lo que quedó por hacer, urgentes primero.
+  const anotados = usePendientes('abiertos', vePendientes);
   // Lo que está en un taller de afuera: hay que acordarse de ir a buscarlo.
   const talleres = useOrdenesTrabajo(
     1,
@@ -119,6 +132,8 @@ export function InicioPage() {
   const vencen = servicios.data ?? [];
   const vencidos = vencen.filter((p) => p.estado === 'VENCIDO').length;
   const afuera = talleres.data?.datos ?? [];
+  const pendientes = anotados.data ?? [];
+  const pendientesUrgentes = pendientes.filter((p) => p.urgente).length;
 
   const parados = NO_OPERATIVOS.map((estado) => ({
     estado,
@@ -165,6 +180,28 @@ export function InicioPage() {
               <Link to={`/equipos/${p.equipoId}`}>{p.equipoNombre}</Link>
               <span className="texto-suave">
                 {p.nombre}, {textoVencimiento(p.diasParaVencer)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+    {
+      clave: 'pendientes' as const,
+      cuantos: pendientes.length,
+      titulo: 'Pendientes',
+      detalle: pendientesUrgentes > 0 ? `${pendientesUrgentes} urgentes` : 'anotados',
+      urgente: pendientesUrgentes > 0,
+      tono: 'azul',
+      ir: { a: '/pendientes', texto: 'Ver todos los pendientes' },
+      contenido: (
+        <ul className="lista-inicio">
+          {pendientes.slice(0, MAXIMO_EN_LISTA).map((p) => (
+            <li key={p.id}>
+              <Link to="/pendientes">{p.texto}</Link>
+              <span className="texto-suave">
+                {p.urgente ? 'urgente · ' : ''}
+                {p.asignadoANombre ?? 'a cualquiera'}
               </span>
             </li>
           ))}

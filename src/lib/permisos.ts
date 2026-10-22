@@ -36,6 +36,8 @@ export const P = {
   TAREAS_VER: 'tareas.ver',
   TAREAS_EDITAR: 'tareas.editar',
   TAREAS_ASIGNAR: 'tareas.asignar',
+  PENDIENTES_VER: 'pendientes.ver',
+  PENDIENTES_EDITAR: 'pendientes.editar',
   EQUIPOS_VER: 'equipos.ver',
   EQUIPOS_EDITAR: 'equipos.editar',
   SERVICIOS_VER: 'servicios.ver',

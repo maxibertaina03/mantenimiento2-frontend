@@ -4332,6 +4332,112 @@ label.casilla .icono {
 .selector-tipo .tipo-salida { --tono: var(--peligro); --tono-suave: var(--peligro-suave); }
 .selector-tipo .tipo-ajuste { --tono: var(--info); --tono-suave: var(--info-suave); }
 
+/* ─────────── Anotador de pendientes ─────────── */
+.anotador {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem 1.1rem;
+}
+.anotador-linea {
+  display: flex;
+  gap: 0.5rem;
+}
+.anotador-linea input {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--texto-md);
+  padding: 0.6rem 0.8rem;
+}
+.anotador-opciones {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.anotador .fila-campos .campo {
+  margin-bottom: 0;
+}
+.lista-pendientes {
+  list-style: none;
+  margin: 0 0 1rem;
+}
+.fila-pendiente {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 0.8rem 1.15rem;
+  border-top: 1px solid var(--borde);
+}
+.fila-pendiente:first-child {
+  border-top: none;
+}
+.fila-pendiente.urgente {
+  box-shadow: inset 3px 0 0 var(--peligro);
+}
+/* El círculo para tildar: grande para el dedo, se llena de verde al pasar. */
+.tilde-pendiente {
+  width: 22px;
+  height: 22px;
+  margin-top: 0.1rem;
+  flex: none;
+  border: 2px solid var(--borde-fuerte);
+  border-radius: 50%;
+  background: var(--panel);
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.tilde-pendiente:hover,
+.tilde-pendiente:focus-visible {
+  outline: none;
+  border-color: var(--exito);
+  background: var(--exito-suave);
+}
+.tilde-pendiente.tildado {
+  border-color: var(--exito);
+  background: var(--exito) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 5 5L20 7'/%3E%3C/svg%3E") no-repeat center / 14px;
+  cursor: default;
+}
+.pendiente-cuerpo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.pendiente-texto {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.fila-pendiente.hecho .pendiente-texto {
+  text-decoration: line-through;
+  color: var(--texto-suave);
+}
+.pendiente-datos {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+}
+.pendiente-dato {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--texto-sm);
+  color: var(--texto-suave);
+}
+.pendiente-dato .icono {
+  margin: 0;
+}
+.hechos-pendientes {
+  margin-top: 0.5rem;
+}
+@media (max-width: 640px) {
+  .anotador-linea .btn {
+    padding-inline: 0.8rem;
+  }
+}
+
 /* ─────────── Barra de abajo del celular ─────────── */
 .barra-inferior {
   display: none;

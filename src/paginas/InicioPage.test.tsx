@@ -68,6 +68,8 @@ function servidor(opciones: {
   enParte?: unknown[];
   equipos?: { total: number; porEstado: Record<string, number>; sinPlan: number };
   cobertura?: { enUso: number; conMinimo: number; sinMinimo: number; bajoStock: number };
+  /** El anotador: si se pasa, el usuario tiene el permiso de verlo. */
+  pendientes?: unknown[];
 }) {
   apiRequestMock.mockImplementation((rutaCruda: string, config?: { query?: Record<string, unknown> }) => {
     const ruta = String(rutaCruda ?? '');
@@ -78,12 +80,13 @@ function servidor(opciones: {
     // muestran los services y los equipos es tenerlos, no ser administrador.
     if (ruta.startsWith('/permisos/mios')) {
       const rol = opciones.rol ?? 'ADMIN';
+      const base =
+        rol === 'ADMIN'
+          ? ['materiales.ver', 'ordenes.ver', 'servicios.ver', 'equipos.ver']
+          : ['materiales.ver', 'ordenes.ver'];
       return Promise.resolve({
         rol,
-        permisos:
-          rol === 'ADMIN'
-            ? ['materiales.ver', 'ordenes.ver', 'servicios.ver', 'equipos.ver']
-            : ['materiales.ver', 'ordenes.ver'],
+        permisos: opciones.pendientes ? [...base, 'pendientes.ver'] : base,
       });
     }
     if (ruta.startsWith('/materiales/bajo-stock')) {
@@ -100,6 +103,7 @@ function servidor(opciones: {
         opciones.equipos ?? { total: 326, porEstado: { OPERATIVO: 326 }, sinPlan: 0 },
       );
     }
+    if (ruta.startsWith('/pendientes')) return Promise.resolve(opciones.pendientes ?? []);
     if (ruta.startsWith('/ordenes-compra')) {
       // El mismo endpoint sirve las listas: se distinguen por el estado.
       const estado = config?.query?.estado;
@@ -377,5 +381,45 @@ describe('InicioPage — de que no puede avisar el sistema', () => {
 
     expect(await screen.findByText(/799 de 911 materiales/)).toBeInTheDocument();
     expect(screen.queryByText(/equipos/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('InicioPage: la tarjeta del anotador de pendientes', () => {
+  const pendiente = (id: string, texto: string, urgente: boolean) => ({
+    id,
+    texto,
+    urgente,
+    asignadoAId: null,
+    asignadoANombre: null,
+    equipoId: null,
+    equipoNombre: null,
+    creadoPorId: 'u1',
+    creadoPorNombre: 'Máximo',
+    creadoEn: '2026-10-20T10:00:00.000Z',
+    hechaEn: null,
+    hechaPorNombre: null,
+  });
+
+  it('cuenta los pendientes y los urgentes, y al tocarla los lista', async () => {
+    servidor({
+      pendientes: [
+        pendiente('p1', 'Comprar rulemanes 6204', true),
+        pendiente('p2', 'Pedir presupuesto de pintura', false),
+      ],
+    });
+    mostrar();
+    const tarjeta = await screen.findByRole('button', { name: /2\s*Pendientes/ });
+    expect(tarjeta).toHaveTextContent('1 urgentes');
+    // La primera tarjeta ya viene abierta; si no lo está, se toca.
+    if (tarjeta.getAttribute('aria-expanded') !== 'true') await userEvent.click(tarjeta);
+    expect(await screen.findByText('Comprar rulemanes 6204')).toBeInTheDocument();
+    expect(screen.getByText('Pedir presupuesto de pintura')).toBeInTheDocument();
+  });
+
+  it('sin el permiso no aparece', async () => {
+    servidor({ bajoStock: [] });
+    mostrar();
+    await screen.findByText('Hoy');
+    expect(screen.queryByRole('button', { name: /Pendientes/ })).not.toBeInTheDocument();
   });
 });

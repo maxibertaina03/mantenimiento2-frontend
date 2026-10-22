@@ -17,6 +17,7 @@ import { MovimientosPage } from './paginas/MovimientosPage';
 import { NuevoMovimientoPage } from './paginas/NuevoMovimientoPage';
 import { OrdenesCompraPage } from './paginas/OrdenesCompraPage';
 import { CalendarioPage } from './paginas/CalendarioPage';
+import { PendientesPage } from './paginas/PendientesPage';
 import { OrdenesTrabajoPage } from './paginas/OrdenesTrabajoPage';
 import { ProveedoresPage } from './paginas/ProveedoresPage';
 import { UsuariosPage } from './paginas/UsuariosPage';
@@ -43,6 +44,14 @@ export function App() {
           element={
             <RutaConPermiso permisos={[P.MATERIALES_VER]}>
               <MaterialDetallePage />
+            </RutaConPermiso>
+          }
+        />
+        <Route
+          path="/pendientes"
+          element={
+            <RutaConPermiso permisos={[P.PENDIENTES_VER]}>
+              <PendientesPage />
             </RutaConPermiso>
           }
         />
