@@ -8,6 +8,17 @@ export function ubicacionDe(r: Pick<RenglonToma, 'estanteriaNombre' | 'fila'>): 
   return r.fila !== null ? `${r.estanteriaNombre} · fila ${r.fila}` : r.estanteriaNombre;
 }
 
+/** Las filas de «Reubicados»: de dónde a dónde, quién y cuándo. */
+export function filasReubicados(reubicaciones: DetalleToma['reubicaciones']): string[][] {
+  return reubicaciones.map((r) => [
+    r.materialNombre,
+    ubicacionDe({ estanteriaNombre: r.desdeEstanteria, fila: r.desdeFila }),
+    ubicacionDe({ estanteriaNombre: r.haciaEstanteria, fila: r.haciaFila }),
+    r.hechaPorNombre ?? '—',
+    formatearFecha(r.hechaEn),
+  ]);
+}
+
 /**
  * La planilla para contar en papel: ordenada como se recorre el pañol, con la
  * columna de lo contado vacía. No dice cuánto figura, a propósito: el que
@@ -31,7 +42,12 @@ const RESULTADO: Record<string, string> = {
 };
 
 /** El informe de lo contado: qué figuraba, qué se contó, la diferencia y qué se hizo. */
-export async function descargarInforme({ toma, renglones, resumen }: DetalleToma): Promise<void> {
+export async function descargarInforme({
+  toma,
+  renglones,
+  resumen,
+  reubicaciones,
+}: DetalleToma): Promise<void> {
   const contados = renglones.filter((r) => r.contado !== null);
   const diferencia = (r: RenglonToma) => (r.contado ?? 0) - (r.stockAlContar ?? 0);
   await exportarPdf({
@@ -58,5 +74,13 @@ export async function descargarInforme({ toma, renglones, resumen }: DetalleToma
       resumen.sinContar > 0
         ? `${resumen.sinContar} materiales sin contar: su stock no se tocó.`
         : 'Se contaron todos los materiales.',
+    // Lo que se cambió de lugar al recorrer el pañol.
+    tablasExtra: [
+      {
+        titulo: `Reubicados durante la toma (${reubicaciones.length})`,
+        encabezados: ['Material', 'Estaba en', 'Quedó en', 'Quién', 'Cuándo'],
+        filas: filasReubicados(reubicaciones),
+      },
+    ],
   });
 }

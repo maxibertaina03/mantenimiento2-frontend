@@ -30,6 +30,8 @@ export interface OpcionesPdf {
   columnaTipo?: number;
   /** Texto chico al pie de la primera línea (leyenda). */
   leyenda?: string;
+  /** Tablas que van después de la principal, cada una con su título. */
+  tablasExtra?: { titulo: string; encabezados: string[]; filas: (string | number)[][] }[];
 }
 
 /** Genera y descarga un PDF con una tabla estilizada. */
@@ -95,6 +97,24 @@ export async function exportarPdf(opc: OpcionesPdf): Promise<void> {
       doc.text(`Página ${pagina}`, anchoPagina - margen, alto - 18, { align: 'right' });
     },
   });
+
+  for (const extra of opc.tablasExtra ?? []) {
+    if (extra.filas.length === 0) continue;
+    const despues = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...GRIS_TEXTO);
+    doc.text(extra.titulo, margen, despues + 28);
+    autoTable(doc, {
+      startY: despues + 36,
+      head: [extra.encabezados],
+      body: extra.filas,
+      margin: { left: margen, right: margen },
+      styles: { fontSize: 8, cellPadding: 4, overflow: 'linebreak', textColor: GRIS_TEXTO },
+      headStyles: { fillColor: AZUL, textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: FILA_ALTERNA },
+    });
+  }
 
   doc.save(opc.nombreArchivo);
 }
