@@ -229,8 +229,10 @@ h3 {
   overflow-x: auto;
   min-width: 0;
 }
-/* El contenido no se estira de más en pantallas muy anchas. */
-.contenido > * {
+/* El contenido no se estira de más en pantallas muy anchas. Los fondos que
+   tapan la pantalla (ventanas, visores de fotos) quedan afuera: con el tope,
+   en un monitor ancho cubrían 1400px y el resto quedaba blanco. */
+.contenido > :not(.modal-fondo, .visor-foto, .visor-logo) {
   max-width: 1400px;
 }
 .cabecera-pagina {
