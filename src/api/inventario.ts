@@ -107,6 +107,29 @@ export function useReubicar(tomaId: string) {
   });
 }
 
+/**
+ * Dar por contados en 0 los que figuran en 0 (la pestaña «En cero»). Vuelve
+ * la toma entera, que reemplaza a la de la caché.
+ */
+export function useContarEnCero(tomaId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (renglonIds: string[]) =>
+      apiRequest<DetalleToma & { contadosEnCero: number; salteados: string[] }>(
+        `/tomas-inventario/${tomaId}/contar-en-cero`,
+        { method: 'POST', body: { renglonIds } },
+      ),
+    onSuccess: ({ toma, renglones, resumen, reubicaciones }) => {
+      qc.setQueryData<DetalleToma>(clavesInventario.detalle(tomaId), {
+        toma,
+        renglones,
+        resumen,
+        reubicaciones,
+      });
+    },
+  });
+}
+
 /** Confirmar ajusta stock: se refresca también el pañol. */
 export function useConfirmarToma(tomaId: string) {
   const qc = useQueryClient();

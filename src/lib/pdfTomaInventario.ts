@@ -25,13 +25,24 @@ export function filasReubicados(reubicaciones: DetalleToma['reubicaciones']): st
  * cuenta escribe lo que ve, no lo que espera ver.
  */
 export async function descargarPlanilla({ toma, renglones }: DetalleToma): Promise<void> {
+  // Lo que figura en 0 va al final, aparte: alcanza con mirar que no haya nada.
+  const enCero = renglones.filter((r) => r.stockActual === 0);
+  const aContar = renglones.filter((r) => r.stockActual !== 0);
+  const fila = (r: RenglonToma) => [ubicacionDe(r), r.materialNombre, r.unidad, ''];
   await exportarPdf({
     titulo: `Toma de inventario ${toma.numero}`,
     subtitulo: `${alcanceDeToma(toma)} · ${renglones.length} materiales · abierta el ${formatearFecha(toma.abiertaEn)}`,
     encabezados: ['Ubicación', 'Material', 'Unidad', 'Contado'],
-    filas: renglones.map((r) => [ubicacionDe(r), r.materialNombre, r.unidad, '']),
+    filas: aContar.map(fila),
     nombreArchivo: `${toma.numero}-planilla.pdf`,
     leyenda: 'Contá lo que hay en el estante y anotalo. Después se carga en el sistema.',
+    tablasExtra: [
+      {
+        titulo: `Figuran en 0 (${enCero.length}): confirmá que no haya nada`,
+        encabezados: ['Ubicación', 'Material', 'Unidad', 'Contado'],
+        filas: enCero.map(fila),
+      },
+    ],
   });
 }
 
