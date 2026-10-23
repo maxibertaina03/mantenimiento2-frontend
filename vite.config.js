@@ -1,7 +1,10 @@
 /// <reference types="vitest" />
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
+/** La versión de package.json, que las pantallas muestran al pie del menú. */
+var version = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf8')).version;
 // https://vitejs.dev/config/
 export default defineConfig(function (_a) {
     var command = _a.command, mode = _a.mode;
@@ -20,6 +23,9 @@ export default defineConfig(function (_a) {
     }
     return {
         plugins: [react()],
+        define: {
+            __VERSION_PANTALLAS__: JSON.stringify(version),
+        },
         resolve: {
             alias: {
                 '@': path.resolve(__dirname, './src'),

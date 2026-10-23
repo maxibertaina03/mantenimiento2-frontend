@@ -25,6 +25,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { BannerServidor } from './Estados';
 import { P, usePuede, type Permiso } from '@/lib/permisos';
 import { PanelLogo } from './PanelLogo';
+import { VersionSistema } from './VersionSistema';
 
 const claseNav = ({ isActive }: { isActive: boolean }) => (isActive ? 'activo' : '');
 
@@ -205,6 +206,7 @@ export function Layout() {
             <UserButton showName />
           </div>
         )}
+        <VersionSistema />
       </aside>
 
       {/* Fondo oscuro para cerrar el menú en celular */}
