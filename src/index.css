@@ -4069,6 +4069,18 @@ tr:hover .nombre-material {
   font-size: inherit;
 }
 .renglon-toma-material .btn-enlace .icono { width: 13px; height: 13px; }
+/* «En cero»: lo que figura en 0 se mira y se confirma junto. */
+.panel-en-cero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 1rem;
+}
+.panel-en-cero p { margin: 0; flex: 1 1 18rem; }
+.aviso-en-cero { margin: 0 0 0.75rem; }
 /* Lo que se cambió de lugar en la toma, al final de la lista. */
 .reubicados-toma { margin-top: 1rem; padding: 0.9rem 1.1rem; }
 .reubicados-toma h2 { font-size: var(--texto-base); margin: 0 0 0.5rem; }

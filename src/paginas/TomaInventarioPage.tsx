@@ -6,6 +6,7 @@ import {
   useCerrarToma,
   useConfirmarToma,
   useContar,
+  useContarEnCero,
   useReubicar,
   useToma,
 } from '@/api/inventario';
@@ -29,7 +30,7 @@ import {
   type ResultadoConfirmacion,
 } from '@/tipos/inventario';
 
-type Vista = 'porContar' | 'contados' | 'diferencias' | 'recontar' | 'todos';
+type Vista = 'porContar' | 'enCero' | 'contados' | 'diferencias' | 'recontar' | 'todos';
 
 const iguales = (a: number, b: number) => Math.round(a * 1000) === Math.round(b * 1000);
 
@@ -45,6 +46,12 @@ function difiere(r: RenglonToma): boolean {
     !iguales(r.contado, r.stockAlContar)
   );
 }
+
+/**
+ * Figura en 0 y no se contó: va a «En cero». Alcanza con mirar que no haya
+ * nada, y se confirman todos juntos.
+ */
+const enCero = (r: RenglonToma) => r.contado === null && !resuelto(r) && iguales(r.stockActual, 0);
 
 const RESULTADO = {
   AJUSTADO: { texto: 'Ajustado', clase: 'badge badge-ok' },
@@ -77,6 +84,9 @@ export function TomaInventarioPage() {
   const [confirmando, setConfirmando] = useState(false);
   const [resultado, setResultado] = useState<ResultadoConfirmacion | null>(null);
   const [reubicando, setReubicando] = useState<RenglonToma | null>(null);
+  const [confirmandoCeros, setConfirmandoCeros] = useState(false);
+  const [salteados, setSalteados] = useState<string[]>([]);
+  const contarEnCero = useContarEnCero(id);
 
   // Escanear la etiqueta de un material (con el cursor fuera de un campo) lo trae.
   useEscaneoSuelto(Boolean(data), (escaneo) => {
@@ -86,7 +96,8 @@ export function TomaInventarioPage() {
   const renglones = data?.renglones ?? [];
   const cuenta = useMemo(
     () => ({
-      porContar: renglones.filter((r) => r.contado === null).length,
+      porContar: renglones.filter((r) => r.contado === null && !enCero(r)).length,
+      enCero: renglones.filter(enCero).length,
       contados: renglones.filter((r) => r.contado !== null).length,
       diferencias: renglones.filter(difiere).length,
       recontar: renglones.filter((r) => r.resultado === 'RECONTAR').length,
@@ -106,14 +117,23 @@ export function TomaInventarioPage() {
   /** Contados que todavía no se confirmaron: lo que «Confirmar» va a procesar. */
   const porConfirmar = renglones.filter((r) => r.contado !== null && !resuelto(r)).length;
   // Abierta: lo que falta contar (o volver a contar); cerrada: todo.
+  // Si ya no queda nada por contar pero sí en cero, se arranca por ahí.
   const vistaActual: Vista =
-    vista ?? (!abierta ? 'todos' : cuenta.recontar > 0 ? 'recontar' : 'porContar');
+    vista ??
+    (!abierta
+      ? 'todos'
+      : cuenta.recontar > 0
+        ? 'recontar'
+        : cuenta.porContar === 0 && cuenta.enCero > 0
+          ? 'enCero'
+          : 'porContar');
 
   const texto = buscar.trim().toLocaleLowerCase('es');
   const visibles = renglones.filter((r) => {
     if (soloMaterial) return r.materialId === soloMaterial;
     if (texto && !r.materialNombre.toLocaleLowerCase('es').includes(texto)) return false;
-    if (vistaActual === 'porContar') return r.contado === null;
+    if (vistaActual === 'porContar') return r.contado === null && !enCero(r);
+    if (vistaActual === 'enCero') return enCero(r);
     if (vistaActual === 'contados') return r.contado !== null;
     if (vistaActual === 'diferencias') return difiere(r);
     if (vistaActual === 'recontar') return r.resultado === 'RECONTAR';
@@ -131,6 +151,9 @@ export function TomaInventarioPage() {
 
   const pestanas: { id: Vista; titulo: string; n: number }[] = [
     { id: 'porContar', titulo: 'Por contar', n: cuenta.porContar },
+    ...(abierta && cuenta.enCero > 0
+      ? [{ id: 'enCero' as const, titulo: 'En cero', n: cuenta.enCero }]
+      : []),
     { id: 'contados', titulo: 'Contados', n: cuenta.contados },
     { id: 'diferencias', titulo: 'Con diferencia', n: cuenta.diferencias },
     ...(cuenta.recontar > 0
@@ -290,6 +313,78 @@ export function TomaInventarioPage() {
             Ver todos
           </button>
         </p>
+      )}
+
+      {!soloMaterial && vistaActual === 'porContar' && abierta && cuenta.enCero > 0 && (
+        <p className="aviso-en-cero texto-chico">
+          Además hay <strong>{cuenta.enCero}</strong> que figuran en 0.{' '}
+          <button type="button" className="btn-enlace" onClick={() => setVista('enCero')}>
+            Ver «En cero»
+          </button>
+        </p>
+      )}
+
+      {!soloMaterial && vistaActual === 'enCero' && cuenta.enCero > 0 && (
+        <div className="panel panel-en-cero">
+          <p>
+            Estos <strong>{cuenta.enCero}</strong> figuran en 0. Mirá el estante: si alguno tiene
+            algo, escribí la cantidad y sale de esta lista. Los demás, confirmalos juntos.
+          </p>
+          {puedeContar && (
+            <button
+              type="button"
+              className="btn btn-primario"
+              disabled={contarEnCero.isPending}
+              onClick={() => setConfirmandoCeros(true)}
+            >
+              <Check className="icono" aria-hidden />
+              Confirmar que están en 0
+            </button>
+          )}
+          {contarEnCero.error && <MensajeError error={contarEnCero.error} />}
+        </div>
+      )}
+
+      {salteados.length > 0 && (
+        <div className="alerta alerta-aviso">
+          No se contaron en 0 porque mientras tanto les entró stock:{' '}
+          <strong>{salteados.join(', ')}</strong>. Contalos en «Por contar».
+        </div>
+      )}
+
+      {confirmandoCeros && (
+        <Modal titulo="¿Están todos en 0?" abierto onCerrar={() => setConfirmandoCeros(false)}>
+          <p>
+            Vas a dar por contados en 0 estos <strong>{cuenta.enCero}</strong> materiales, a tu
+            nombre.
+          </p>
+          <p className="texto-suave">Si alguno tiene algo, cancelá y escribí su cantidad antes.</p>
+          <div className="acciones">
+            <button type="button" className="btn" onClick={() => setConfirmandoCeros(false)}>
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="btn btn-primario"
+              disabled={contarEnCero.isPending}
+              onClick={() =>
+                contarEnCero.mutate(
+                  renglones.filter(enCero).map((r) => r.id),
+                  {
+                    onSuccess: (res) => {
+                      setSalteados(res.salteados);
+                      setConfirmandoCeros(false);
+                    },
+                    onError: () => setConfirmandoCeros(false),
+                  },
+                )
+              }
+            >
+              <Check className="icono" aria-hidden />
+              Sí, están en 0
+            </button>
+          </div>
+        </Modal>
       )}
 
       {visibles.length === 0 && (

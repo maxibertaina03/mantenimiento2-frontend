@@ -102,6 +102,9 @@ beforeEach(() => {
         ]);
       }
       if (ruta.endsWith('/reubicar')) return Promise.resolve(renglon('r1', 'Cable 2,5 mm'));
+      if (ruta.endsWith('/contar-en-cero')) {
+        return Promise.resolve({ ...DETALLE, contadosEnCero: 1, salteados: [] });
+      }
       if (config?.method === 'PATCH') {
         const contado = (config.body as { contado: number }).contado;
         return Promise.resolve(renglon('r1', 'Cable 2,5 mm', { contado, stockAlContar: 10 }));
@@ -181,6 +184,54 @@ describe('TomaInventarioPage', () => {
     expect(screen.getByText(/A · fila 1 → B · fila 4/)).toBeInTheDocument();
     // Sin permiso de contar, no aparece el botón.
     expect(screen.queryByRole('button', { name: /^Reubicar / })).not.toBeInTheDocument();
+  });
+
+  it('lo que figura en 0 va a «En cero», y se confirma junto', async () => {
+    const usuario = userEvent.setup();
+    const conCero: DetalleToma = {
+      ...DETALLE,
+      renglones: [...DETALLE.renglones, renglon('r4', 'Fusible 10 A', { stockActual: 0 })],
+    };
+    apiRequestMock.mockImplementation(
+      (ruta: string, config?: { method?: string; body?: unknown }) => {
+        if (ruta.startsWith('/permisos/mios')) {
+          return Promise.resolve({
+            rol: 'ADMIN',
+            permisos: ['inventario.ver', 'inventario.contar'],
+          });
+        }
+        if (ruta === '/tomas-inventario/toma-1') return Promise.resolve(conCero);
+        if (ruta.endsWith('/contar-en-cero')) {
+          return Promise.resolve({
+            ...conCero,
+            contadosEnCero: 1,
+            salteados: [],
+            body: config?.body,
+          });
+        }
+        return Promise.resolve(null);
+      },
+    );
+    mostrar();
+    // En «Por contar» no está, pero se avisa.
+    expect(await screen.findByText('Cable 2,5 mm')).toBeInTheDocument();
+    expect(screen.queryByText('Fusible 10 A')).not.toBeInTheDocument();
+    expect(screen.getByText(/que figuran en 0/)).toBeInTheDocument();
+
+    await usuario.click(screen.getByRole('tab', { name: /En cero/ }));
+    expect(screen.getByText('Fusible 10 A')).toBeInTheDocument();
+    expect(screen.queryByText('Cable 2,5 mm')).not.toBeInTheDocument();
+
+    await usuario.click(screen.getByRole('button', { name: /Confirmar que están en 0/ }));
+    await usuario.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: /Sí, están en 0/ }),
+    );
+    await waitFor(() =>
+      expect(apiRequestMock).toHaveBeenCalledWith('/tomas-inventario/toma-1/contar-en-cero', {
+        method: 'POST',
+        body: { renglonIds: ['r4'] },
+      }),
+    );
   });
 
   it('lo contado se guarda al salir del campo', async () => {
