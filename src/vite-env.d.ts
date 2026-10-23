@@ -1,5 +1,8 @@
 /// <reference types="vite/client" />
 
+/** La versión de package.json, puesta al compilar (ver vite.config.ts). */
+declare const __VERSION_PANTALLAS__: string;
+
 interface ImportMetaEnv {
   readonly VITE_API_URL: string;
   readonly VITE_CLERK_PUBLISHABLE_KEY?: string;
