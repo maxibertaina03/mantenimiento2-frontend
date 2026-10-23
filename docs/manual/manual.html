@@ -89,35 +89,39 @@
   <p>Cómo usar cada pantalla, para qué sirve y qué conviene cargar.
      Las imágenes son del sistema en funcionamiento, con los datos reales de la planta.</p>
   <div class="pie">
-    Versión de septiembre de 2026 · Vista de administrador<br>
+    Versión de octubre de 2026 · pantallas v1.9.0 · servidor v1.8.0 · Vista de administrador<br>
     mantenimiento2-frontend.vercel.app
   </div>
 </div>
 
 <section>
   <h2><span class="numero">1</span>Qué es esto</h2>
-  <p class="entrada">Un sistema para saber qué hay en el pañol, en qué se usa y en qué estado están
-    las máquinas de la planta.</p>
+  <p class="entrada">Un sistema para saber qué hay en el pañol, qué se compra, en qué estado están
+    las máquinas y qué hay que hacerles.</p>
 
   <p>Antes cada cosa vivía en un lugar distinto: el stock en una planilla, las compras en papel,
-    las máquinas en carpetas de fotos. Acá está todo junto y, sobre todo, relacionado: se puede
-    preguntar en qué se fue un material, qué se le hizo a una bomba, o cuánto se le compró a un
-    proveedor.</p>
+    las máquinas en carpetas de fotos, lo pendiente en un papel en la pared. Acá está todo junto
+    y, sobre todo, relacionado: se puede preguntar en qué se fue un material, qué se le hizo a una
+    bomba o cuánto se le compró a un proveedor.</p>
 
   <h3>Cómo se entra</h3>
   <p>Desde cualquier navegador, en <strong>mantenimiento2-frontend.vercel.app</strong>. Cada
-    persona entra con su cuenta de correo. No hace falta instalar nada, y anda igual en la
-    computadora que en el celular.</p>
+    persona entra con su cuenta. No hace falta instalar nada, y anda igual en la computadora que en
+    el celular: en el celular, las pantallas de todos los días quedan en la barra de abajo (Hoy,
+    Materiales, Cargar, Calendario) y el resto, en «Más».</p>
 
   <h3>Qué ve cada uno</h3>
-  <p>No todos ven lo mismo. El sistema tiene roles, y cada rol tiene permisos que se pueden
-    cambiar desde la pantalla de Permisos.</p>
+  <p>No todos ven lo mismo. Cada persona tiene un rol, y cada rol tiene permisos que se cambian
+    desde la pantalla de Permisos, sin tocar el sistema.</p>
 
   <table>
     <tr><th>Rol</th><th>Qué puede hacer</th></tr>
     <tr><td><strong>Administrador</strong></td><td>Todo: cargar, editar, borrar, y repartir permisos.</td></tr>
-    <tr><td><strong>Mantenimiento</strong></td><td>El pañol de punta a punta: materiales, movimientos, órdenes de compra y proveedores.</td></tr>
-    <tr><td><strong>Gerencia</strong></td><td>Mira todo, no toca nada.</td></tr>
+    <tr><td><strong>Mantenimiento</strong></td><td>El pañol (materiales, movimientos, toma de
+      inventario), las compras y los proveedores, los equipos y sus services, el calendario, las
+      órdenes de trabajo y el anotador de pendientes.</td></tr>
+    <tr><td><strong>Gerencia</strong></td><td>Mira, no toca: el pañol, las compras, los equipos,
+      los services y el calendario.</td></tr>
     <tr><td><strong>Administrativo</strong></td><td>Solo las órdenes de compra, para verlas.</td></tr>
   </table>
 
@@ -126,16 +130,6 @@
     Por eso se ven todas las opciones. Si a vos te falta algún botón de los que aparecen acá,
     es porque tu rol no tiene ese permiso, no porque el sistema esté fallando.
   </div>
-
-  <h3>Lo que hay cargado hoy</h3>
-  <table>
-    <tr><td>Materiales en el pañol</td><td><strong>480</strong></td></tr>
-    <tr><td>Movimientos de stock registrados</td><td><strong>562</strong></td></tr>
-    <tr><td>Máquinas e instalaciones de planta</td><td><strong>326</strong></td></tr>
-    <tr><td>Equipos de informática</td><td><strong>65</strong></td></tr>
-    <tr><td>Proveedores</td><td><strong>1.070</strong></td></tr>
-    <tr><td>Órdenes de compra</td><td><strong>11</strong></td></tr>
-  </table>
 </section>
 
 <section>
@@ -143,30 +137,40 @@
   <p class="entrada">La primera pantalla. Lo que hay que mirar hoy, sin buscarlo.</p>
 
   <figure>
-    <img src="capturas/hoy.png" alt="Pantalla de inicio">
-    <figcaption>Pantalla de inicio: lo que hay que reponer y lo que el sistema todavía no puede avisar.</figcaption>
+    <img src="capturas/hoy.png" alt="Pantalla Hoy">
+    <figcaption>Hoy: una tarjeta por cada cosa que pide atención, y abajo lo que tiene que hacer cada uno.</figcaption>
   </figure>
 
-  <p>Sirve para arrancar el día sin entrar a cada módulo a ver si pasa algo.</p>
+  <h3>Las tarjetas de arriba</h3>
+  <p>Cada una es algo que pide atención, con cuántos son. Tocando una se ve su lista; las que no
+    tienen nada no aparecen.</p>
+  <table>
+    <tr><th>Tarjeta</th><th>Qué junta</th></tr>
+    <tr><td><strong>Equipos parados</strong></td><td>Máquinas fuera de servicio o en reparación.</td></tr>
+    <tr><td><strong>Mantenimiento</strong></td><td>Services que vencen en la semana, y los vencidos que nadie hizo.</td></tr>
+    <tr><td><strong>Pendientes</strong></td><td>Lo anotado en el anotador, con cuántos son urgentes.</td></tr>
+    <tr><td><strong>En talleres externos</strong></td><td>Lo que se mandó a reparar afuera y todavía no volvió.</td></tr>
+    <tr><td><strong>Hay que reponer</strong></td><td>Materiales en su stock mínimo o por debajo.</td></tr>
+    <tr><td><strong>Mercadería por llegar</strong></td><td>Órdenes de compra emitidas que todavía no se recibieron.</td></tr>
+    <tr><td><strong>Órdenes sin enviar</strong></td><td>Órdenes de compra armadas que no se le mandaron al proveedor.</td></tr>
+  </table>
 
-  <h3>Hay que reponer</h3>
-  <p>Los materiales que quedaron en o por debajo de su stock mínimo, con cuánto queda y cuál era
-    el mínimo. Hoy son 56. Tocando cualquiera se abre su ficha.</p>
+  <h3>Lo que hay que hacer</h3>
+  <p>Las tareas del calendario de cada persona, más las que no son de nadie. Cada una con la
+    máquina en grande y abajo qué hay que hacerle; lo vencido, en rojo. Desde ahí mismo se da por
+    <strong>hecha</strong> o se <strong>posterga</strong> a otro día. Lo que se repite todos los
+    días (las purgas, por ejemplo) va junto en un solo renglón, que se abre al tocarlo, para que no
+    tape lo importante.</p>
 
   <h3>De esto el sistema todavía no te puede avisar</h3>
-  <p>Esta segunda caja es la más importante del sistema, y conviene leerla entera. Dice qué le
-    falta cargar al sistema para poder avisar bien. Hoy dice dos cosas:</p>
-  <ul>
-    <li><strong>368 de 480 materiales no tienen stock mínimo cargado.</strong> Pueden llegar a
-      cero sin que aparezcan arriba. El mínimo se carga desde la ficha de cada material.</li>
-    <li><strong>326 de 326 equipos no tienen plan de mantenimiento.</strong> Nunca van a generar
-      un aviso de service. El plan se define desde la ficha de cada equipo.</li>
-  </ul>
+  <p>Al pie, una caja que dice qué le falta cargar al sistema para poder avisar bien: materiales
+    sin stock mínimo (pueden llegar a cero sin aparecer en «Hay que reponer») y equipos sin plan
+    de mantenimiento (nunca van a generar un aviso de service).</p>
 
   <div class="nota">
-    <strong>Esos dos números son la tarea pendiente</strong>
+    <strong>Esa caja es la tarea pendiente</strong>
     El sistema no inventa mínimos ni planes: los tiene que decidir alguien que conozca la planta.
-    A medida que se vayan cargando, esa caja se va achicando y los avisos empiezan a servir.
+    A medida que se cargan, la caja se achica y los avisos empiezan a servir.
   </div>
 </section>
 
@@ -179,38 +183,33 @@
     <figcaption>Listado de materiales, con el stock actual de cada uno.</figcaption>
   </figure>
 
-  <h3>Para qué sirve</h3>
-  <p>Es el corazón del sistema. Cada material tiene su stock, y ese número no se escribe a mano:
-    sale de sumar y restar todos los movimientos. Por eso siempre coincide con lo que se cargó, y
-    si no coincide con la realidad del estante, se hace un ajuste y queda asentado.</p>
+  <p>Cada material tiene su stock, y ese número no se escribe a mano: sale de sumar y restar todos
+    los movimientos. Si no coincide con el estante, se cuenta y se ajusta, y queda asentado.</p>
 
-  <h3>Cómo se usa</h3>
   <ul>
-    <li><strong>Buscar.</strong> Escribís parte del nombre y filtra solo. No hace falta apretar nada.</li>
-    <li><strong>Filtros.</strong> Por categoría, por unidad, por estantería, o los que están bajo el mínimo.</li>
-    <li><strong>+ Nuevo material.</strong> Para dar de alta algo que nunca se compró.</li>
-    <li><strong>Etiquetas QR.</strong> Imprime las etiquetas para pegar en las cajas del pañol.</li>
+    <li><strong>Buscar.</strong> Escribís parte del nombre y filtra solo.</li>
+    <li><strong>Filtros.</strong> Por categoría, por estantería, los que no tienen ubicación o los que están bajo el mínimo.</li>
+    <li><strong>+ Nuevo material.</strong> Para dar de alta algo que nunca se compró. Se le puede cargar
+      una <strong>foto</strong>, que ayuda mucho con los repuestos que se confunden.</li>
+    <li><strong>Etiquetas QR.</strong> Imprime las etiquetas para pegar en las cajas y los estantes.</li>
     <li><strong>CSV y PDF.</strong> Bajan el listado para mandarlo o imprimirlo.</li>
   </ul>
-
-  <div class="nota">
-    <strong>Stock mínimo</strong>
-    Si le cargás un mínimo a un material, el sistema avisa cuando baja de ahí. Es lo que después
-    evita quedarse sin un repuesto en medio de una rotura.
-  </div>
 </section>
 
 <section class="seguida">
   <h3>La ficha de un material</h3>
-  <p>Tocando el ojo de cualquier fila se abre su ficha.</p>
-
   <figure>
     <img src="capturas/material-detalle.png" alt="Ficha de un material">
-    <figcaption>Ficha de un material, con su stock y su historial de movimientos.</figcaption>
+    <figcaption>Ficha de un material: su stock, dónde está, el último inventario y su historial.</figcaption>
   </figure>
 
-  <p>Acá se ve de dónde salió cada unidad: cada entrada, cada salida, con fecha y quién la cargó.
-    Es lo que permite reconstruir una diferencia de inventario en vez de tener que adivinarla.</p>
+  <ul>
+    <li><strong>Dónde está:</strong> estantería y fila.</li>
+    <li><strong>Último inventario:</strong> cuándo se contó por última vez, y quién.</li>
+    <li><strong>Equipos que lo llevan:</strong> las máquinas que lo usan como repuesto.</li>
+    <li><strong>Historial:</strong> cada entrada, salida y ajuste, con fecha y quién lo cargó. Es lo
+      que permite reconstruir una diferencia en vez de adivinarla.</li>
+  </ul>
 </section>
 
 <section>
@@ -223,7 +222,7 @@
   </figure>
 
   <p>Lo mismo que la ficha de un material, pero de todos a la vez. Sirve para responder
-    "qué pasó esta semana" o "quién sacó esto".</p>
+    «qué pasó esta semana» o «quién sacó esto».</p>
 
   <table>
     <tr><th>Tipo</th><th>Qué significa</th></tr>
@@ -234,8 +233,8 @@
 
   <div class="nota">
     <strong>Los movimientos no se borran</strong>
-    Si uno se carga mal, se edita y queda registrado que se editó, quién y cuándo. Borrar el error
-    dejaría el stock bien y la historia mal.
+    Si uno se carga mal, se edita con un motivo, y queda registrado qué se cambió, quién y cuándo.
+    Borrar el error dejaría el stock bien y la historia mal.
   </div>
 </section>
 
@@ -248,13 +247,11 @@
     <figcaption>Formulario para registrar un movimiento de stock.</figcaption>
   </figure>
 
-  <h3>Cómo se carga</h3>
   <ul>
-    <li><strong>Material.</strong> Lo buscás por nombre. También podés escanear el QR de la caja con la pistola.</li>
-    <li><strong>Tipo.</strong> Entrada, salida o ajuste.</li>
-    <li><strong>Motivo.</strong> Por qué. Un ajuste va con motivo ajuste; una salida por trabajo, con motivo trabajo.</li>
-    <li><strong>Cantidad.</strong> Siempre en positivo. El sistema sabe si suma o resta según el tipo.</li>
-    <li><strong>Fecha.</strong> Opcional. Si se deja vacía, es hoy. Sirve para cargar algo de ayer.</li>
+    <li><strong>Material.</strong> Lo buscás por nombre, o escaneás el QR de la caja.</li>
+    <li><strong>Tipo y motivo.</strong> Entrada, salida o ajuste, y por qué.</li>
+    <li><strong>Cantidad.</strong> Siempre en positivo: el sistema sabe si suma o resta.</li>
+    <li><strong>Fecha.</strong> Opcional. Vacía es hoy. Sirve para cargar algo de ayer.</li>
     <li><strong>Notas.</strong> Opcional, pero es lo que dentro de un mes explica el movimiento.</li>
   </ul>
 
@@ -267,7 +264,66 @@
 </section>
 
 <section>
-  <h2><span class="numero">6</span>Órdenes de compra</h2>
+  <h2><span class="numero">6</span>Toma de inventario</h2>
+  <p class="entrada">Contar lo que hay en el pañol y dejar el stock igual a lo contado.</p>
+
+  <figure>
+    <img src="capturas/inventario.png" alt="Listado de tomas de inventario">
+    <figcaption>Las tomas de inventario, con cuánto lleva contado cada una.</figcaption>
+  </figure>
+
+  <h3>Abrir una toma</h3>
+  <p>«Nueva toma» y se elige qué contar: una categoría, una estantería o todo el pañol. Sale un
+    renglón por cada material, ordenados como se recorre el pañol: estantería por estantería.</p>
+
+  <figure>
+    <img src="capturas/toma.png" alt="Una toma de inventario">
+    <figcaption>Una toma abierta: lo que falta contar, agrupado por estantería.</figcaption>
+  </figure>
+
+  <h3>Contar</h3>
+  <ul>
+    <li><strong>Desde el celular,</strong> parado frente al estante: se escribe lo que hay y se
+      guarda solo al pasar al siguiente. También se puede escanear el QR del material.</li>
+    <li><strong>A ciegas.</strong> Mientras se cuenta no se muestra cuánto figura: el que cuenta
+      escribe lo que ve, no lo que espera ver.</li>
+    <li><strong>O en papel,</strong> con la «Planilla para contar», y después se carga.</li>
+    <li>Pueden contar varias personas a la vez, y se puede hacer por tandas: hoy una estantería,
+      mañana otra.</li>
+  </ul>
+
+  <h3>Las pestañas</h3>
+  <table>
+    <tr><th>Pestaña</th><th>Qué tiene</th></tr>
+    <tr><td><strong>Por contar</strong></td><td>Lo que todavía no se contó.</td></tr>
+    <tr><td><strong>En cero</strong></td><td>Lo que figura en 0 y no se contó. Se mira el estante: al
+      que tiene algo se le escribe la cantidad; el resto se confirma junto con «Confirmar que están
+      en 0», que pregunta antes y queda a tu nombre.</td></tr>
+    <tr><td><strong>Contados</strong></td><td>Lo que ya se contó.</td></tr>
+    <tr><td><strong>Con diferencia</strong></td><td>Lo contado que no coincide con lo que figuraba, y por cuánto.
+      Es lo que conviene revisar antes de confirmar.</td></tr>
+    <tr><td><strong>Volver a contar</strong></td><td>Aparece si a un material le cargaron un movimiento
+      después de contarlo: su conteo ya no describe el estante.</td></tr>
+  </table>
+
+  <h3>Reubicar</h3>
+  <p>Si al recorrer el pañol algo está en otro estante, «Reubicar» (al lado de su ubicación) deja
+    elegir la estantería y la fila. El material queda ahí en todo el sistema, y la toma lo anota en
+    «Reubicados en esta toma».</p>
+
+  <h3>Confirmar y cerrar</h3>
+  <ul>
+    <li><strong>Confirmar y ajustar:</strong> cada diferencia se convierte en un ajuste, con la nota
+      de la toma. Antes dice cuántos se ajustan y cuántos no cambian.</li>
+    <li><strong>Cerrar la toma:</strong> la da por terminada. Lo que no se contó queda como estaba.</li>
+    <li><strong>Anular:</strong> solo si todavía no ajustó nada.</li>
+    <li><strong>Informe:</strong> el PDF con lo que figuraba, lo contado, la diferencia, qué se hizo
+      y lo que se reubicó.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="numero">7</span>Órdenes de compra</h2>
   <p class="entrada">Lo que se le pide a un proveedor, desde que se arma hasta que llega.</p>
 
   <figure>
@@ -275,12 +331,12 @@
     <figcaption>Listado de órdenes, con su estado y el comprobante con el que llegaron.</figcaption>
   </figure>
 
-  <h3>El circuito</h3>
   <table>
     <tr><th>Estado</th><th>Qué quiere decir</th></tr>
-    <tr><td><strong>Borrador</strong></td><td>Se está armando. Todavía se puede cambiar todo.</td></tr>
-    <tr><td><strong>Emitida</strong></td><td>Ya se le mandó al proveedor. Se espera la mercadería.</td></tr>
-    <tr><td><strong>Recibida</strong></td><td>Llegó. En ese momento el stock sube solo.</td></tr>
+    <tr><td><strong>Orden creada</strong></td><td>Se está armando. Todavía se puede cambiar todo.</td></tr>
+    <tr><td><strong>Pendiente de recibo</strong></td><td>Ya se emitió. Se espera la mercadería.</td></tr>
+    <tr><td><strong>Recibida en parte</strong></td><td>Llegó una parte; falta el resto.</td></tr>
+    <tr><td><strong>Finalizada</strong></td><td>Llegó todo. El stock ya subió.</td></tr>
     <tr><td><strong>Anulada</strong></td><td>No va más. Queda registrada, no se borra.</td></tr>
   </table>
 </section>
@@ -289,39 +345,43 @@
   <h3>Armar una orden</h3>
   <figure>
     <img src="capturas/orden-compra-nueva.png" alt="Nueva orden de compra">
-    <figcaption>Alta de una orden: proveedor y los materiales que se piden.</figcaption>
+    <figcaption>Alta de una orden: proveedor y lo que se pide.</figcaption>
   </figure>
 
   <ul>
     <li>Elegís el proveedor buscándolo por nombre o CUIT.</li>
-    <li>Agregás los materiales. Podés buscarlos por nombre <strong>o escanear el QR de la caja</strong>,
-      y en ese caso entran uno atrás del otro sin tocar el teclado.</li>
-    <li>Las cantidades y los precios se cargan en la tabla, y podés dejarlos para el final.</li>
-    <li>Al crearla, el sistema ofrece imprimir el PDF y mandárselo al proveedor.</li>
+    <li>Agregás los materiales buscándolos por nombre <strong>o escaneando el QR de la caja</strong>:
+      entran uno atrás del otro sin tocar el teclado. También se pueden pedir equipos y herramientas.</li>
+    <li>Las cantidades y los precios se cargan en la tabla, y los precios pueden quedar para después.</li>
   </ul>
 </section>
 
 <section class="seguida">
-  <h3>Recibir la mercadería</h3>
+  <h3>Mandarla y recibirla</h3>
   <figure>
     <img src="capturas/orden-compra-detalle.png" alt="Detalle de una orden de compra">
-    <figcaption>Detalle de una orden, con sus renglones y el comprobante.</figcaption>
+    <figcaption>Una orden: recibir la mercadería, enviarla, el PDF, los precios y los comprobantes.</figcaption>
   </figure>
 
-  <p>Cuando llega, se marca como recibida y se carga el número de remito o de factura. Ese número
-    es lo único que ata la entrada de stock al papel que quedó en la empresa: sin él, una
-    diferencia de inventario no se puede reconstruir.</p>
-  <p>También se le puede adjuntar la foto o el PDF del comprobante, y queda guardado con la orden.</p>
+  <ul>
+    <li><strong>Enviar:</strong> se le manda al proveedor por correo (con el PDF) o por WhatsApp, y
+      cada envío queda registrado en la pestaña «Envíos».</li>
+    <li><strong>Recibir mercadería:</strong> se carga lo que llegó y el número de remito o factura.
+      Si llegó una parte, se recibe esa parte y la orden queda «recibida en parte» hasta la próxima
+      entrega.</li>
+    <li><strong>Reclamar lo que falta:</strong> arma el mensaje al proveedor con lo que no llegó.</li>
+    <li><strong>Comprobantes:</strong> la foto o el PDF del remito o la factura queda guardado con la orden.</li>
+  </ul>
 
   <div class="nota">
     <strong>Recibir mueve el stock</strong>
-    No hay que cargar los movimientos a mano después. Al dar por recibida la orden, cada material
-    entra al pañol con su cantidad, y en el historial queda la referencia de la orden.
+    No hay que cargar los movimientos a mano después: al recibir, cada material entra al pañol con
+    su cantidad, y en el historial queda la referencia de la orden y del comprobante.
   </div>
 </section>
 
 <section>
-  <h2><span class="numero">7</span>Proveedores</h2>
+  <h2><span class="numero">8</span>Proveedores</h2>
   <p class="entrada">A quién se le compra.</p>
 
   <figure>
@@ -329,32 +389,27 @@
     <figcaption>Padrón de proveedores, con CUIT y datos de contacto.</figcaption>
   </figure>
 
-  <p>Sirve para dos cosas. La primera es tener el contacto a mano. La segunda, más importante, es
-    que cada orden de compra se le carga a un proveedor, y así se puede preguntar cuánto se le
-    compró a cada uno.</p>
-  <p>El correo y el teléfono son los que el sistema usa para mandarle la orden, así que conviene
-    tenerlos cargados.</p>
+  <p>Cada orden de compra se le carga a un proveedor, y así se puede preguntar cuánto se le compró
+    a cada uno. El correo y el teléfono son los que el sistema usa para mandarle las órdenes, así
+    que conviene tenerlos cargados.</p>
 </section>
 
 <section>
-  <h2><span class="numero">8</span>Equipos</h2>
-  <p class="entrada">Las máquinas e instalaciones de la planta.</p>
+  <h2><span class="numero">9</span>Equipos y herramientas</h2>
+  <p class="entrada">Las máquinas e instalaciones de la planta, y las herramientas con ficha propia.</p>
 
   <figure>
     <img src="capturas/equipos.png" alt="Listado de equipos">
-    <figcaption>Listado de equipos, agrupados por tipo y ubicación.</figcaption>
+    <figcaption>Listado de equipos y herramientas, con cuántos hay en cada estado.</figcaption>
   </figure>
 
-  <p>Las 326 máquinas están clasificadas en 24 tipos: silos, bombas, motores, tableros, válvulas,
-    equipos de frío y demás. Eso es lo que permite filtrar y encontrar algo sin recorrer la lista
-    entera.</p>
-
-  <h3>Cómo se usa</h3>
   <ul>
-    <li><strong>Los filtros de arriba</strong> son los de todos los días: tipo, estado y ubicación.</li>
-    <li><strong>Tocando cualquier fila</strong> se abre la ficha de esa máquina.</li>
-    <li><strong>Etiquetas QR.</strong> Imprime las etiquetas para pegar en las máquinas.</li>
-    <li><strong>Cargar fotos.</strong> Sube fotos en lote desde una carpeta.</li>
+    <li><strong>Arriba,</strong> cuántos hay en total, cuántos operativos, en reparación, fuera de
+      servicio y sin plan de mantenimiento.</li>
+    <li><strong>Equipos o herramientas,</strong> y los filtros de tipo, estado y ubicación.</li>
+    <li><strong>Tocando cualquier fila</strong> se abre la ficha.</li>
+    <li><strong>Etiquetas QR, Cargar fotos, Importar carpeta:</strong> para etiquetar las máquinas y
+      cargar fotos o datos en lote.</li>
   </ul>
 </section>
 
@@ -362,50 +417,116 @@
   <h3>La ficha de una máquina</h3>
   <figure>
     <img src="capturas/equipo-ficha.png" alt="Ficha de un equipo">
-    <figcaption>Ficha completa: foto, datos, plan de mantenimiento, historial y órdenes de trabajo.</figcaption>
+    <figcaption>Ficha de un equipo: lo que hay que mirar, los datos, y las pestañas con todo lo demás.</figcaption>
   </figure>
 
-  <p>Es donde está todo lo de esa máquina:</p>
   <ul>
-    <li><strong>La foto y los datos.</strong> Marca, modelo, número de serie, ubicación, garantía.</li>
-    <li><strong>Mantenimiento programado.</strong> Qué se le hace y cada cuánto. El sistema calcula la próxima fecha sola.</li>
-    <li><strong>Historial.</strong> Cada service o reparación que se le hizo, con su costo y las horas que estuvo parada.</li>
-    <li><strong>Órdenes de trabajo.</strong> Los trabajos que la nombraron, con los materiales que se usaron.</li>
+    <li><strong>Resumen:</strong> lo que hay que mirar (services vencidos, repuestos que faltan) y los datos.</li>
+    <li><strong>Repuestos:</strong> los materiales del pañol que lleva, con cuánto hay.</li>
+    <li><strong>Trabajos:</strong> cada orden de trabajo que se le hizo, con su costo y las horas de parada.</li>
+    <li><strong>Planes:</strong> qué se le hace y cada cuánto. La próxima fecha la calcula el sistema.</li>
+    <li><strong>Componentes y Manuales:</strong> sus partes y los PDF de los fabricantes.</li>
+    <li><strong>Registrar trabajo:</strong> anotar algo que ya se le hizo. Sale la orden de trabajo
+      cerrada, con los materiales descontados del pañol.</li>
+    <li><strong>Mandar a servicio externo:</strong> cuando va a un taller de afuera. Abre la orden y
+      baja el PDF que viaja con el equipo; mientras tanto la máquina figura «en reparación».</li>
   </ul>
 
   <div class="nota">
     <strong>El QR de la máquina</strong>
-    Escaneando la etiqueta con el celular se abre esta ficha directamente. Sirve para estar parado
-    frente a la máquina y ver qué se le hizo la última vez.
+    Escaneando la etiqueta con el celular se abre la ficha en modo rápido: lo vencido, lo que falta,
+    y los botones para registrar el trabajo o mandarla afuera, para usar parado frente a la máquina.
   </div>
 </section>
 
 <section>
-  <h2><span class="numero">9</span>Servicios</h2>
+  <h2><span class="numero">10</span>Servicios</h2>
   <p class="entrada">Los mantenimientos programados de toda la planta, juntos.</p>
 
   <figure>
     <img src="capturas/servicios.png" alt="Pantalla de servicios">
-    <figcaption>Servicios que vencen. Está vacía porque todavía no hay planes cargados.</figcaption>
+    <figcaption>Los services que vencen, de lo más urgente a lo menos.</figcaption>
   </figure>
 
-  <p>Cada plan que se carga en la ficha de una máquina aparece acá. En vez de entrar equipo por
-    equipo a ver si toca el service, se mira esta pantalla.</p>
-  <p>Arriba se elige el plazo: esta semana, quince días, un mes o tres meses. No aparecen los
-    equipos fuera de servicio ni los dados de baja, porque no tiene sentido pedir un service para
-    algo desafectado.</p>
-  <p>Al registrar el trabajo en la ficha de la máquina, la próxima fecha se adelanta sola.</p>
-
-  <div class="nota">
-    <strong>Hoy está vacía, y tiene explicación</strong>
-    Ninguno de los 326 equipos tiene plan definido todavía. Hasta que se carguen, esta pantalla
-    no va a mostrar nada. También sale todos los días un correo con lo que vence en la semana y
-    lo que ya venció, y no se repite mientras no haya nada nuevo.
-  </div>
+  <p>Cada plan cargado en la ficha de una máquina aparece acá. Arriba se elige el plazo: esta
+    semana, quince días, un mes o tres meses. Incluye lo vencido, porque si nadie lo hizo es
+    justamente lo que más urge.</p>
+  <ul>
+    <li><strong>Dar por hecho:</strong> registra el trabajo y el plan corre a la próxima fecha.</li>
+    <li><strong>Postergar:</strong> a otro día, con el motivo. El plan se mueve con el service.</li>
+  </ul>
+  <p>Además, todos los días sale un correo con lo que vence en la semana y lo que ya venció.</p>
 </section>
 
 <section>
-  <h2><span class="numero">10</span>Equipos IT</h2>
+  <h2><span class="numero">11</span>Órdenes de trabajo</h2>
+  <p class="entrada">Qué se le hizo a cada máquina, con qué materiales y cuánto costó.</p>
+
+  <figure>
+    <img src="capturas/ordenes-trabajo.png" alt="Listado de órdenes de trabajo">
+    <figcaption>Las órdenes de trabajo, abiertas y cerradas.</figcaption>
+  </figure>
+
+  <ul>
+    <li><strong>Se abre</strong> contando qué pasó, de qué tipo es (preventivo, correctivo o mejora) y sobre qué máquina.</li>
+    <li><strong>Se le asigna a alguien,</strong> que es quien la termina.</li>
+    <li><strong>Se le cargan los materiales</strong> a medida que se usan: salen del pañol de verdad.</li>
+    <li><strong>Se cierra contando qué se hizo.</strong> Ese texto es lo que va a leer el próximo que
+      agarre la máquina.</li>
+    <li><strong>En talleres externos:</strong> el filtro de lo que está afuera. Cuando vuelve, «Volvió
+      del taller» la cierra con lo que hizo el taller, su remito o factura y lo que cobró.</li>
+  </ul>
+  <p>Muchas órdenes nacen solas: al registrar un trabajo en la ficha de una máquina, al dar por
+    hecho un service o una tarea del calendario, o al cerrar un pendiente sobre un equipo.</p>
+</section>
+
+<section>
+  <h2><span class="numero">12</span>Calendario</h2>
+  <p class="entrada">Qué hay que hacer cada día, y quién.</p>
+
+  <figure>
+    <img src="capturas/calendario.png" alt="Calendario del mes">
+    <figcaption>El calendario: cada tarea con la máquina arriba y lo que hay que hacerle abajo, con el color de su responsable.</figcaption>
+  </figure>
+
+  <ul>
+    <li><strong>Primero la máquina.</strong> Cada tarea muestra en grande el equipo («Compresor 1»)
+      y abajo qué hay que hacerle («Purga de agua») y quién.</li>
+    <li><strong>Dos pestañas.</strong> «Services y tareas» tiene los services que vencen y lo que se
+      programó a mano. «Todos los días» tiene lo que se repite cada día, como las purgas.</li>
+    <li><strong>Sin repartir.</strong> Las tareas sin responsable se marcan aparte, con un aviso:
+      mientras no tengan a alguien, todos suponen que las hace otro.</li>
+    <li><strong>Nueva tarea, Administrar rutinas, Imprimir:</strong> programar algo a mano, armar lo
+      que se repite, e imprimir la semana o el mes.</li>
+    <li>Cada tarea se da por <strong>hecha</strong> o se <strong>posterga</strong>, igual que en Hoy.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="numero">13</span>Pendientes</h2>
+  <p class="entrada">El papel de la pared, pero que lo ve todo mantenimiento.</p>
+
+  <figure>
+    <img src="capturas/pendientes.png" alt="Anotador de pendientes">
+    <figcaption>El anotador: lo que quedó por hacer, los urgentes primero.</figcaption>
+  </figure>
+
+  <p>Para lo que no es una tarea del calendario: «comprar rulemanes 6204», «mandar a revisar la
+    válvula». Se escribe y Enter. Si hace falta, se marca urgente, a quién le toca y sobre qué
+    equipo. Arriba, los filtros Todos, Míos y Urgentes.</p>
+  <ul>
+    <li><strong>Darlo por hecho se confirma.</strong> Tocar el círculo pregunta «¿Ya está hecho?»,
+      para que un toque sin querer no lo saque de la lista.</li>
+    <li><strong>Si le toca a alguien, lo da por hecho esa persona</strong> (o un administrador).</li>
+    <li><strong>Si es sobre una máquina,</strong> «Registrar el trabajo» abre el formulario de la
+      ficha del equipo y queda la orden de trabajo en su historial. Si no fue un trabajo sobre la
+      máquina (comprar un repuesto, por ejemplo), se cierra sin orden.</li>
+    <li>Lo hecho se ve abajo, en «Hechos en los últimos 60 días», y se puede reabrir.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="numero">14</span>Equipos IT</h2>
   <p class="entrada">Las computadoras, impresoras y teléfonos de la empresa.</p>
 
   <figure>
@@ -413,14 +534,13 @@
     <figcaption>Equipos de informática, con a quién está asignado cada uno.</figcaption>
   </figure>
 
-  <p>Está separado de Equipos a propósito: comparten la mitad de los campos pero no la otra mitad
-    ni quién los usa. Acá lo importante es a quién se le entregó cada cosa y desde cuándo.</p>
-  <p>Cuando un equipo cambia de manos, se registra la nueva asignación y la anterior queda en el
-    historial.</p>
+  <p>Está separado de Equipos a propósito: lo importante acá es a quién se le entregó cada cosa y
+    desde cuándo. Cuando un equipo cambia de manos, se registra la nueva asignación y la anterior
+    queda en el historial. También tiene sus etiquetas QR y se puede importar desde una planilla.</p>
 </section>
 
 <section>
-  <h2><span class="numero">11</span>Contraseñas</h2>
+  <h2><span class="numero">15</span>Contraseñas</h2>
   <p class="entrada">El baúl de credenciales de la empresa.</p>
 
   <figure>
@@ -430,102 +550,15 @@
 
   <p>Guarda las contraseñas de los sistemas, los correos y los servicios. Están cifradas: ni
     entrando a la base de datos se pueden leer.</p>
-
   <ul>
-    <li><strong>Ver el valor</strong> de una contraseña queda registrado: quién la miró y cuándo.</li>
-    <li><strong>Rotar.</strong> Cambiar una contraseña deja asentado el cambio, sin guardar la vieja.</li>
-    <li><strong>Vencimiento.</strong> Se puede marcar cada cuánto hay que cambiarla.</li>
+    <li><strong>Ver el valor</strong> queda registrado: quién la miró y cuándo.</li>
+    <li><strong>Rotar</strong> deja asentado el cambio, sin guardar la vieja.</li>
+    <li><strong>Vencimiento:</strong> cada cuánto hay que cambiarla.</li>
   </ul>
-
-  <div class="nota">
-    <strong>Solo el administrador</strong>
-    Este módulo no lo ve nadie más, y cada vez que se revela una contraseña queda el registro.
-  </div>
 </section>
 
 <section>
-  <h2><span class="numero">12</span>Órdenes de trabajo</h2>
-  <p class="entrada">Para qué se usó lo que salió del pañol.</p>
-
-  <figure>
-    <img src="capturas/ordenes-trabajo.png" alt="Listado de órdenes de trabajo">
-    <figcaption>Listado de órdenes de trabajo. Es un módulo nuevo y todavía no tiene órdenes cargadas.</figcaption>
-  </figure>
-
-  <p>Antes, una salida por trabajo era una fila de stock con una nota suelta, y ahí terminaba el
-    rastro. Nadie podía contestar cuánto costó en repuestos arreglar una bomba, ni en qué se
-    fueron diez metros de manguera. La orden de trabajo es donde esas dos preguntas se cruzan.</p>
-
-  <h3>Cómo funciona</h3>
-  <figure>
-    <img src="capturas/orden-trabajo-nueva.png" alt="Nueva orden de trabajo">
-    <figcaption>Alta de una orden: qué pasó, de qué tipo es, a quién se le asigna y sobre qué máquina.</figcaption>
-  </figure>
-
-  <ul>
-    <li><strong>Se abre la orden</strong> contando qué pasó, cuando arranca el trabajo.</li>
-    <li><strong>Se le asigna a alguien.</strong> Si no elegís a nadie, queda para vos. Solo esa
-      persona puede terminarla; los demás la ven pero no la tocan.</li>
-    <li><strong>Se le cargan los materiales</strong> a medida que se usan. Cada carga saca el
-      material del pañol de verdad, no anota un número al costado.</li>
-    <li><strong>Se cierra contando qué se hizo.</strong> Ese texto es obligatorio: es lo que va a
-      leer el próximo que agarre la máquina.</li>
-  </ul>
-
-  <div class="nota">
-    <strong>Hoy es solo del administrador</strong>
-    El módulo se apoya en los equipos, y mantenimiento todavía no tiene ese módulo. Cuando se les
-    abra Equipos, las órdenes de trabajo pasan a ser de ellos, que son quienes hacen el trabajo.
-  </div>
-</section>
-
-<section>
-  <h2><span class="numero">13</span>Calendario y pendientes</h2>
-  <p class="entrada">Lo que hay que hacer, con fecha o sin ella.</p>
-
-  <figure>
-    <img src="capturas/calendario.png" alt="Calendario del mes">
-    <figcaption>El calendario: cada tarea con el equipo arriba y lo que hay que hacerle abajo.</figcaption>
-  </figure>
-
-  <h3>El calendario</h3>
-  <ul>
-    <li><strong>Primero el equipo.</strong> Cada tarea muestra en grande la máquina («Compresor 1»)
-      y abajo qué hay que hacerle («Purga de agua») y quién.</li>
-    <li><strong>Dos pestañas.</strong> «Services y tareas» tiene los services que vencen y lo que se
-      programó a mano. «Todos los días» tiene lo que se repite cada día, como las purgas, para que
-      no tape lo importante.</li>
-    <li><strong>En Hoy pasa lo mismo:</strong> lo de todos los días va junto en un solo renglón,
-      que se abre al tocarlo.</li>
-  </ul>
-
-  <h3>Pendientes</h3>
-  <figure>
-    <img src="capturas/pendientes.png" alt="Anotador de pendientes">
-    <figcaption>El anotador: lo que quedó por hacer, los urgentes primero.</figcaption>
-  </figure>
-  <p>Es el papel de la pared, pero que lo ve todo mantenimiento: «comprar rulemanes 6204»,
-    «mandar a revisar la válvula». Se escribe y Enter. Si hace falta, se marca urgente, a quién le
-    toca y sobre qué equipo.</p>
-  <ul>
-    <li><strong>Darlo por hecho se confirma.</strong> Tocar el círculo pregunta «¿Ya está hecho?»,
-      para que un toque sin querer no lo saque de la lista.</li>
-    <li><strong>Si le toca a alguien, lo da por hecho esa persona</strong> (o un administrador).</li>
-    <li><strong>Si es sobre una máquina,</strong> «Registrar el trabajo» abre el mismo formulario
-      de la ficha del equipo y queda la orden de trabajo realizada en su historial. Si no fue un
-      trabajo sobre la máquina (por ejemplo, comprar un repuesto), se cierra sin orden.</li>
-    <li>Lo hecho se ve abajo, en «Hechos en los últimos 60 días», y se puede reabrir.</li>
-  </ul>
-
-  <div class="nota">
-    <strong>Hace falta el permiso</strong>
-    Pendientes aparece para quien tiene «pendientes.ver» (y «pendientes.editar» para anotar y
-    tildar). Se reparten desde Permisos.
-  </div>
-</section>
-
-<section>
-  <h2><span class="numero">14</span>Usuarios y permisos</h2>
+  <h2><span class="numero">16</span>Usuarios y permisos</h2>
   <p class="entrada">Quién entra al sistema y qué puede hacer.</p>
 
   <figure>
@@ -533,73 +566,72 @@
     <figcaption>Usuarios del sistema, con su rol.</figcaption>
   </figure>
 
-  <p>Acá se da de alta a las personas y se les asigna el rol. El nombre que se le ponga es el que
-    va a aparecer en las órdenes de compra y en los movimientos que esa persona cargue.</p>
+  <p>Acá se le asigna el rol a cada persona. El nombre es el que aparece en las órdenes, los
+    movimientos y las tareas que esa persona cargue.</p>
 
   <figure>
     <img src="capturas/permisos.png" alt="Pantalla de permisos">
-    <figcaption>Permisos por rol. Cada casilla se puede prender y apagar.</figcaption>
+    <figcaption>Permisos por rol. Cada casilla se prende y se apaga.</figcaption>
   </figure>
 
   <p>El rol no decide por sí mismo lo que se puede hacer: decide qué permisos tiene, y esos se
-    editan acá, uno por uno. Si mañana querés que mantenimiento pueda ver los equipos, se prende
-    esa casilla y listo, sin tocar el sistema.</p>
+    editan acá, uno por uno, sin tocar el sistema.</p>
 
   <div class="nota">
-    <strong>El administrador siempre tiene todo</strong>
-    Es lo que evita que una función nueva quede sin nadie que pueda usarla ni repartirla. Los
-    demás roles se configuran acá, y lo que se configura manda.
+    <strong>Las funciones nuevas le llegan solo al administrador</strong>
+    Cuando el sistema suma algo (como el anotador de pendientes), su permiso lo tiene de entrada
+    solo el administrador, que después decide a qué roles dárselo desde esta pantalla.
   </div>
 </section>
 
 <section>
-  <h2><span class="numero">15</span>La pistola de códigos</h2>
+  <h2><span class="numero">17</span>La pistola de códigos y el QR</h2>
   <p class="entrada">Escanear en vez de buscar.</p>
 
-  <p>Cada caja del pañol y cada máquina tienen una etiqueta con código QR. La pistola no es una
-    cámara: para la computadora es un teclado, y escanear es como si alguien tecleara la dirección
-    muy rápido.</p>
+  <p>Cada caja del pañol, cada estante y cada máquina tienen una etiqueta con código QR. La
+    pistola no es una cámara: para la computadora es un teclado, y escanear es como si alguien
+    tecleara la dirección muy rápido.</p>
 
-  <h3>Dónde sirve</h3>
   <ul>
-    <li><strong>Armando una orden de compra.</strong> Escaneás las etiquetas de corrido y los
-      materiales entran uno atrás del otro. Después te sentás y cargás las cantidades.</li>
-    <li><strong>Cargando un movimiento.</strong> El material queda elegido sin buscarlo. Es la
-      pantalla que se usa parado frente al estante.</li>
-    <li><strong>En una orden de trabajo.</strong> Igual que arriba, con el repuesto en la mano.</li>
-    <li><strong>Con el celular.</strong> La cámara de cualquier teléfono abre la ficha del
-      material o de la máquina.</li>
+    <li><strong>Armando una orden de compra:</strong> los materiales entran uno atrás del otro.</li>
+    <li><strong>Cargando un movimiento:</strong> el material queda elegido sin buscarlo.</li>
+    <li><strong>En una toma de inventario:</strong> trae directo el renglón de ese material.</li>
+    <li><strong>En una orden de trabajo:</strong> con el repuesto en la mano.</li>
+    <li><strong>Con el celular:</strong> la cámara de cualquier teléfono abre la ficha del material
+      o de la máquina.</li>
   </ul>
 
   <div class="nota">
     <strong>Si la pistola escribe raro</strong>
     Si al escanear aparecen símbolos cambiados, es que su teclado quedó en inglés y Windows está
     en español. Se arregla escaneando el código de configuración del manual de la pistola, el que
-    dice Español o Latinoamérica. El sistema entiende las dos formas igual, pero conviene
-    arreglarla para que el QR también abra la ficha.
+    dice Español o Latinoamérica.
   </div>
 </section>
 
 <section>
-  <h2><span class="numero">16</span>Cosas que conviene saber</h2>
+  <h2><span class="numero">18</span>Cosas que conviene saber</h2>
 
   <h3>La primera pantalla del día tarda</h3>
   <p>El servidor se duerme cuando nadie lo usa. La primera vez que alguien entra después de un
-    rato largo puede tardar hasta medio minuto en abrir. Las siguientes van normales. No es un
-    problema del sistema.</p>
+    rato largo puede tardar hasta un minuto, y el sistema avisa «Iniciando el servidor». Las
+    siguientes van normales.</p>
 
   <h3>Nada se borra solo</h3>
   <p>Los movimientos, las órdenes y el historial quedan. Cuando algo se carga mal se corrige, y la
-    corrección también queda registrada. Es a propósito: un número que se puede arreglar sin dejar
-    rastro es un número en el que no se puede confiar.</p>
+    corrección también queda registrada. Un número que se puede arreglar sin dejar rastro es un
+    número en el que no se puede confiar.</p>
 
   <h3>El stock sale de los movimientos</h3>
-  <p>Ningún stock se escribe a mano. Si el número no coincide con el estante, la forma correcta de
-    arreglarlo es un ajuste, que deja dicho que se contó y cuándo.</p>
+  <p>Ningún stock se escribe a mano. Si el número no coincide con el estante, se arregla con un
+    ajuste o una toma de inventario, que dejan dicho que se contó y cuándo.</p>
+
+  <h3>Todas las noches se guarda una copia</h3>
+  <p>Una copia cifrada de toda la información se guarda cada noche fuera del sistema.</p>
 
   <h3>Si algo no aparece</h3>
   <p>Antes de pensar que se rompió, fijate si es un tema de permisos. Los botones que tu rol no
-    puede usar directamente no se muestran, para que nadie apriete algo que le va a rebotar.</p>
+    puede usar no se muestran, para que nadie apriete algo que le va a rebotar.</p>
 </section>
 
 </body>
