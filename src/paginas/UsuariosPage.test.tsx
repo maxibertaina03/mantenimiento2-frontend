@@ -80,7 +80,7 @@ beforeEach(() => {
 });
 
 describe('UsuariosPage', () => {
-  it('REGRESION: el desplegable ofrece los CUATRO roles', async () => {
+  it('REGRESION: el desplegable ofrece los CINCO roles', async () => {
     // Ofrecía dos. Elegir uno que el servidor no conoce devolvía
     // "rol must be one of the following values", que no le dice nada a nadie.
     servidor();
@@ -88,7 +88,13 @@ describe('UsuariosPage', () => {
 
     const desplegable = await screen.findByLabelText('Rol de facundo');
     const opciones = [...desplegable.querySelectorAll('option')].map((o) => o.textContent);
-    expect(opciones).toEqual(['Administrador', 'Gerencia', 'Administrativo', 'Mantenimiento']);
+    expect(opciones).toEqual([
+      'Administrador',
+      'Gerencia',
+      'Administrativo',
+      'Mantenimiento',
+      'Encargado de planta',
+    ]);
   });
 
   it('cada desplegable arranca en el rol que la persona tiene', async () => {
