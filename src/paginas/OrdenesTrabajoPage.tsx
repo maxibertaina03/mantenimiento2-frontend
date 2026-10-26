@@ -6,10 +6,17 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useUsuarioActual } from '@/api/usuarios';
 import { useOrdenesTrabajo } from '@/api/ordenesTrabajo';
+import { useSectores } from '@/api/sectores';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { formatearFecha } from '@/lib/formato';
 import { P, usePuede } from '@/lib/permisos';
-import { ESTADOS_ORDEN_TRABAJO, ETIQUETA_ESTADO_TRABAJO, ETIQUETA_TIPO_TRABAJO, TIPOS_TRABAJO } from '@/tipos/ordenTrabajo';
+import {
+  ESTADOS_ORDEN_TRABAJO,
+  ETIQUETA_ESTADO_TRABAJO,
+  ETIQUETA_TIPO_TRABAJO,
+  TIPOS_TRABAJO,
+  sobreQue,
+} from '@/tipos/ordenTrabajo';
 import type { EstadoOrdenTrabajo, TipoTrabajo } from '@/tipos/ordenTrabajo';
 import { CLASE_ESTADO } from '@/componentes/ordenesTrabajo/estado';
 import { ModalNuevaOrden } from '@/componentes/ordenesTrabajo/ModalNuevaOrden';
@@ -30,6 +37,10 @@ export function OrdenesTrabajoPage() {
   const [busqueda, setBusqueda] = useState('');
   const [estado, setEstado] = useState<EstadoOrdenTrabajo | ''>('');
   const [tipo, setTipo] = useState<TipoTrabajo | ''>('');
+  // Los trabajos cargados sobre un sector (los de sus máquinas están en la
+  // pantalla del sector, aparte).
+  const [sector, setSector] = useState('');
+  const { data: sectores } = useSectores();
   const [modalAlta, setModalAlta] = useState(false);
   const [ordenAbierta, setOrdenAbierta] = useState<string | null>(null);
   const [soloMias, setSoloMias] = useState(false);
@@ -50,6 +61,7 @@ export function OrdenesTrabajoPage() {
     buscar: busqueda,
     estado: afuera ? 'ABIERTA' : estado || undefined,
     tipo: tipo || undefined,
+    ubicacionId: sector || undefined,
     asignadoAId: soloMias ? (yo?.id ?? undefined) : undefined,
     ejecutor: afuera ? 'EXTERNO' : undefined,
   });
@@ -134,6 +146,23 @@ export function OrdenesTrabajoPage() {
             </option>
           ))}
         </select>
+        {sectores && sectores.length > 0 && (
+          <select
+            value={sector}
+            onChange={(e) => {
+              setSector(e.target.value);
+              setPagina(1);
+            }}
+            aria-label="Filtrar por sector"
+          >
+            <option value="">Todos los sectores</option>
+            {sectores.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nombre}
+              </option>
+            ))}
+          </select>
+        )}
         {/* Lo primero que quiere ver cualquiera al entrar: qué le toca a él. */}
         {yo && (
           <label className="casilla">
@@ -202,7 +231,7 @@ export function OrdenesTrabajoPage() {
                       <span className="texto-suave texto-chico"> (vos)</span>
                     )}
                   </td>
-                  <td data-etiqueta="Equipo">{o.equipoNombre ?? '—'}</td>
+                  <td data-etiqueta="Sobre qué">{sobreQue(o) ?? '—'}</td>
                   <td data-etiqueta="Materiales">
                     {o.materiales.length === 0 ? '—' : `${o.materiales.length}`}
                   </td>

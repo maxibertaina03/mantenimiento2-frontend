@@ -84,6 +84,8 @@ const orden: OrdenTrabajo = {
   equipoItId: null,
   equipoItNombre: null,
   equipoItCodigo: null,
+  ubicacionId: null,
+  ubicacionNombre: null,
   fecha: '2026-10-01T10:00:00.000Z',
   ejecutor: 'EXTERNO',
   proveedorId: 'prov-1',

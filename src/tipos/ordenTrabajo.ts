@@ -59,6 +59,9 @@ export interface OrdenTrabajo {
   equipoItId: string | null;
   equipoItNombre: string | null;
   equipoItCodigo: string | null;
+  /** El sector, si el trabajo es de un lugar y no de una máquina. Uno solo de los tres. */
+  ubicacionId: string | null;
+  ubicacionNombre: string | null;
   /** Cuándo se hizo el trabajo, que no es cuándo se abrió la orden. */
   fecha: string;
   ejecutor: Ejecutor;
@@ -96,6 +99,8 @@ export interface CrearOrdenTrabajoInput {
   equipoId?: string | null;
   /** O un equipo de informática. Uno de los dos, nunca los dos. */
   equipoItId?: string | null;
+  /** O un sector de la planta. Una sola de las tres cosas. */
+  ubicacionId?: string | null;
   /** Si no viene, la orden queda para quien la abre. */
   asignadoAId?: string | null;
 
@@ -151,7 +156,24 @@ export interface FiltrosOrdenesTrabajo {
   /** Con `equipoId`: suma lo de sus componentes, mientras estuvieron montados ahí. */
   incluirComponentes?: boolean;
   equipoItId?: string;
+  /** Los trabajos del sector... */
+  ubicacionId?: string;
+  /** ...o, con esto, los de las máquinas que están en él. */
+  deSusMaquinas?: boolean;
   asignadoAId?: string;
   /** EXTERNO: las de talleres de afuera. */
   ejecutor?: Ejecutor;
+}
+
+/**
+ * Sobre qué es una orden, en palabras: la máquina, el equipo de informática o
+ * el sector. `null` si no dice.
+ */
+export function sobreQue(
+  o: Pick<OrdenTrabajo, 'equipoNombre' | 'equipoItNombre' | 'ubicacionNombre'>,
+): string | null {
+  if (o.equipoNombre) return o.equipoNombre;
+  if (o.equipoItNombre) return o.equipoItNombre;
+  if (o.ubicacionNombre) return `Sector ${o.ubicacionNombre}`;
+  return null;
 }

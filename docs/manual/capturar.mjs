@@ -76,6 +76,15 @@ const PANTALLAS = [
   },
   { archivo: 'servicios', ruta: '/servicios' },
   { archivo: 'ordenes-trabajo', ruta: '/ordenes-trabajo' },
+  { archivo: 'sectores', ruta: '/sectores' },
+  {
+    archivo: 'sector',
+    ruta: '/sectores',
+    // El de más actividad: el primero de la lista puede no tener ningún trabajo.
+    abrir: `[...document.querySelectorAll('a[href^="/sectores/"]')]
+      .map((a) => [a, [...a.querySelectorAll('b')].reduce((t, b) => t + (parseFloat(b.textContent) || 0), 0)])
+      .sort((x, y) => y[1] - x[1])[0]?.[0].click()`,
+  },
   { archivo: 'calendario', ruta: '/calendario' },
   { archivo: 'pendientes', ruta: '/pendientes' },
   { archivo: 'equipos-it', ruta: '/equipos-it' },

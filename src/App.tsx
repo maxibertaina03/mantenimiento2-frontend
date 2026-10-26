@@ -18,6 +18,8 @@ import { NuevoMovimientoPage } from './paginas/NuevoMovimientoPage';
 import { OrdenesCompraPage } from './paginas/OrdenesCompraPage';
 import { CalendarioPage } from './paginas/CalendarioPage';
 import { PendientesPage } from './paginas/PendientesPage';
+import { SectorPage } from './paginas/SectorPage';
+import { SectoresPage } from './paginas/SectoresPage';
 import { OrdenesTrabajoPage } from './paginas/OrdenesTrabajoPage';
 import { ProveedoresPage } from './paginas/ProveedoresPage';
 import { UsuariosPage } from './paginas/UsuariosPage';
@@ -52,6 +54,22 @@ export function App() {
           element={
             <RutaConPermiso permisos={[P.PENDIENTES_VER]}>
               <PendientesPage />
+            </RutaConPermiso>
+          }
+        />
+        <Route
+          path="/sectores"
+          element={
+            <RutaConPermiso permisos={[P.TRABAJOS_VER]}>
+              <SectoresPage />
+            </RutaConPermiso>
+          }
+        />
+        <Route
+          path="/sectores/:id"
+          element={
+            <RutaConPermiso permisos={[P.TRABAJOS_VER]}>
+              <SectorPage />
             </RutaConPermiso>
           }
         />

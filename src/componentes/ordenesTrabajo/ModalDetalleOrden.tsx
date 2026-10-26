@@ -170,6 +170,9 @@ export function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () =
             {(orden.equipoNombre || orden.equipoItNombre) && (
               <span>Equipo: {orden.equipoNombre ?? orden.equipoItNombre}</span>
             )}
+            {orden.ubicacionNombre && (
+              <span>Sector: {orden.ubicacionNombre}</span>
+            )}
             <span>
               Asignada a: <strong>{orden.asignadoANombre ?? '—'}</strong>
               {esMia && ' (vos)'}

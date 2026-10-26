@@ -57,6 +57,8 @@ export function useOrdenesTrabajo(
           equipoId: filtros.equipoId || undefined,
           incluirComponentes: filtros.incluirComponentes ? 'true' : undefined,
           equipoItId: filtros.equipoItId || undefined,
+          ubicacionId: filtros.ubicacionId || undefined,
+          deSusMaquinas: filtros.ubicacionId && filtros.deSusMaquinas ? 'true' : undefined,
           asignadoAId: filtros.asignadoAId || undefined,
           ejecutor: filtros.ejecutor || undefined,
         },

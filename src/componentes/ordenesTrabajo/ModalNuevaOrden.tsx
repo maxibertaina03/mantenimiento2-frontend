@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAsignables, useCrearOrdenTrabajo } from '@/api/ordenesTrabajo';
+import { useSectores } from '@/api/sectores';
 import { ComboEquipo } from '@/componentes/ComboEquipo';
 import { MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
@@ -14,6 +15,10 @@ export function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCer
   const [tipo, setTipo] = useState<TipoTrabajo>('CORRECTIVO');
   const [descripcion, setDescripcion] = useState('');
   const [equipo, setEquipo] = useState<{ id: string; nombre: string } | null>(null);
+  /** Sobre qué es: una máquina, un sector de la planta, o no se dice. Uno solo. */
+  const [sobre, setSobre] = useState<'nada' | 'maquina' | 'sector'>('nada');
+  const [sectorId, setSectorId] = useState('');
+  const { data: sectores } = useSectores(abierto && puede(P.TRABAJOS_VER));
   /** Vacío quiere decir "para mí": el backend lo resuelve así. */
   const [asignadoA, setAsignadoA] = useState('');
   const { data: asignables } = useAsignables(abierto);
@@ -23,6 +28,8 @@ export function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCer
     setTipo('CORRECTIVO');
     setDescripcion('');
     setEquipo(null);
+    setSobre('nada');
+    setSectorId('');
     setAsignadoA('');
   };
 
@@ -32,7 +39,8 @@ export function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCer
       titulo,
       tipo,
       descripcion: descripcion || undefined,
-      equipoId: equipo?.id ?? undefined,
+      equipoId: sobre === 'maquina' ? (equipo?.id ?? undefined) : undefined,
+      ubicacionId: sobre === 'sector' ? sectorId || undefined : undefined,
       asignadoAId: asignadoA || undefined,
     });
     limpiar();
@@ -83,10 +91,34 @@ export function ModalNuevaOrden({ abierto, onCerrar }: { abierto: boolean; onCer
         {/* El equipo solo lo puede elegir quien ve equipos. Mantenimiento
             todavía no tiene ese módulo: carga la orden sin máquina, contándolo
             en el título, y después un administrador la relaciona. */}
-        {puede(P.EQUIPOS_VER) && (
+        <label className="campo">
+          ¿Sobre qué es?
+          <select
+            value={sobre}
+            onChange={(e) => setSobre(e.target.value as 'nada' | 'maquina' | 'sector')}
+          >
+            <option value="nada">No lo digo</option>
+            {puede(P.EQUIPOS_VER) && <option value="maquina">Una máquina</option>}
+            <option value="sector">Un sector de la planta</option>
+          </select>
+        </label>
+        {sobre === 'maquina' && (
           <label className="campo">
-            Equipo (opcional)
+            Máquina
             <ComboEquipo onCambio={setEquipo} />
+          </label>
+        )}
+        {sobre === 'sector' && (
+          <label className="campo">
+            Sector
+            <select value={sectorId} onChange={(e) => setSectorId(e.target.value)} required>
+              <option value="">Elegí un sector…</option>
+              {(sectores ?? []).map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.nombre}
+                </option>
+              ))}
+            </select>
           </label>
         )}
 

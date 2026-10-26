@@ -13,7 +13,7 @@ export function mensajeAlTaller(orden: OrdenTrabajo): string {
     ? orden.equipoCodigo
       ? `${orden.equipoNombre} (${orden.equipoCodigo})`
       : orden.equipoNombre
-    : orden.equipoItNombre;
+    : (orden.equipoItNombre ?? (orden.ubicacionNombre ? `sector ${orden.ubicacionNombre}` : null));
 
   const lineas = [
     `Estimados de ${orden.proveedorNombre ?? 'la empresa'}:`,

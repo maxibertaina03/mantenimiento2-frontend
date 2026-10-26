@@ -84,6 +84,9 @@ beforeEach(() => {
 
   apiRequestMock.mockImplementation((rutaCruda: string) => {
     const ruta = String(rutaCruda ?? '');
+    if (ruta === '/sectores') {
+      return Promise.resolve([{ id: 's1', nombre: 'Saladero' }]);
+    }
     if (ruta.startsWith('/usuarios/me')) {
       return Promise.resolve({ id: 'u1', nombre: 'Facundo', rol: 'MANTENIMIENTO' });
     }
@@ -153,7 +156,7 @@ describe('OrdenesTrabajoPage', () => {
     await usuario.click(await screen.findByRole('button', { name: /nueva orden/i }));
     await screen.findByRole('heading', { name: /Nueva orden de trabajo/i });
 
-    expect(screen.queryByText(/Equipo \(opcional\)/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Una máquina' })).not.toBeInTheDocument();
     expect(screen.getByLabelText(/Qué pasó/i)).toBeInTheDocument();
   });
 
@@ -164,7 +167,30 @@ describe('OrdenesTrabajoPage', () => {
 
     await usuario.click(await screen.findByRole('button', { name: /nueva orden/i }));
 
-    expect(await screen.findByText(/Equipo \(opcional\)/i)).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: 'Una máquina' })).toBeInTheDocument();
+  });
+
+  it('una orden puede ser sobre un sector de la planta', async () => {
+    const usuario = userEvent.setup();
+    mostrar();
+
+    await usuario.click(await screen.findByRole('button', { name: /nueva orden/i }));
+    await usuario.click(screen.getByLabelText(/Qué pasó/i));
+    await usuario.paste('Instalación eléctrica');
+    await usuario.selectOptions(screen.getByLabelText(/Sobre qué es/i), 'sector');
+    await usuario.selectOptions(await screen.findByLabelText(/^Sector/), 's1');
+    await usuario.click(screen.getByRole('button', { name: /abrir orden/i }));
+
+    await waitFor(() => {
+      const alta = apiRequestMock.mock.calls.find(
+        (c) => c[0] === '/ordenes-trabajo' && c[1]?.method === 'POST',
+      );
+      expect(alta?.[1].body).toMatchObject({
+        titulo: 'Instalación eléctrica',
+        ubicacionId: 's1',
+        equipoId: undefined,
+      });
+    });
   });
 
   it('abrir una orden manda el titulo y el tipo', async () => {
