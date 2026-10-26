@@ -24,6 +24,7 @@ Todo pasa por la API, que vive en otro repo:
 | **Calendario** | Tareas por persona, primero el equipo y abajo la tarea; dos pestañas, «Services y tareas» y «Todos los días»; se imprime por semana o por mes. |
 | **Pendientes** | El anotador de mantenimiento: lo que quedó por hacer (comprar, mandar a reparar), con urgente, a quién le toca y equipo. Se confirma antes de darlo por hecho y, si es sobre una máquina, se registra su orden de trabajo. |
 | **Órdenes de trabajo** | Abrir, cargar materiales, cerrar; mandar a un taller de afuera y registrar la vuelta. |
+| **Sectores** | Los trabajos de cada sector de la planta (Saladero, Recibo…): los hechos sobre el sector y los de sus máquinas, con sus horas de parada por separado. |
 | **Órdenes de compra** | Armar, enviar al proveedor, recibir en partes, reclamar lo que falta, PDF. |
 | **Equipos y herramientas, Servicios** | La ficha de cada máquina (fotos, manuales, repuestos, componentes, planes) y lo que vence. |
 | **Equipos IT, Contraseñas** | Inventario de informática y el baúl de contraseñas. |
