@@ -21,8 +21,11 @@ import type { Material } from '@/tipos/material';
 interface Props {
   /** La máquina de planta... */
   equipoId?: string;
-  /** ...o el equipo de informática. Uno de los dos. */
+  /** ...o el equipo de informática... */
   equipoItId?: string;
+  /** ...o un sector de la planta. Uno de los tres. */
+  ubicacionId?: string;
+  /** El nombre de la máquina, del equipo o del sector, para el título. */
   equipoNombre: string;
   /** Los planes de la máquina, para decir a cuál responde el trabajo. */
   planes?: { id: string; nombre: string }[];
@@ -55,6 +58,7 @@ interface MaterialElegido {
 export function RegistrarTrabajoEquipo({
   equipoId,
   equipoItId,
+  ubicacionId,
   equipoNombre,
   planes = [],
   tituloInicial = '',
@@ -65,6 +69,7 @@ export function RegistrarTrabajoEquipo({
   // "sello mecánico" en el formulario de una PC no ayuda a nadie a entender
   // qué se espera que escriba.
   const esInformatica = Boolean(equipoItId);
+  const esSector = Boolean(ubicacionId);
   const crear = useCrearOrdenTrabajo();
 
   const [titulo, setTitulo] = useState(tituloInicial);
@@ -96,6 +101,7 @@ export function RegistrarTrabajoEquipo({
       tipo,
       equipoId,
       equipoItId,
+      ubicacionId,
       // La resolución es lo que hace que la orden nazca cerrada.
       resolucion,
       fecha: fecha || undefined,
@@ -119,7 +125,13 @@ export function RegistrarTrabajoEquipo({
             value={titulo}
             maxLength={200}
             required
-            placeholder={esInformatica ? 'La PC no arrancaba' : 'Perdida por el sello mecanico'}
+            placeholder={
+              esSector
+                ? 'Instalación eléctrica nueva'
+                : esInformatica
+                  ? 'La PC no arrancaba'
+                  : 'Perdida por el sello mecanico'
+            }
             onChange={(e) => setTitulo(e.target.value)}
           />
         </label>
@@ -132,14 +144,22 @@ export function RegistrarTrabajoEquipo({
             maxLength={2000}
             required
             placeholder={
-              esInformatica
-                ? 'Se limpio el gabinete y se actualizo Windows'
-                : 'Se cambio el sello y la junta de la tapa'
+              esSector
+                ? 'Se tendió una línea nueva desde el tablero y se cambiaron las luminarias'
+                : esInformatica
+                  ? 'Se limpio el gabinete y se actualizo Windows'
+                  : 'Se cambio el sello y la junta de la tapa'
             }
             onChange={(e) => setResolucion(e.target.value)}
           />
           <span className="texto-suave texto-chico">
-            Es lo que va a leer el próximo que agarre {esInformatica ? 'el equipo' : 'la máquina'}.
+            Es lo que va a leer el próximo que{' '}
+            {esSector
+              ? 'trabaje en el sector'
+              : esInformatica
+                ? 'agarre el equipo'
+                : 'agarre la máquina'}
+            .
           </span>
         </label>
 

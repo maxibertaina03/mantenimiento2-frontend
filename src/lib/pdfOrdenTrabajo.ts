@@ -47,6 +47,7 @@ function renglonesDelEquipo(orden: OrdenTrabajo, equipo: Equipo | null | undefin
       orden.equipoItCodigo ? `Código: ${orden.equipoItCodigo}` : '',
     ].filter(Boolean);
   }
+  if (orden.ubicacionNombre) return [`Sector: ${orden.ubicacionNombre}`];
   return ['Sin equipo relacionado'];
 }
 

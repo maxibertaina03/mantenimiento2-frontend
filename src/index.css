@@ -4554,3 +4554,62 @@ label.casilla .icono {
     padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
   }
 }
+
+/* ── Sectores ─────────────────────────────────────────────────────────────
+   Una tarjeta por sector, y en el sector, sus totales y sus trabajos. */
+.grilla-sectores {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 0.9rem;
+}
+.tarjeta-sector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem 1.1rem;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.tarjeta-sector:hover { border-color: var(--primario-borde); box-shadow: var(--sombra); }
+.tarjeta-sector-titulo { display: inline-flex; align-items: center; gap: 0.4rem; font-size: var(--texto-md); }
+.tarjeta-sector-titulo .icono { color: var(--primario); }
+.tarjeta-sector-numeros { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; font-size: var(--texto-sm); }
+.totales-sector {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+}
+.totales-sector-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 0.9rem 1.1rem;
+}
+.lista-trabajos-sector { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.trabajo-sector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+.trabajo-sector:hover { border-color: var(--primario-borde); }
+.lista-maquinas-sector { list-style: none; margin: 0; padding: 0; }
+.lista-maquinas-sector li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--borde);
+}
+.lista-maquinas-sector li:last-child { border-bottom: none; }
+@media (max-width: 640px) {
+  .grilla-sectores, .totales-sector { grid-template-columns: 1fr; }
+}
