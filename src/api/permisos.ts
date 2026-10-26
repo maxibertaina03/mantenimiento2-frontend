@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/apiClient';
 
-export type Rol = 'ADMIN' | 'GERENCIA' | 'ADMINISTRATIVO' | 'MANTENIMIENTO';
+export type Rol = 'ADMIN' | 'GERENCIA' | 'ADMINISTRATIVO' | 'MANTENIMIENTO' | 'ENCARGADO_PLANTA';
 
 /** Cómo se llama cada rol en la pantalla, y qué es en una línea. */
 export const ROLES: { rol: Rol; etiqueta: string; descripcion: string }[] = [
@@ -16,6 +16,11 @@ export const ROLES: { rol: Rol; etiqueta: string; descripcion: string }[] = [
     rol: 'MANTENIMIENTO',
     etiqueta: 'Mantenimiento',
     descripcion: 'El depósito: stock, movimientos y el circuito de compras.',
+  },
+  {
+    rol: 'ENCARGADO_PLANTA',
+    etiqueta: 'Encargado de planta',
+    descripcion: 'Organiza a mantenimiento: todo lo de ellos y además reparte el trabajo.',
   },
 ];
 
