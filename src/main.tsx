@@ -11,6 +11,7 @@ import { clerkEspanol } from './lib/clerkEspanol';
 import { queryClient } from './lib/queryClient';
 import { PantallaConError } from './componentes/PantallaConError';
 import { iniciarMonitoreo } from './lib/monitoreo';
+import { recargarSiHayVersionNueva } from './lib/versionNueva';
 // La tipografía va dentro del sistema y no se pide a Google: anda sin
 // internet externa y nadie más se entera de quién entra.
 import '@fontsource-variable/inter';
@@ -18,6 +19,10 @@ import './index.css';
 
 // Aviso de errores de pantalla a Sentry. Sin VITE_SENTRY_DSN no hace nada.
 iniciarMonitoreo();
+
+// Si se publicó una versión nueva con la pestaña abierta, recarga en vez de
+// dejar botones que no responden (ver lib/versionNueva.ts).
+recargarSiHayVersionNueva();
 
 // Publishable key de Clerk. Si NO está configurada, la app corre SIN auth
 // (modo desarrollo): útil mientras no tengas la cuenta de Clerk lista.

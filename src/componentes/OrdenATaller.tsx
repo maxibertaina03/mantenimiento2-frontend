@@ -92,9 +92,12 @@ async function siSePuede<T>(pedido: Promise<T>): Promise<T | null> {
  */
 export function ImprimirOrdenTrabajo({ orden }: { orden: OrdenTrabajo }) {
   const [imprimiendo, setImprimiendo] = useState(false);
+  // Antes un fallo al armar el PDF no se mostraba: el botón no hacía nada.
+  const [error, setError] = useState<string | null>(null);
 
   const imprimir = async () => {
     setImprimiendo(true);
+    setError(null);
     try {
       const [equipo, proveedor] = await Promise.all([
         orden.equipoId ? siSePuede(apiRequest<Equipo>(`/equipos/${orden.equipoId}`)) : null,
@@ -103,15 +106,24 @@ export function ImprimirOrdenTrabajo({ orden }: { orden: OrdenTrabajo }) {
           : null,
       ]);
       await descargarPdfOrdenTrabajo(orden, { equipo, proveedor });
+    } catch {
+      setError('No se pudo armar el PDF. Recargá la página y probá de nuevo.');
     } finally {
       setImprimiendo(false);
     }
   };
 
   return (
-    <button type="button" className="btn btn-sm" disabled={imprimiendo} onClick={imprimir}>
-      <Printer className="icono" aria-hidden />
-      {imprimiendo ? 'Armando el PDF…' : 'Imprimir orden'}
-    </button>
+    <>
+      <button type="button" className="btn btn-sm" disabled={imprimiendo} onClick={imprimir}>
+        <Printer className="icono" aria-hidden />
+        {imprimiendo ? 'Armando el PDF…' : 'Imprimir orden'}
+      </button>
+      {error && (
+        <span className="alerta alerta-error texto-chico" role="alert">
+          {error}
+        </span>
+      )}
+    </>
   );
 }
