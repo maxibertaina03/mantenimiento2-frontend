@@ -4,6 +4,16 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.12.2] — 2026-10-27
+
+### Arreglado
+
+- **«Imprimir orden» no respondía** si se había publicado una versión nueva con la página abierta.
+  Ahora la página se recarga sola en ese caso, y si el PDF no se puede armar, el botón lo dice.
+- **Campos angostos:** al agregar una marca o un modelo nuevo desde la ficha del equipo, el campo
+  quedaba de dos letras de ancho; ahora ocupa toda la columna. En la orden de compra, «Qué es» ya
+  no corta «Herramienta».
+
 ## [1.12.1] — 2026-10-26
 
 ### Documentación
@@ -248,6 +258,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.12.2]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.12.2
 [1.12.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.12.1
 [1.12.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.12.0
 [1.11.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.11.1
