@@ -1556,7 +1556,7 @@ button.combo-item:hover {
 .alta-renglon-equipo {
   /* La segunda columna entra "Herramienta" completo; cortado se lee
      "Herrami..." y no se sabe que dice. */
-  grid-template-columns: minmax(0, 1.9fr) minmax(0, 1.1fr) minmax(0, 0.6fr) minmax(0, 0.9fr) auto;
+  grid-template-columns: minmax(0, 1.9fr) minmax(9.5rem, 1.1fr) minmax(4.5rem, 0.6fr) minmax(6rem, 0.9fr) auto;
 }
 @media (max-width: 860px) {
   .alta-renglon-equipo {
@@ -2822,13 +2822,20 @@ tr:hover .nombre-material {
   display: grid;
   gap: 0.4rem;
 }
+/* El campo ocupa todo el ancho y los botones van abajo: en una columna
+   angosta (un tercio del formulario), campo y botones en la misma fila dejaban
+   el campo de dos letras de ancho. */
 .alta-en-linea-fila {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.4rem;
 }
 .alta-en-linea-fila input {
-  flex: 1;
+  flex: 1 1 100%;
   min-width: 0;
+}
+.alta-en-linea-fila .btn {
+  flex: 1 1 auto;
 }
 
 /* Qué días de la semana se hace un plan o una rutina (SelectorDias). */
