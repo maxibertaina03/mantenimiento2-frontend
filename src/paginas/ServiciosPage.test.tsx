@@ -98,7 +98,9 @@ describe('Servicios — dar un service por hecho', () => {
     await usuario.click(await screen.findByRole('button', { name: 'Dar por hecho' }));
 
     expect(pedidos).toContain('/calendario/planes/plan-1/tarea');
-    expect(await screen.findByRole('heading', { name: 'Dar por hecha: Purga de agua' })).toBeInTheDocument();
+    // Se abre la hoja de dos toques: «Hecha, sin novedad» o «Hubo algo».
+    expect(await screen.findByRole('heading', { name: 'Dar por hecha' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Hecha, sin novedad/ })).toBeInTheDocument();
   });
 
   it('REGRESION: si el service es de otro, avisa en vez de abrir algo que va a fallar', async () => {
@@ -129,7 +131,9 @@ describe('Hoy — lo que hay que hacer', () => {
     expect(await screen.findByText(/la puede hacer cualquiera/)).toBeInTheDocument();
     await usuario.click(screen.getByRole('button', { name: 'Darla por hecha' }));
 
-    expect(await screen.findByRole('heading', { name: 'Dar por hecha: Purga de agua' })).toBeInTheDocument();
+    // Se abre la hoja de dos toques: «Hecha, sin novedad» o «Hubo algo».
+    expect(await screen.findByRole('heading', { name: 'Dar por hecha' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Hecha, sin novedad/ })).toBeInTheDocument();
   });
 
   it('sin permiso para hacer tareas, se ven pero no se ofrece el botón', async () => {

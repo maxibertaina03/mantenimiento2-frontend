@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -55,6 +55,12 @@ beforeEach(() => {
       return Promise.resolve({ rol: 'MANTENIMIENTO', permisos: ['tareas.ver', 'tareas.editar'] });
     }
     if (ruta === '/calendario/mias') return Promise.resolve(tareas);
+    if (ruta === '/calendario/hechas-sin-novedad') {
+      return Promise.resolve({
+        hechas: 1,
+        errores: [{ tareaId: 'r2', titulo: 'Limpiar filtros', motivo: 'Ya está hecha' }],
+      });
+    }
     return Promise.resolve(null);
   });
 });
@@ -96,5 +102,27 @@ describe('MisTareasDeHoy', () => {
     mostrar();
     expect(await screen.findByText('Cambiar lámpara del pasillo')).toBeInTheDocument();
     expect(screen.queryByText('Tareas de todos los días')).not.toBeInTheDocument();
+  });
+
+  it('«Todas hechas, sin novedad» cierra las de todos los días juntas, y avisa las que no', async () => {
+    tareas = [
+      tarea('r1', { titulo: 'Recorrida de tableros', planId: 'p-diario', cadaDias: 1 }),
+      tarea('r2', { titulo: 'Limpiar filtros', planId: 'p-diario', cadaDias: 1 }),
+    ];
+    const usuario = userEvent.setup();
+    mostrar();
+    await usuario.click(
+      await screen.findByRole('button', { name: /Todas hechas, sin novedad \(2\)/ }),
+    );
+    const ventana = await screen.findByRole('dialog');
+    await usuario.click(within(ventana).getByRole('button', { name: /Sí, todas hechas/ }));
+
+    await waitFor(() =>
+      expect(apiRequestMock).toHaveBeenCalledWith('/calendario/hechas-sin-novedad', {
+        method: 'POST',
+        body: { tareaIds: ['r1', 'r2'] },
+      }),
+    );
+    expect(await screen.findByText(/Limpiar filtros \(Ya está hecha\)/)).toBeInTheDocument();
   });
 });

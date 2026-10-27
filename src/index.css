@@ -4620,3 +4620,71 @@ label.casilla .icono {
 @media (max-width: 640px) {
   .grilla-sectores, .totales-sector { grid-template-columns: 1fr; }
 }
+
+/* ── La recorrida de tareas (HacerTareas) ──────────────────────────────────
+   Pensada para el dedo: la máquina en grande, y los botones altos y de todo
+   el ancho en el celular. Dos toques por tarea. */
+.hoja-tarea {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.hoja-tarea-listo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radio);
+  background: var(--exito-suave);
+  color: var(--exito);
+  font-weight: 600;
+}
+.hoja-tarea-que {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.hoja-tarea-principal {
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+.hoja-tarea-secundario {
+  font-size: var(--texto-md);
+  color: var(--texto-suave);
+}
+.hoja-tarea-datos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.hoja-tarea-fin {
+  margin: 0;
+  font-size: var(--texto-md);
+}
+.hoja-tarea-botones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.btn-grande {
+  justify-content: center;
+  min-height: 3.25rem;
+  font-size: var(--texto-md);
+}
+.hoja-tarea-secundarios {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.hoja-tarea-secundarios .btn { min-height: 2.75rem; }
+.hoja-tarea-secundarios .btn:only-child { margin-left: auto; }
+.grupo-rutinas-todas {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 1rem 0.75rem;
+}
+@media (max-width: 640px) {
+  .grupo-rutinas-todas .btn { width: 100%; justify-content: center; min-height: 2.75rem; }
+}

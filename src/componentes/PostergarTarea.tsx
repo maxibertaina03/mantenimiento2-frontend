@@ -20,7 +20,16 @@ function diaSiguiente(fechaIso: string): string {
  * la vez siguiente que toca esa misma tarea. Si es de un plan, el service se
  * mueve con ella, y si cae un día que no se trabaja pasa al siguiente.
  */
-export function PostergarTarea({ tarea, onCerrar }: { tarea: Tarea; onCerrar: () => void }) {
+export function PostergarTarea({
+  tarea,
+  onCerrar,
+  onPostergada,
+}: {
+  tarea: Tarea;
+  onCerrar: () => void;
+  /** Avisa que se postergó, antes de cerrar (la recorrida pasa a la siguiente). */
+  onPostergada?: () => void;
+}) {
   const postergar = usePostergarTarea();
   const minimo = diaSiguiente(tarea.fecha);
   const [fecha, setFecha] = useState(minimo);
@@ -30,7 +39,8 @@ export function PostergarTarea({ tarea, onCerrar }: { tarea: Tarea; onCerrar: ()
     e.preventDefault();
     try {
       await postergar.mutateAsync({ id: tarea.id, fecha, motivo: motivo.trim() });
-      onCerrar();
+      if (onPostergada) onPostergada();
+      else onCerrar();
     } catch {
       // El rechazo se muestra abajo, con el límite que corresponde.
     }
