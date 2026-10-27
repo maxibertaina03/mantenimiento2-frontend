@@ -207,6 +207,7 @@ export function FormularioEquipo({ equipo, alCerrar }: { equipo?: Equipo; alCerr
             <label>Modelo</label>
             <SelectConAlta
               etiqueta="Modelo"
+              masculino
               valor={form.modeloId ?? ''}
               vacio={form.marcaId ? 'Sin modelo' : 'Elegí la marca'}
               textoAgregar="+ Agregar modelo…"

@@ -26,7 +26,8 @@ vi.mock('@/lib/apiClient', () => {
 const CREDENCIAL = {
   id: 'c1',
   nombre: 'Inicio de sesion PC recepcion',
-  tipo: 'EQUIPO',
+  tipoId: 't3',
+  tipoNombre: 'Equipo',
   usuario: 'recepcion',
   url: null,
   notas: null,

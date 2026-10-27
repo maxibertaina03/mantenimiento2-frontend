@@ -4,36 +4,39 @@ import {
   Eye,
   History,
   KeyRound,
+  Monitor,
+  MoreHorizontal,
+  Pencil,
   Plus,
+  Power,
+  StickyNote,
+  Trash2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
-  TIPOS_CREDENCIAL,
   useActualizarCredencial,
   useCredenciales,
   useCrearCredencial,
+  useCrearTipoCredencial,
   useEliminarCredencial,
+  useTiposCredencial,
   type Credencial,
   type EstadoRotacion,
   type FiltrosCredenciales,
-  type TipoCredencial,
 } from '@/api/credenciales';
-import {
-  HistorialCredencial,
-  RotarCredencial,
-  VerSecreto,
-} from '@/componentes/AccionesCredencial';
-import { useEquipos as useEquiposIt } from '@/api/equiposIt';
+import { HistorialCredencial, RotarCredencial, VerSecreto } from '@/componentes/AccionesCredencial';
+import { ComboEquipoIt } from '@/componentes/ComboEquipoIt';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
+import { MenuDesplegable } from '@/componentes/MenuDesplegable';
 import { Modal } from '@/componentes/Modal';
+import { SelectConAlta } from '@/componentes/SelectConAlta';
+import { P, usePuede } from '@/lib/permisos';
 
 const LIMITE = 20;
 
-const ETIQUETA_TIPO = Object.fromEntries(TIPOS_CREDENCIAL.map((t) => [t.valor, t.etiqueta]));
-
-/** Cómo se ve el estado de rotación en la lista. */
+/** Cómo se ve el estado de rotación. */
 const ROTACION: Record<EstadoRotacion, { texto: string; clase: string }> = {
-  'sin-rotacion': { texto: 'sin vencimiento', clase: 'texto-suave' },
+  'sin-rotacion': { texto: 'sin vencimiento', clase: 'badge' },
   'al-dia': { texto: 'al día', clase: 'badge badge-ok' },
   'por-vencer': { texto: 'por vencer', clase: 'badge badge-aviso' },
   vencida: { texto: 'vencida', clase: 'badge badge-error' },
@@ -42,43 +45,48 @@ const ROTACION: Record<EstadoRotacion, { texto: string; clase: string }> = {
 const fechaCorta = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString('es-AR', { dateStyle: 'short' }) : '—';
 
+/** Si «dónde se usa» es una dirección web, se puede abrir. */
+const esEnlace = (url: string) => /^https?:\/\//i.test(url);
+
 interface FormCredencial {
   nombre: string;
-  tipo: TipoCredencial;
+  tipoId: string;
   usuario: string;
   secreto: string;
   url: string;
   notas: string;
   rotarCadaDias: string;
-  /** A qué equipo de IT pertenece. Vacío es "no es de ninguno". */
-  equipoItId: string;
+  /** A qué equipo de IT pertenece. `null` es «no es de ninguno». */
+  equipoIt: { id: string; nombre: string } | null;
 }
 
 const FORM_VACIO: FormCredencial = {
   nombre: '',
-  tipo: 'CORREO',
+  tipoId: '',
   usuario: '',
   secreto: '',
   url: '',
   notas: '',
   rotarCadaDias: '',
-  equipoItId: '',
+  equipoIt: null,
 };
 
 /**
  * El baúl de credenciales.
  *
  * La contraseña no está en esta pantalla. El servidor no la manda en el
- * listado: para verla hay que pedirla, y ese pedido queda registrado. Por eso
- * la columna que se ve es «cuándo hay que cambiarla», que es lo que uno
- * necesita mirar todos los días, y no la contraseña, que se necesita de a una.
+ * listado: para verla hay que pedirla, y ese pedido queda registrado. Lo que se
+ * ve de cada una es lo que hace falta para encontrarla y usarla: el usuario,
+ * dónde se usa, de qué equipo es, las notas y cuándo hay que cambiarla.
  */
 export function CredencialesPage() {
+  const puede = usePuede();
+  const puedeEditar = puede(P.CREDENCIALES_EDITAR);
   const [buscar, setBuscar] = useState('');
   const [busqueda, setBusqueda] = useState('');
-  const [tipo, setTipo] = useState<TipoCredencial | ''>('');
+  const [tipoId, setTipoId] = useState('');
   const [rotacion, setRotacion] = useState<FiltrosCredenciales['rotacion']>('');
-  const [equipoIt, setEquipoIt] = useState('');
+  const [equipoIt, setEquipoIt] = useState<{ id: string; nombre: string } | null>(null);
   const [verInactivas, setVerInactivas] = useState(false);
   const [pagina, setPagina] = useState(1);
 
@@ -92,24 +100,18 @@ export function CredencialesPage() {
 
   const filtros: FiltrosCredenciales = {
     buscar: busqueda,
-    tipo,
+    tipoId: tipoId || undefined,
     rotacion,
-    equipoItId: equipoIt || undefined,
+    equipoItId: equipoIt?.id,
     mostrar: verInactivas ? 'todas' : 'activas',
   };
   const { data, isLoading, error, isFetching } = useCredenciales(pagina, LIMITE, filtros);
+  const { data: tipos } = useTiposCredencial();
 
   const crear = useCrearCredencial();
   const actualizar = useActualizarCredencial();
   const eliminar = useEliminarCredencial();
-
-  /**
-   * El padón de equipos de IT, para el selector y el filtro.
-   *
-   * Son 65: entran de una y se pueden mostrar en un desplegable común. Si
-   * algún día fueran cientos, esto tendría que pasar a ser un buscador.
-   */
-  const equiposIt = useEquiposIt(1, 200);
+  const crearTipo = useCrearTipoCredencial();
 
   const [form, setForm] = useState<FormCredencial | null>(null);
   const [editando, setEditando] = useState<Credencial | null>(null);
@@ -128,37 +130,40 @@ export function CredencialesPage() {
     setEditando(c);
     setForm({
       nombre: c.nombre,
-      tipo: c.tipo,
+      tipoId: c.tipoId ?? '',
       usuario: c.usuario ?? '',
       // Vacío a propósito: la contraseña no se edita acá, se cambia rotando.
       secreto: '',
       url: c.url ?? '',
       notas: c.notas ?? '',
       rotarCadaDias: c.rotarCadaDias ? String(c.rotarCadaDias) : '',
-      equipoItId: c.equipoItId ?? '',
+      equipoIt:
+        c.equipoItId !== null ? { id: c.equipoItId, nombre: c.equipoItNombre ?? 'Equipo' } : null,
     });
+  };
+
+  const cerrarFormulario = () => {
+    setForm(null);
+    setEditando(null);
   };
 
   const guardar = async () => {
     if (!form) return;
     const comun = {
       nombre: form.nombre.trim(),
-      tipo: form.tipo,
+      // `null` y no `undefined` cuando está vacío: así se puede sacar el tipo
+      // o despegar una credencial del equipo al que dejó de pertenecer.
+      tipoId: form.tipoId || null,
       usuario: form.usuario.trim() || undefined,
       url: form.url.trim() || undefined,
       notas: form.notas.trim() || undefined,
       rotarCadaDias: form.rotarCadaDias ? Number(form.rotarCadaDias) : undefined,
-      // `null` y no `undefined` cuando está vacío: así se puede despegar una
-      // credencial del equipo al que dejó de pertenecer. `undefined` seria
-      // "no lo toques", que no es lo mismo.
-      equipoItId: form.equipoItId || null,
+      equipoItId: form.equipoIt?.id ?? null,
     };
 
     if (editando) await actualizar.mutateAsync({ id: editando.id, ...comun });
     else await crear.mutateAsync({ ...comun, secreto: form.secreto });
-
-    setForm(null);
-    setEditando(null);
+    cerrarFormulario();
   };
 
   const borrar = async (c: Credencial) => {
@@ -173,21 +178,25 @@ export function CredencialesPage() {
   };
 
   const puedeGuardar =
-    form !== null && form.nombre.trim().length >= 2 && (editando !== null || form.secreto.length > 0);
+    form !== null &&
+    form.nombre.trim().length >= 2 &&
+    (editando !== null || form.secreto.length > 0);
 
   return (
     <>
       <div className="cabecera-pagina">
-        <h1>Contraseñas</h1>
-        <button className="btn btn-primario" onClick={abrirNueva}>
-          <Plus className="icono" aria-hidden />
-          Nueva credencial
-        </button>
-      </div>
-
-      <div className="alerta alerta-aviso">
-        Las contraseñas se guardan cifradas y no aparecen en esta lista. Para ver una hay que
-        pedirla, y queda registrado quién la vio.
+        <div>
+          <h1>Contraseñas</h1>
+          <p className="texto-suave">
+            Se guardan cifradas. Para ver una hay que pedirla, y queda registrado quién la vio.
+          </p>
+        </div>
+        {puedeEditar && (
+          <button className="btn btn-primario" onClick={abrirNueva}>
+            <Plus className="icono" aria-hidden />
+            Nueva credencial
+          </button>
+        )}
       </div>
 
       <div className="buscador">
@@ -201,27 +210,27 @@ export function CredencialesPage() {
         {isFetching && <span className="texto-suave">buscando…</span>}
       </div>
 
-      <div className="fila-campos">
-        <div className="campo">
-          <label>Tipo</label>
+      <div className="filtros-credenciales">
+        <label className="campo">
+          Tipo
           <select
-            value={tipo}
+            value={tipoId}
             onChange={(e) => {
-              setTipo(e.target.value as TipoCredencial | '');
+              setTipoId(e.target.value);
               setPagina(1);
             }}
           >
             <option value="">Todos</option>
-            {TIPOS_CREDENCIAL.map((t) => (
-              <option key={t.valor} value={t.valor}>
-                {t.etiqueta}
+            {(tipos ?? []).map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.nombre}
               </option>
             ))}
           </select>
-        </div>
+        </label>
 
-        <div className="campo">
-          <label>Rotación</label>
+        <label className="campo">
+          Rotación
           <select
             value={rotacion}
             onChange={(e) => {
@@ -234,30 +243,20 @@ export function CredencialesPage() {
             <option value="vencida">Vencidas</option>
             <option value="por-vencer">Vencen esta semana</option>
           </select>
-        </div>
+        </label>
 
         <div className="campo">
-          <label>Equipo</label>
-          <select
-            value={equipoIt}
-            onChange={(e) => {
-              setEquipoIt(e.target.value);
+          <span>Equipo de informática</span>
+          <ComboEquipoIt
+            onCambio={(e) => {
+              setEquipoIt(e);
               setPagina(1);
             }}
-          >
-            <option value="">Todos</option>
-            {(equiposIt.data?.datos ?? []).map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.codigoInterno ? `${e.codigoInterno} · ` : ''}
-                {e.tipoNombre ?? 'Equipo'}
-                {e.responsableNombre ? ` — ${e.responsableNombre}` : ''}
-              </option>
-            ))}
-          </select>
+          />
         </div>
       </div>
 
-      <label className="filtro-check">
+      <label className="casilla">
         <input
           type="checkbox"
           checked={verInactivas}
@@ -272,90 +271,121 @@ export function CredencialesPage() {
       {isLoading && <Cargando />}
       {error && <MensajeError error={error} />}
       {eliminar.error && <MensajeError error={eliminar.error} />}
+      {actualizar.error && !form && <MensajeError error={actualizar.error} />}
 
       {data && data.datos.length > 0 && (
-        <div className="tabla-scroll tabla-cards-contenedor">
-          <table className="tabla tabla-cards">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Tipo</th>
-                <th>Usuario</th>
-                <th>Hay que cambiarla</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.datos.map((c) => {
-                const estado = ROTACION[c.estadoRotacion];
-                return (
-                  <tr key={c.id} className={c.activo ? undefined : 'inactivo'}>
-                    <td data-etiqueta="Nombre">
-                      {c.nombre}
-                      {!c.activo && <span className="texto-suave texto-chico"> · desactivada</span>}
-                      {c.equipoItNombre && (
-                        <div className="texto-suave texto-chico">{c.equipoItNombre}</div>
+        <ul className="lista-credenciales">
+          {data.datos.map((c) => {
+            const estado = ROTACION[c.estadoRotacion];
+            return (
+              <li key={c.id} className={`panel tarjeta-credencial ${c.activo ? '' : 'inactiva'}`}>
+                <div className="tarjeta-credencial-cabecera">
+                  <span className="tarjeta-credencial-icono" aria-hidden>
+                    <KeyRound />
+                  </span>
+                  <div className="tarjeta-credencial-titulo">
+                    <strong>{c.nombre}</strong>
+                    <span className="tarjeta-credencial-etiquetas">
+                      {c.tipoNombre && <span className="badge">{c.tipoNombre}</span>}
+                      {!c.activo && <span className="badge badge-error">desactivada</span>}
+                    </span>
+                  </div>
+                  <span className="tarjeta-credencial-rotacion">
+                    <span className={estado.clase}>{estado.texto}</span>
+                    {c.proximaRotacion && (
+                      <span className="texto-suave texto-chico">
+                        cambiarla el {fechaCorta(c.proximaRotacion)}
+                      </span>
+                    )}
+                  </span>
+                </div>
+
+                <dl className="tarjeta-credencial-datos">
+                  <div>
+                    <dt>Usuario</dt>
+                    <dd>{c.usuario ?? '—'}</dd>
+                  </div>
+                  <div>
+                    <dt>Dónde se usa</dt>
+                    <dd>
+                      {c.url ? (
+                        esEnlace(c.url) ? (
+                          <a href={c.url} target="_blank" rel="noreferrer noopener">
+                            {c.url}
+                          </a>
+                        ) : (
+                          c.url
+                        )
+                      ) : (
+                        '—'
                       )}
-                    </td>
-                    <td data-etiqueta="Tipo">{ETIQUETA_TIPO[c.tipo] ?? c.tipo}</td>
-                    <td data-etiqueta="Usuario">{c.usuario ?? '—'}</td>
-                    <td data-etiqueta="Hay que cambiarla">
-                      <span className={estado.clase}>{estado.texto}</span>
-                      {c.proximaRotacion && (
-                        <div className="texto-suave texto-chico">
-                          {fechaCorta(c.proximaRotacion)}
-                        </div>
-                      )}
-                    </td>
-                    <td className="celda-acciones">
-                      <div className="fila-acciones">
-                        <button className="btn btn-sm" onClick={() => setViendo(c)}>
-                          <Eye className="icono" aria-hidden />
-                          Ver
-                        </button>
-                        <button className="btn btn-sm" onClick={() => setRotando(c)}>
-                          <KeyRound className="icono" aria-hidden />
-                          Cambiar
-                        </button>
-                        <button className="btn btn-sm" onClick={() => setHistorial(c)}>
-                          <History className="icono" aria-hidden />
-                          Historial
-                        </button>
-                        <button className="btn btn-sm" onClick={() => abrirEdicion(c)}>
-                          Editar
-                        </button>
-                        <button
-                          className="btn btn-sm"
-                          onClick={() =>
-                            actualizar.mutate({ id: c.id, activo: !c.activo })
-                          }
-                        >
-                          {c.activo ? 'Desactivar' : 'Activar'}
-                        </button>
-                        <button className="btn btn-sm" onClick={() => borrar(c)}>
-                          Eliminar
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                    </dd>
+                  </div>
+                  {c.equipoItNombre && (
+                    <div>
+                      <dt>Equipo</dt>
+                      <dd className="con-icono">
+                        <Monitor className="icono" aria-hidden />
+                        {c.equipoItNombre}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+
+                {c.notas && (
+                  <p className="tarjeta-credencial-notas">
+                    <StickyNote className="icono" aria-hidden />
+                    <span>{c.notas}</span>
+                  </p>
+                )}
+
+                <div className="tarjeta-credencial-acciones">
+                  <button className="btn btn-sm btn-primario" onClick={() => setViendo(c)}>
+                    <Eye className="icono" aria-hidden />
+                    Ver
+                  </button>
+                  {puedeEditar && (
+                    <button className="btn btn-sm" onClick={() => setRotando(c)}>
+                      <KeyRound className="icono" aria-hidden />
+                      Cambiar
+                    </button>
+                  )}
+                  <MenuDesplegable
+                    texto="Más"
+                    Icono={MoreHorizontal}
+                    opciones={[
+                      { texto: 'Historial', Icono: History, onElegir: () => setHistorial(c) },
+                      ...(puedeEditar
+                        ? [
+                            { texto: 'Editar', Icono: Pencil, onElegir: () => abrirEdicion(c) },
+                            {
+                              texto: c.activo ? 'Desactivar' : 'Activar',
+                              Icono: Power,
+                              onElegir: () => actualizar.mutate({ id: c.id, activo: !c.activo }),
+                            },
+                            { texto: 'Eliminar', Icono: Trash2, onElegir: () => void borrar(c) },
+                          ]
+                        : []),
+                    ]}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       )}
 
       {data && data.datos.length === 0 && (
         <EstadoVacio>
-          {busqueda || tipo || rotacion
+          {busqueda || tipoId || rotacion || equipoIt
             ? 'Ninguna credencial cumple con ese filtro.'
             : 'Todavía no hay ninguna credencial guardada.'}
         </EstadoVacio>
       )}
 
       {data && data.total > LIMITE && (
-        <div className="acciones" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <span className="texto-suave">{data.total} credencial(es)</span>
+        <div className="paginacion">
+          <span className="texto-suave">{data.total} credenciales</span>
           <div className="fila-acciones">
             <button
               className="btn btn-sm"
@@ -365,7 +395,7 @@ export function CredencialesPage() {
               <ChevronLeft className="icono" aria-hidden />
               Anterior
             </button>
-            <span className="texto-suave" style={{ padding: '0 0.5rem' }}>
+            <span className="texto-suave">
               Página {pagina} de {totalPaginas}
             </span>
             <button
@@ -383,58 +413,56 @@ export function CredencialesPage() {
       <Modal
         titulo={editando ? `Editar ${editando.nombre}` : 'Nueva credencial'}
         abierto={form !== null}
-        onCerrar={() => {
-          setForm(null);
-          setEditando(null);
-        }}
+        onCerrar={cerrarFormulario}
       >
         {form && (
           <div className="formulario-modal">
-            <div className="campo">
-              <label>Nombre *</label>
+            <label className="campo">
+              Nombre *
               <input
                 value={form.nombre}
                 autoFocus
                 placeholder="Correo administración, AnyDesk PC1, Router principal…"
                 onChange={(e) => setForm({ ...form, nombre: e.target.value })}
               />
-            </div>
+            </label>
 
             <div className="fila-campos">
               <div className="campo">
-                <label>Tipo</label>
-                <select
-                  value={form.tipo}
-                  onChange={(e) => setForm({ ...form, tipo: e.target.value as TipoCredencial })}
-                >
-                  {TIPOS_CREDENCIAL.map((t) => (
-                    <option key={t.valor} value={t.valor}>
-                      {t.etiqueta}
-                    </option>
-                  ))}
-                </select>
+                <span>Tipo</span>
+                <SelectConAlta
+                  etiqueta="Tipo"
+                  masculino
+                  valor={form.tipoId}
+                  opciones={tipos ?? []}
+                  vacio="Sin tipo"
+                  textoAgregar="+ Agregar tipo…"
+                  puedeAgregar={puedeEditar}
+                  onCambio={(id) => setForm({ ...form, tipoId: id })}
+                  onAgregar={async (nombre) => (await crearTipo.mutateAsync(nombre)).id}
+                />
               </div>
 
-              <div className="campo">
-                <label>Usuario o dirección</label>
+              <label className="campo">
+                Usuario o dirección
                 <input
                   value={form.usuario}
                   placeholder="administracion@lacteoslastres.com.ar"
                   onChange={(e) => setForm({ ...form, usuario: e.target.value })}
                 />
-              </div>
+              </label>
             </div>
 
             {!editando && (
-              <div className="campo">
-                <label>Contraseña *</label>
+              <label className="campo">
+                Contraseña *
                 <input
                   type="password"
                   autoComplete="new-password"
                   value={form.secreto}
                   onChange={(e) => setForm({ ...form, secreto: e.target.value })}
                 />
-              </div>
+              </label>
             )}
 
             {editando && (
@@ -445,17 +473,17 @@ export function CredencialesPage() {
             )}
 
             <div className="fila-campos">
-              <div className="campo">
-                <label>Dónde se usa</label>
+              <label className="campo">
+                Dónde se usa
                 <input
                   value={form.url}
                   placeholder="https://webmail…"
                   onChange={(e) => setForm({ ...form, url: e.target.value })}
                 />
-              </div>
+              </label>
 
-              <div className="campo">
-                <label>Cambiarla cada (días)</label>
+              <label className="campo">
+                Cambiarla cada (días)
                 <input
                   type="number"
                   min={1}
@@ -466,53 +494,41 @@ export function CredencialesPage() {
                 <span className="texto-suave texto-chico">
                   Vacío es sin vencimiento. No todo acceso necesita cambiarse.
                 </span>
-              </div>
+              </label>
             </div>
 
-            {/* Muchas claves son de una maquina concreta: el inicio de sesion
-                de una PC, el ingreso a una grabadora. Atarlas al equipo hace
-                que despues aparezcan en su ficha, que es donde alguien las va
-                a buscar. Las casillas de correo no son de ninguna maquina, y
-                por eso esto es opcional. */}
+            {/* Muchas claves son de una máquina concreta: el inicio de sesión de
+                una PC, el ingreso a una grabadora. Atarlas al equipo hace que
+                después aparezcan en su ficha, que es donde alguien las va a
+                buscar. Las casillas de correo no son de ninguna máquina, y por
+                eso es opcional. */}
             <div className="campo">
-              <label>Equipo de informatica</label>
-              <select
-                value={form.equipoItId}
-                onChange={(e) => setForm({ ...form, equipoItId: e.target.value })}
-              >
-                <option value="">No es de ningún equipo</option>
-                {(equiposIt.data?.datos ?? []).map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.codigoInterno ? `${e.codigoInterno} · ` : ''}
-                    {e.tipoNombre ?? 'Equipo'}
-                    {e.marcaNombre ? ` ${e.marcaNombre}` : ''}
-                    {e.modeloNombre ? ` ${e.modeloNombre}` : ''}
-                    {e.responsableNombre ? ` — ${e.responsableNombre}` : ''}
-                  </option>
-                ))}
-              </select>
+              <span>Equipo de informática (opcional)</span>
+              <ComboEquipoIt
+                inicial={form.equipoIt}
+                onCambio={(e) => setForm({ ...form, equipoIt: e })}
+              />
+              <span className="texto-suave texto-chico">
+                Buscalo por código, marca o modelo, o escaneá su etiqueta. Vacío: no es de ningún
+                equipo.
+              </span>
             </div>
 
-            <div className="campo">
-              <label>Notas</label>
+            <label className="campo">
+              Notas
               <textarea
                 rows={3}
                 value={form.notas}
+                placeholder="Para qué es, quién la usa, cualquier dato para no tener que preguntar"
                 onChange={(e) => setForm({ ...form, notas: e.target.value })}
               />
-            </div>
+            </label>
 
             {crear.error && <MensajeError error={crear.error} />}
             {actualizar.error && <MensajeError error={actualizar.error} />}
 
             <div className="acciones">
-              <button
-                className="btn"
-                onClick={() => {
-                  setForm(null);
-                  setEditando(null);
-                }}
-              >
+              <button className="btn" onClick={cerrarFormulario}>
                 Cancelar
               </button>
               <button

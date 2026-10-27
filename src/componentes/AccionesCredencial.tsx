@@ -65,18 +65,40 @@ export function VerSecreto({
   return (
     <Modal titulo={credencial.nombre} abierto onCerrar={onCerrar}>
       <div className="formulario-modal">
-        <div className="grilla-datos">
+        {/* Uno debajo del otro: una dirección de correo o un enlace largos, uno
+            al lado del otro, se pisaban. */}
+        <dl className="datos-credencial">
           <div>
-            <span className="texto-suave texto-chico">Usuario</span>
-            <div>{credencial.usuario ?? '—'}</div>
+            <dt>Usuario</dt>
+            <dd>{credencial.usuario ?? '—'}</dd>
           </div>
           {credencial.url && (
             <div>
-              <span className="texto-suave texto-chico">Dónde se usa</span>
-              <div>{credencial.url}</div>
+              <dt>Dónde se usa</dt>
+              <dd>
+                {/^https?:\/\//i.test(credencial.url) ? (
+                  <a href={credencial.url} target="_blank" rel="noreferrer noopener">
+                    {credencial.url}
+                  </a>
+                ) : (
+                  credencial.url
+                )}
+              </dd>
             </div>
           )}
-        </div>
+          {credencial.equipoItNombre && (
+            <div>
+              <dt>Equipo</dt>
+              <dd>{credencial.equipoItNombre}</dd>
+            </div>
+          )}
+          {credencial.notas && (
+            <div>
+              <dt>Notas</dt>
+              <dd className="notas-credencial">{credencial.notas}</dd>
+            </div>
+          )}
+        </dl>
 
         {!revelado && (
           <>

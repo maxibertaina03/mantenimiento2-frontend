@@ -2,17 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/apiClient';
 import type { RespuestaPaginada } from '@/tipos/comunes';
 
-export type TipoCredencial = 'CORREO' | 'ACCESO_REMOTO' | 'EQUIPO' | 'SERVICIO' | 'RED' | 'OTRO';
 export type EstadoRotacion = 'sin-rotacion' | 'al-dia' | 'por-vencer' | 'vencida';
 
-export const TIPOS_CREDENCIAL: { valor: TipoCredencial; etiqueta: string }[] = [
-  { valor: 'CORREO', etiqueta: 'Casilla de correo' },
-  { valor: 'ACCESO_REMOTO', etiqueta: 'Acceso remoto' },
-  { valor: 'EQUIPO', etiqueta: 'Equipo' },
-  { valor: 'RED', etiqueta: 'Red' },
-  { valor: 'SERVICIO', etiqueta: 'Servicio' },
-  { valor: 'OTRO', etiqueta: 'Otro' },
-];
+/** Un tipo del catálogo: «Casilla de correo», «Servicio», o los que se agreguen. */
+export interface TipoCredencial {
+  id: string;
+  nombre: string;
+}
 
 /**
  * Una credencial tal como llega del servidor.
@@ -23,7 +19,8 @@ export const TIPOS_CREDENCIAL: { valor: TipoCredencial; etiqueta: string }[] = [
 export interface Credencial {
   id: string;
   nombre: string;
-  tipo: TipoCredencial;
+  tipoId: string | null;
+  tipoNombre: string | null;
   usuario: string | null;
   url: string | null;
   notas: string | null;
@@ -54,7 +51,7 @@ export interface HistorialCredencial {
 
 export interface FiltrosCredenciales {
   buscar?: string;
-  tipo?: TipoCredencial | '';
+  tipoId?: string;
   equipoItId?: string;
   rotacion?: 'vencida' | 'por-vencer' | 'pendiente' | '';
   mostrar?: 'activas' | 'todas';
@@ -87,12 +84,31 @@ export function useCredenciales(
           pagina,
           limite,
           buscar: filtros.buscar || undefined,
-          tipo: filtros.tipo || undefined,
+          tipoId: filtros.tipoId || undefined,
           equipoItId: filtros.equipoItId || undefined,
           rotacion: filtros.rotacion || undefined,
           mostrar: filtros.mostrar || undefined,
         },
       }),
+  });
+}
+
+/** Los tipos de credencial, para el formulario y el filtro. */
+export function useTiposCredencial() {
+  return useQuery({
+    queryKey: ['credenciales', 'tipos'] as const,
+    queryFn: () => apiRequest<TipoCredencial[]>('/tipos-credencial'),
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** Agregar un tipo desde el formulario («+ Agregar tipo…»). */
+export function useCrearTipoCredencial() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (nombre: string) =>
+      apiRequest<TipoCredencial>('/tipos-credencial', { method: 'POST', body: { nombre } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['credenciales', 'tipos'] }),
   });
 }
 

@@ -14,6 +14,8 @@ interface Props {
   textoAgregar: string;
   /** Si es false, no se ofrece agregar (falta el permiso). */
   puedeAgregar: boolean;
+  /** Para escribir bien el campo nuevo: «el modelo nuevo», no «la modelo nueva». */
+  masculino?: boolean;
   disabled?: boolean;
   title?: string;
   onCambio: (id: string) => void;
@@ -36,6 +38,7 @@ export function SelectConAlta({
   vacio,
   textoAgregar,
   puedeAgregar,
+  masculino = false,
   disabled,
   title,
   onCambio,
@@ -68,16 +71,20 @@ export function SelectConAlta({
     }
   };
 
+  const nombreNuevo = masculino
+    ? `del ${etiqueta.toLowerCase()} nuevo`
+    : `de la ${etiqueta.toLowerCase()} nueva`;
+
   if (agregando) {
     return (
       <div className="alta-en-linea">
         <div className="alta-en-linea-fila">
           <input
             autoFocus
-            aria-label={`Nombre de la ${etiqueta.toLowerCase()} nueva`}
+            aria-label={`Nombre ${nombreNuevo}`}
             value={nombre}
             maxLength={100}
-            placeholder={`Nombre de la ${etiqueta.toLowerCase()}`}
+            placeholder={`Nombre ${nombreNuevo}`}
             onChange={(e) => setNombre(e.target.value)}
             onKeyDown={(e) => {
               // Enter guarda esto, no el formulario entero de afuera.
