@@ -4693,6 +4693,7 @@ label.casilla .icono {
 }
 @media (max-width: 640px) {
   .grupo-rutinas-todas .btn { width: 100%; justify-content: center; min-height: 2.75rem; }
+}
 
 /* ── Contraseñas ──────────────────────────────────────────────────────────
    Una tarjeta por credencial: qué es, el usuario, dónde se usa, de qué equipo,
