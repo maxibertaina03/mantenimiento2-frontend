@@ -130,9 +130,9 @@ export function ModalDetalleEquipo({
         {/* Muchas de estas maquinas tienen clave de ingreso: el inicio de
             sesion de la PC, el acceso a una grabadora. Aca se ven las que le
             pertenecen, que es donde alguien parado frente al equipo las va a
-            buscar. Los valores no: para eso hay que pedirlos desde el baul y
-            queda registrado quien los miro. */}
-        <CredencialesDelEquipo equipoItId={equipo.id} />
+            buscar. Desde aca se ven (el pedido queda registrado igual que
+            en el baul) y se cargan nuevas, con el equipo ya elegido. */}
+        <CredencialesDelEquipo equipoItId={equipo.id} equipoNombre={nombreDelEquipo(equipo)} />
 
         {/* Las limpiezas, las actualizaciones de software y los arreglos: lo
             mismo que se anota de una máquina de planta, con el mismo módulo.

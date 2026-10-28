@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CredencialesDelEquipo } from './CredencialesDelEquipo';
@@ -45,12 +46,17 @@ let permisos: string[] = [];
 beforeEach(() => {
   apiRequestMock.mockReset();
   permisos = ['it.ver', 'credenciales.ver'];
-  apiRequestMock.mockImplementation((rutaCruda: string) => {
+  apiRequestMock.mockImplementation((rutaCruda: string, config?: { method?: string }) => {
     const ruta = String(rutaCruda ?? '');
     if (ruta.startsWith('/usuarios/me')) {
       return Promise.resolve({ id: 'u1', nombre: 'informatica', rol: 'ADMIN' });
     }
     if (ruta.startsWith('/permisos/mios')) return Promise.resolve({ rol: 'ADMIN', permisos });
+    if (ruta.startsWith('/tipos-credencial')) return Promise.resolve([]);
+    if (ruta.endsWith('/revelar')) return Promise.resolve({ secreto: 'clave-de-prueba' });
+    if (ruta === '/credenciales' && config?.method === 'POST') {
+      return Promise.resolve({ ...CREDENCIAL, id: 'c2' });
+    }
     if (ruta.startsWith('/credenciales')) {
       return Promise.resolve({ datos: [CREDENCIAL], total: 1, pagina: 1, limite: 50 });
     }
@@ -62,7 +68,7 @@ function mostrar() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const nodo: ReactNode = (
     <QueryClientProvider client={qc}>
-      <CredencialesDelEquipo equipoItId="eq-1" />
+      <CredencialesDelEquipo equipoItId="eq-1" equipoNombre="PC-014" />
     </QueryClientProvider>
   );
   return render(nodo);
@@ -102,15 +108,64 @@ describe('CredencialesDelEquipo', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('REGRESION: no revela ningun valor de contraseña', async () => {
-    // Esta seccion muestra nombres. El valor se pide aparte desde el baul, y
-    // ese pedido queda registrado con quien lo hizo.
+  it('REGRESION: no revela ningun valor de contraseña sin pedirlo', async () => {
+    // La lista muestra nombres. El valor se pide aparte, y ese pedido queda
+    // registrado con quien lo hizo.
+    permisos = ['it.ver', 'credenciales.ver', 'credenciales.revelar'];
     mostrar();
     await screen.findByText('Inicio de sesion PC recepcion');
 
     const pedidos = apiRequestMock.mock.calls.map((c) => String(c[0]));
     expect(pedidos.some((r) => r.includes('revelar'))).toBe(false);
-    expect(screen.getByText(/queda\s+registrado/i)).toBeInTheDocument();
+  });
+
+  it('«Ver» pide la contraseña con el mismo aviso y registro que el baúl', async () => {
+    const usuario = userEvent.setup();
+    permisos = ['it.ver', 'credenciales.ver', 'credenciales.revelar'];
+    mostrar();
+
+    await usuario.click(
+      await screen.findByRole('button', { name: /Ver la contraseña de Inicio de sesion/ }),
+    );
+    const ventana = screen.getByRole('dialog');
+    expect(within(ventana).getByText(/queda registrado/i)).toBeInTheDocument();
+    await usuario.click(within(ventana).getByRole('button', { name: /Mostrar la contraseña/ }));
+
+    await waitFor(() =>
+      expect(apiRequestMock).toHaveBeenCalledWith('/credenciales/c1/revelar', { method: 'POST' }),
+    );
+    expect(await within(ventana).findByDisplayValue('clave-de-prueba')).toBeInTheDocument();
+  });
+
+  it('sin permiso de revelar no ofrece «Ver» ni «Agregar»', async () => {
+    mostrar();
+    await screen.findByText('Inicio de sesion PC recepcion');
+    expect(screen.queryByRole('button', { name: /Ver la contraseña/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Agregar contraseña/ })).not.toBeInTheDocument();
+  });
+
+  it('«Agregar contraseña» la carga con el equipo ya elegido', async () => {
+    // Un equipo puede tener varias: el inicio de sesión de la PC y su AnyDesk.
+    const usuario = userEvent.setup();
+    permisos = ['it.ver', 'credenciales.ver', 'credenciales.editar'];
+    mostrar();
+
+    await usuario.click(await screen.findByRole('button', { name: /Agregar contraseña/ }));
+    const ventana = screen.getByRole('dialog');
+    await usuario.type(within(ventana).getByLabelText(/Nombre \*/), 'AnyDesk PC recepcion');
+    await usuario.type(within(ventana).getByLabelText(/Contraseña \*/), 'clave-2');
+    await usuario.click(within(ventana).getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() => {
+      const alta = apiRequestMock.mock.calls.find(
+        (c) => c[0] === '/credenciales' && c[1]?.method === 'POST',
+      );
+      expect(alta?.[1].body).toMatchObject({
+        nombre: 'AnyDesk PC recepcion',
+        secreto: 'clave-2',
+        equipoItId: 'eq-1',
+      });
+    });
   });
 
   it('avisa cuando el equipo no tiene ninguna cargada', async () => {
