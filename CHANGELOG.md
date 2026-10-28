@@ -15,10 +15,22 @@ sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versione
 - **«Todas hechas, sin novedad»** en el renglón de las tareas de todos los días: con una
   confirmación, las cierra juntas y avisa si alguna no se pudo.
 - El calendario y Servicios usan la misma hoja.
+- **Contraseñas:** se pueden agregar **tipos** nuevos desde el formulario («+ Agregar tipo…»).
+
+### Cambiado
+
+- **Contraseñas, más clara:** cada una en una tarjeta con sus notas a la vista y el enlace de
+  dónde se usa. «Ver» y «Cambiar» quedan a mano; lo demás, en «Más». Al ver una, el usuario y
+  dónde se usa ya no se pisan.
+
+### Arreglado
+
+- **Contraseñas: no se podía elegir el equipo.** La lista de equipos de informática salía vacía;
+  ahora el equipo se busca escribiendo su nombre, en el formulario y en el filtro.
 
 ### Documentación
 
-- Manual: «Dar por hechas las tareas, en dos toques», y portada con las versiones nuevas.
+- Manual: «Dar por hechas las tareas, en dos toques», tipos y equipo en Contraseñas, y portada con las versiones nuevas.
 
 
 ## [1.12.2] — 2026-10-27
