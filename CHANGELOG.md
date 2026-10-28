@@ -4,6 +4,19 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.14.0] — 2026-10-28
+
+### Agregado
+
+- **Contraseñas en la ficha del equipo:** en Equipos IT, la ficha de una PC (o de cualquier
+  equipo) muestra todas sus contraseñas —por ejemplo, el inicio de sesión y el AnyDesk— con
+  **«Ver»**, que queda registrado igual que en Contraseñas, y **«Agregar contraseña»**, que
+  abre el formulario con el equipo ya elegido.
+
+### Documentación
+
+- Manual: las contraseñas en la ficha del equipo, y portada con las versiones nuevas.
+
 ## [1.13.0] — 2026-10-27
 
 ### Agregado
@@ -287,6 +300,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.14.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.14.0
 [1.13.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.13.0
 [1.12.2]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.12.2
 [1.12.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.12.1
