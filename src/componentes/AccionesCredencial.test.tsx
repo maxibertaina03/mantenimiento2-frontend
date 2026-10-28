@@ -35,7 +35,8 @@ vi.mock('@/lib/apiClient', () => {
 const credencial: Credencial = {
   id: 'cred-1',
   nombre: 'Correo administración',
-  tipo: 'CORREO',
+  tipoId: 't1',
+  tipoNombre: 'Casilla de correo',
   usuario: 'administracion@lacteoslastres.com.ar',
   url: null,
   notas: null,

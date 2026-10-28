@@ -32,7 +32,16 @@ interface MaterialElegido {
  * pide contar qué se hizo: ese texto es el que va a leer el próximo que agarre
  * la máquina.
  */
-export function CompletarTarea({ tarea, onCerrar }: { tarea: Tarea; onCerrar: () => void }) {
+export function CompletarTarea({
+  tarea,
+  onCerrar,
+  onHecha,
+}: {
+  tarea: Tarea;
+  onCerrar: () => void;
+  /** Avisa que quedó hecha, en lugar de cerrar (la recorrida pasa a la siguiente). */
+  onHecha?: () => void;
+}) {
   const completar = useCompletarTarea();
 
   const [resolucion, setResolucion] = useState('');
@@ -59,7 +68,8 @@ export function CompletarTarea({ tarea, onCerrar }: { tarea: Tarea; onCerrar: ()
       materiales: materiales.map((m) => ({ materialId: m.materialId, cantidad: m.cantidad })),
       ...paraEnviar(masDatos),
     });
-    onCerrar();
+    if (onHecha) onHecha();
+    else onCerrar();
   };
 
   return (

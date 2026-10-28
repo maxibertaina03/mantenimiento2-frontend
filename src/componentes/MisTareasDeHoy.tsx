@@ -1,12 +1,13 @@
-import { CalendarDays, Check, ChevronDown, Clock, Repeat } from 'lucide-react';
+import { CalendarDays, Check, CheckCheck, ChevronDown, Clock, Repeat } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useMisTareas } from '@/api/calendario';
+import { useCompletarSinNovedad, useMisTareas } from '@/api/calendario';
 import { vencio } from '@/lib/diaDeTarea';
 import { P, usePuede } from '@/lib/permisos';
 import { encabezadoTarea, esDeTodosLosDias } from '@/lib/tareas';
 import type { Tarea } from '@/tipos/tarea';
-import { CompletarTarea } from './CompletarTarea';
+import { HacerTareas } from './HacerTareas';
+import { Modal } from './Modal';
 import { PostergarTarea } from './PostergarTarea';
 import { Cargando, MensajeError } from './Estados';
 
@@ -53,7 +54,10 @@ export function MisTareasDeHoy() {
   // Un hook no se puede llamar condicionalmente, así que la consulta se apaga.
   const habilitado = puede(P.TAREAS_VER);
   const { data, isLoading, error } = useMisTareas(habilitado);
-  const [completando, setCompletando] = useState<Tarea | null>(null);
+  // La recorrida: se abre en una tarea y sigue con las demás pendientes.
+  const [recorriendo, setRecorriendo] = useState<string | null>(null);
+  const [confirmandoTodas, setConfirmandoTodas] = useState(false);
+  const todasHechas = useCompletarSinNovedad();
   const [postergando, setPostergando] = useState<Tarea | null>(null);
   const [todas, setTodas] = useState(false);
   const [rutinasAbiertas, setRutinasAbiertas] = useState(false);
@@ -79,7 +83,7 @@ export function MisTareasDeHoy() {
       tarea={t}
       puedeHacerla={puedeHacerlas}
       onPostergar={() => setPostergando(t)}
-      onCompletar={() => setCompletando(t)}
+      onCompletar={() => setRecorriendo(t.id)}
     />
   );
 
@@ -140,11 +144,75 @@ export function MisTareasDeHoy() {
             </span>
             <ChevronDown className={`icono flecha-grupo ${rutinasAbiertas ? 'abierta' : ''}`} />
           </button>
+          {/* Las de todos los días, de una: siete purgas sin novedad no
+              tienen por qué ser siete veces lo mismo. Va arriba de la lista,
+              a la vista aunque esté plegada. */}
+          {puedeHacerlas && rutinas.length > 1 && (
+            <div className="grupo-rutinas-todas">
+              <button
+                type="button"
+                className="btn btn-sm"
+                disabled={todasHechas.isPending}
+                onClick={() => setConfirmandoTodas(true)}
+              >
+                <CheckCheck className="icono" aria-hidden />
+                Todas hechas, sin novedad ({rutinas.length})
+              </button>
+            </div>
+          )}
+          {todasHechas.data && todasHechas.data.errores.length > 0 && (
+            <div className="alerta alerta-aviso texto-chico">
+              {todasHechas.data.hechas > 0 &&
+                `${todasHechas.data.hechas} quedaron hechas. `}
+              No se pudieron dar por hechas:{' '}
+              {todasHechas.data.errores.map((e) => `${e.titulo} (${e.motivo})`).join('; ')}
+            </div>
+          )}
+          {todasHechas.error && <MensajeError error={todasHechas.error} />}
           {rutinasAbiertas && <ul className="lista-tareas lista-rutinas">{rutinas.map(fila)}</ul>}
         </div>
       )}
 
-      {completando && <CompletarTarea tarea={completando} onCerrar={() => setCompletando(null)} />}
+      {confirmandoTodas && (
+        <Modal
+          titulo="¿Todas hechas, sin novedad?"
+          abierto
+          onCerrar={() => setConfirmandoTodas(false)}
+        >
+          <p>
+            Vas a dar por hechas las <strong>{rutinas.length}</strong> tareas de todos los días que
+            quedan, sin novedad, a tu nombre. Cada una queda con su orden de trabajo.
+          </p>
+          <p className="texto-suave">Si en alguna hubo algo, cancelá y cerrala de a una.</p>
+          <div className="acciones">
+            <button type="button" className="btn" onClick={() => setConfirmandoTodas(false)}>
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="btn btn-primario"
+              disabled={todasHechas.isPending}
+              onClick={() =>
+                todasHechas.mutate(
+                  rutinas.map((t) => t.id),
+                  { onSettled: () => setConfirmandoTodas(false) },
+                )
+              }
+            >
+              <CheckCheck className="icono" aria-hidden />
+              {todasHechas.isPending ? 'Guardando…' : 'Sí, todas hechas'}
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {recorriendo && (
+        <HacerTareas
+          tareas={[...importantes, ...rutinas]}
+          inicialId={recorriendo}
+          onCerrar={() => setRecorriendo(null)}
+        />
+      )}
       {postergando && <PostergarTarea tarea={postergando} onCerrar={() => setPostergando(null)} />}
     </section>
   );

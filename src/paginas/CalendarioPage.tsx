@@ -15,7 +15,7 @@ import { colorDeTarea, coloresPorPersona } from '@/lib/coloresUsuario';
 import { useUsuarios } from '@/api/usuarios';
 import { useUsuarioActual } from '@/api/usuarios';
 import { CalendarioImpreso, type ModoImpresion } from '@/componentes/CalendarioImpreso';
-import { CompletarTarea } from '@/componentes/CompletarTarea';
+import { HacerTareas } from '@/componentes/HacerTareas';
 import { PostergarTarea } from '@/componentes/PostergarTarea';
 import { vencio } from '@/lib/diaDeTarea';
 import { encabezadoTarea, esDeTodosLosDias } from '@/lib/tareas';
@@ -560,7 +560,7 @@ function DetalleTarea({
   const sePuedeHacer = tarea.estado === 'PENDIENTE' && puede(P.TAREAS_EDITAR) && esMia;
 
   if (completando) {
-    return <CompletarTarea tarea={tarea} onCerrar={onCerrar} />;
+    return <HacerTareas tareas={[tarea]} inicialId={tarea.id} onCerrar={onCerrar} />;
   }
   if (postergando) {
     return <PostergarTarea tarea={tarea} onCerrar={onCerrar} />;

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTareaDelPlan } from '@/api/calendario';
 import { usePlanesQueVencen } from '@/api/equipos';
 import { useUsuarioActual } from '@/api/usuarios';
-import { CompletarTarea } from '@/componentes/CompletarTarea';
+import { HacerTareas } from '@/componentes/HacerTareas';
 import { PostergarTarea } from '@/componentes/PostergarTarea';
 import { P, usePuede } from '@/lib/permisos';
 import type { Tarea } from '@/tipos/tarea';
@@ -189,7 +189,11 @@ export function ServiciosPage() {
         <PostergarTarea tarea={postergando} onCerrar={() => setPostergando(null)} />
       )}
       {completando && (
-        <CompletarTarea tarea={completando} onCerrar={() => setCompletando(null)} />
+        <HacerTareas
+          tareas={[completando]}
+          inicialId={completando.id}
+          onCerrar={() => setCompletando(null)}
+        />
       )}
 
       <p className="texto-suave texto-chico">

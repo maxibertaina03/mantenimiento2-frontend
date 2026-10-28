@@ -79,6 +79,22 @@ export function useAsignarTarea() {
   });
 }
 
+/**
+ * Dar por hechas varias juntas, «sin novedad»: las de todos los días. Cada una
+ * genera su orden de trabajo; las que no se pueden vuelven en `errores`.
+ */
+export function useCompletarSinNovedad() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (tareaIds: string[]) =>
+      apiRequest<{ hechas: number; errores: { tareaId: string; titulo: string; motivo: string }[] }>(
+        '/calendario/hechas-sin-novedad',
+        { method: 'POST', body: { tareaIds } },
+      ),
+    onSuccess: () => invalidarTodo(qc),
+  });
+}
+
 export function useCompletarTarea() {
   const qc = useQueryClient();
   return useMutation({

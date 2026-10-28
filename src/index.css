@@ -1334,6 +1334,12 @@ button.combo-item:hover {
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 0.7rem;
 }
+/* Un correo o un enlace largo no tiene espacios donde cortar: sin esto se salía
+   de su columna y se pisaba con la de al lado. */
+.grilla-datos > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .dato {
   display: flex;
   flex-direction: column;
@@ -4619,4 +4625,193 @@ label.casilla .icono {
 .lista-maquinas-sector li:last-child { border-bottom: none; }
 @media (max-width: 640px) {
   .grilla-sectores, .totales-sector { grid-template-columns: 1fr; }
+}
+
+/* ── La recorrida de tareas (HacerTareas) ──────────────────────────────────
+   Pensada para el dedo: la máquina en grande, y los botones altos y de todo
+   el ancho en el celular. Dos toques por tarea. */
+.hoja-tarea {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.hoja-tarea-listo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radio);
+  background: var(--exito-suave);
+  color: var(--exito);
+  font-weight: 600;
+}
+.hoja-tarea-que {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.hoja-tarea-principal {
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+.hoja-tarea-secundario {
+  font-size: var(--texto-md);
+  color: var(--texto-suave);
+}
+.hoja-tarea-datos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.hoja-tarea-fin {
+  margin: 0;
+  font-size: var(--texto-md);
+}
+.hoja-tarea-botones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.btn-grande {
+  justify-content: center;
+  min-height: 3.25rem;
+  font-size: var(--texto-md);
+}
+.hoja-tarea-secundarios {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.hoja-tarea-secundarios .btn { min-height: 2.75rem; }
+.hoja-tarea-secundarios .btn:only-child { margin-left: auto; }
+.grupo-rutinas-todas {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 1rem 0.75rem;
+}
+@media (max-width: 640px) {
+  .grupo-rutinas-todas .btn { width: 100%; justify-content: center; min-height: 2.75rem; }
+}
+
+/* ── Contraseñas ──────────────────────────────────────────────────────────
+   Una tarjeta por credencial: qué es, el usuario, dónde se usa, de qué equipo,
+   las notas a la vista y las acciones (las de todos los días a mano, el resto
+   en «Más»). */
+.filtros-credenciales {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.lista-credenciales {
+  list-style: none;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr));
+  gap: 0.9rem;
+}
+.tarjeta-credencial {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 1rem 1.1rem;
+}
+.tarjeta-credencial.inactiva { opacity: 0.65; }
+.tarjeta-credencial-cabecera {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.tarjeta-credencial-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radio);
+  background: var(--primario-suave);
+  color: var(--primario);
+}
+.tarjeta-credencial-icono svg { width: 1.1rem; height: 1.1rem; }
+.tarjeta-credencial-titulo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.tarjeta-credencial-titulo strong { font-size: var(--texto-md); }
+.tarjeta-credencial-etiquetas { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.tarjeta-credencial-rotacion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+  flex: none;
+  text-align: right;
+}
+.tarjeta-credencial-datos,
+.datos-credencial {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+}
+.tarjeta-credencial-datos dt,
+.datos-credencial dt {
+  font-size: var(--texto-sm);
+  color: var(--texto-suave);
+}
+.tarjeta-credencial-datos dd,
+.datos-credencial dd {
+  margin: 0.1rem 0 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.con-icono { display: inline-flex; align-items: center; gap: 0.35rem; }
+.con-icono .icono { width: 15px; height: 15px; color: var(--texto-suave); }
+.tarjeta-credencial-notas {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radio);
+  background: var(--panel-suave);
+  font-size: var(--texto-sm);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.tarjeta-credencial-notas .icono {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 0.15rem;
+  color: var(--texto-suave);
+}
+.notas-credencial { white-space: pre-line; }
+.tarjeta-credencial-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: auto;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--borde);
+}
+.paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+@media (max-width: 720px) {
+  /* Tipo y rotación lado a lado; el buscador de equipo, abajo a todo el ancho. */
+  .filtros-credenciales { grid-template-columns: 1fr 1fr; }
+  .filtros-credenciales > :last-child { grid-column: 1 / -1; }
 }
