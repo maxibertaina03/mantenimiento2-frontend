@@ -16,8 +16,6 @@ import { useEffect, useState } from 'react';
 import {
   useActualizarCredencial,
   useCredenciales,
-  useCrearCredencial,
-  useCrearTipoCredencial,
   useEliminarCredencial,
   useTiposCredencial,
   type Credencial,
@@ -26,10 +24,9 @@ import {
 } from '@/api/credenciales';
 import { HistorialCredencial, RotarCredencial, VerSecreto } from '@/componentes/AccionesCredencial';
 import { ComboEquipoIt } from '@/componentes/ComboEquipoIt';
+import { FormularioCredencial } from '@/componentes/FormularioCredencial';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { MenuDesplegable } from '@/componentes/MenuDesplegable';
-import { Modal } from '@/componentes/Modal';
-import { SelectConAlta } from '@/componentes/SelectConAlta';
 import { P, usePuede } from '@/lib/permisos';
 
 const LIMITE = 20;
@@ -48,29 +45,6 @@ const fechaCorta = (iso: string | null) =>
 /** Si «dónde se usa» es una dirección web, se puede abrir. */
 const esEnlace = (url: string) => /^https?:\/\//i.test(url);
 
-interface FormCredencial {
-  nombre: string;
-  tipoId: string;
-  usuario: string;
-  secreto: string;
-  url: string;
-  notas: string;
-  rotarCadaDias: string;
-  /** A qué equipo de IT pertenece. `null` es «no es de ninguno». */
-  equipoIt: { id: string; nombre: string } | null;
-}
-
-const FORM_VACIO: FormCredencial = {
-  nombre: '',
-  tipoId: '',
-  usuario: '',
-  secreto: '',
-  url: '',
-  notas: '',
-  rotarCadaDias: '',
-  equipoIt: null,
-};
-
 /**
  * El baúl de credenciales.
  *
@@ -86,7 +60,10 @@ export function CredencialesPage() {
   const [busqueda, setBusqueda] = useState('');
   const [tipoId, setTipoId] = useState('');
   const [rotacion, setRotacion] = useState<FiltrosCredenciales['rotacion']>('');
-  const [equipoIt, setEquipoIt] = useState<{ id: string; nombre: string } | null>(null);
+  const [equipoIt, setEquipoIt] = useState<{
+    id: string;
+    nombre: string;
+  } | null>(null);
   const [verInactivas, setVerInactivas] = useState(false);
   const [pagina, setPagina] = useState(1);
 
@@ -108,63 +85,19 @@ export function CredencialesPage() {
   const { data, isLoading, error, isFetching } = useCredenciales(pagina, LIMITE, filtros);
   const { data: tipos } = useTiposCredencial();
 
-  const crear = useCrearCredencial();
   const actualizar = useActualizarCredencial();
   const eliminar = useEliminarCredencial();
-  const crearTipo = useCrearTipoCredencial();
 
-  const [form, setForm] = useState<FormCredencial | null>(null);
-  const [editando, setEditando] = useState<Credencial | null>(null);
+  // El formulario: `null` cerrado, `'nueva'` para cargar una, o la que se edita.
+  const [formulario, setFormulario] = useState<Credencial | 'nueva' | null>(null);
   const [viendo, setViendo] = useState<Credencial | null>(null);
   const [rotando, setRotando] = useState<Credencial | null>(null);
   const [historial, setHistorial] = useState<Credencial | null>(null);
 
   const totalPaginas = data ? Math.max(1, Math.ceil(data.total / LIMITE)) : 1;
 
-  const abrirNueva = () => {
-    setEditando(null);
-    setForm(FORM_VACIO);
-  };
-
-  const abrirEdicion = (c: Credencial) => {
-    setEditando(c);
-    setForm({
-      nombre: c.nombre,
-      tipoId: c.tipoId ?? '',
-      usuario: c.usuario ?? '',
-      // Vacío a propósito: la contraseña no se edita acá, se cambia rotando.
-      secreto: '',
-      url: c.url ?? '',
-      notas: c.notas ?? '',
-      rotarCadaDias: c.rotarCadaDias ? String(c.rotarCadaDias) : '',
-      equipoIt:
-        c.equipoItId !== null ? { id: c.equipoItId, nombre: c.equipoItNombre ?? 'Equipo' } : null,
-    });
-  };
-
-  const cerrarFormulario = () => {
-    setForm(null);
-    setEditando(null);
-  };
-
-  const guardar = async () => {
-    if (!form) return;
-    const comun = {
-      nombre: form.nombre.trim(),
-      // `null` y no `undefined` cuando está vacío: así se puede sacar el tipo
-      // o despegar una credencial del equipo al que dejó de pertenecer.
-      tipoId: form.tipoId || null,
-      usuario: form.usuario.trim() || undefined,
-      url: form.url.trim() || undefined,
-      notas: form.notas.trim() || undefined,
-      rotarCadaDias: form.rotarCadaDias ? Number(form.rotarCadaDias) : undefined,
-      equipoItId: form.equipoIt?.id ?? null,
-    };
-
-    if (editando) await actualizar.mutateAsync({ id: editando.id, ...comun });
-    else await crear.mutateAsync({ ...comun, secreto: form.secreto });
-    cerrarFormulario();
-  };
+  const abrirNueva = () => setFormulario('nueva');
+  const abrirEdicion = (c: Credencial) => setFormulario(c);
 
   const borrar = async (c: Credencial) => {
     if (
@@ -176,11 +109,6 @@ export function CredencialesPage() {
       return;
     await eliminar.mutateAsync(c.id);
   };
-
-  const puedeGuardar =
-    form !== null &&
-    form.nombre.trim().length >= 2 &&
-    (editando !== null || form.secreto.length > 0);
 
   return (
     <>
@@ -271,7 +199,7 @@ export function CredencialesPage() {
       {isLoading && <Cargando />}
       {error && <MensajeError error={error} />}
       {eliminar.error && <MensajeError error={eliminar.error} />}
-      {actualizar.error && !form && <MensajeError error={actualizar.error} />}
+      {actualizar.error && !formulario && <MensajeError error={actualizar.error} />}
 
       {data && data.datos.length > 0 && (
         <ul className="lista-credenciales">
@@ -354,16 +282,32 @@ export function CredencialesPage() {
                     texto="Más"
                     Icono={MoreHorizontal}
                     opciones={[
-                      { texto: 'Historial', Icono: History, onElegir: () => setHistorial(c) },
+                      {
+                        texto: 'Historial',
+                        Icono: History,
+                        onElegir: () => setHistorial(c),
+                      },
                       ...(puedeEditar
                         ? [
-                            { texto: 'Editar', Icono: Pencil, onElegir: () => abrirEdicion(c) },
+                            {
+                              texto: 'Editar',
+                              Icono: Pencil,
+                              onElegir: () => abrirEdicion(c),
+                            },
                             {
                               texto: c.activo ? 'Desactivar' : 'Activar',
                               Icono: Power,
-                              onElegir: () => actualizar.mutate({ id: c.id, activo: !c.activo }),
+                              onElegir: () =>
+                                actualizar.mutate({
+                                  id: c.id,
+                                  activo: !c.activo,
+                                }),
                             },
-                            { texto: 'Eliminar', Icono: Trash2, onElegir: () => void borrar(c) },
+                            {
+                              texto: 'Eliminar',
+                              Icono: Trash2,
+                              onElegir: () => void borrar(c),
+                            },
                           ]
                         : []),
                     ]}
@@ -410,138 +354,12 @@ export function CredencialesPage() {
         </div>
       )}
 
-      <Modal
-        titulo={editando ? `Editar ${editando.nombre}` : 'Nueva credencial'}
-        abierto={form !== null}
-        onCerrar={cerrarFormulario}
-      >
-        {form && (
-          <div className="formulario-modal">
-            <label className="campo">
-              Nombre *
-              <input
-                value={form.nombre}
-                autoFocus
-                placeholder="Correo administración, AnyDesk PC1, Router principal…"
-                onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-              />
-            </label>
-
-            <div className="fila-campos">
-              <div className="campo">
-                <span>Tipo</span>
-                <SelectConAlta
-                  etiqueta="Tipo"
-                  masculino
-                  valor={form.tipoId}
-                  opciones={tipos ?? []}
-                  vacio="Sin tipo"
-                  textoAgregar="+ Agregar tipo…"
-                  puedeAgregar={puedeEditar}
-                  onCambio={(id) => setForm({ ...form, tipoId: id })}
-                  onAgregar={async (nombre) => (await crearTipo.mutateAsync(nombre)).id}
-                />
-              </div>
-
-              <label className="campo">
-                Usuario o dirección
-                <input
-                  value={form.usuario}
-                  placeholder="administracion@lacteoslastres.com.ar"
-                  onChange={(e) => setForm({ ...form, usuario: e.target.value })}
-                />
-              </label>
-            </div>
-
-            {!editando && (
-              <label className="campo">
-                Contraseña *
-                <input
-                  type="password"
-                  autoComplete="new-password"
-                  value={form.secreto}
-                  onChange={(e) => setForm({ ...form, secreto: e.target.value })}
-                />
-              </label>
-            )}
-
-            {editando && (
-              <div className="alerta alerta-aviso">
-                La contraseña no se edita acá. Para cambiarla usá <strong>Cambiar</strong>, que deja
-                registro de cuándo se hizo.
-              </div>
-            )}
-
-            <div className="fila-campos">
-              <label className="campo">
-                Dónde se usa
-                <input
-                  value={form.url}
-                  placeholder="https://webmail…"
-                  onChange={(e) => setForm({ ...form, url: e.target.value })}
-                />
-              </label>
-
-              <label className="campo">
-                Cambiarla cada (días)
-                <input
-                  type="number"
-                  min={1}
-                  value={form.rotarCadaDias}
-                  placeholder="90"
-                  onChange={(e) => setForm({ ...form, rotarCadaDias: e.target.value })}
-                />
-                <span className="texto-suave texto-chico">
-                  Vacío es sin vencimiento. No todo acceso necesita cambiarse.
-                </span>
-              </label>
-            </div>
-
-            {/* Muchas claves son de una máquina concreta: el inicio de sesión de
-                una PC, el ingreso a una grabadora. Atarlas al equipo hace que
-                después aparezcan en su ficha, que es donde alguien las va a
-                buscar. Las casillas de correo no son de ninguna máquina, y por
-                eso es opcional. */}
-            <div className="campo">
-              <span>Equipo de informática (opcional)</span>
-              <ComboEquipoIt
-                inicial={form.equipoIt}
-                onCambio={(e) => setForm({ ...form, equipoIt: e })}
-              />
-              <span className="texto-suave texto-chico">
-                Buscalo por código, marca o modelo, o escaneá su etiqueta. Vacío: no es de ningún
-                equipo.
-              </span>
-            </div>
-
-            <label className="campo">
-              Notas
-              <textarea
-                rows={3}
-                value={form.notas}
-                placeholder="Para qué es, quién la usa, cualquier dato para no tener que preguntar"
-                onChange={(e) => setForm({ ...form, notas: e.target.value })}
-              />
-            </label>
-
-            {crear.error && <MensajeError error={crear.error} />}
-            {actualizar.error && <MensajeError error={actualizar.error} />}
-
-            <div className="acciones">
-              <button className="btn" onClick={cerrarFormulario}>
-                Cancelar
-              </button>
-              <button
-                className="btn btn-primario"
-                onClick={guardar}
-                disabled={!puedeGuardar || crear.isPending || actualizar.isPending}
-              >
-                {crear.isPending || actualizar.isPending ? 'Guardando…' : 'Guardar'}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      {formulario && (
+        <FormularioCredencial
+          editando={formulario === 'nueva' ? null : formulario}
+          onCerrar={() => setFormulario(null)}
+        />
+      )}
 
       {viendo && <VerSecreto credencial={viendo} onCerrar={() => setViendo(null)} />}
       {rotando && <RotarCredencial credencial={rotando} onCerrar={() => setRotando(null)} />}
