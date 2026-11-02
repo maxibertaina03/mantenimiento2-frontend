@@ -47,6 +47,9 @@ export const P = {
   CREDENCIALES_VER: 'credenciales.ver',
   CREDENCIALES_REVELAR: 'credenciales.revelar',
   CREDENCIALES_EDITAR: 'credenciales.editar',
+  INFORMES_VER: 'informes.ver',
+  /** Ver la comparación entre personas. Lo propio lo ve cada uno sin permiso. */
+  INFORMES_PERSONAL: 'informes.personal',
   USUARIOS_ADMINISTRAR: 'usuarios.administrar',
   PERMISOS_ADMINISTRAR: 'permisos.administrar',
 } as const;

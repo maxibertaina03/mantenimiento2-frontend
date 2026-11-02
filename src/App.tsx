@@ -1,4 +1,6 @@
+import { lazy, Suspense, type ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { Cargando } from './componentes/Estados';
 import { EquiposPage } from '@/paginas/EquiposPage';
 import { EquipoPage } from '@/paginas/EquipoPage';
 import { InicioPage } from '@/paginas/InicioPage';
@@ -23,6 +25,16 @@ import { SectoresPage } from './paginas/SectoresPage';
 import { OrdenesTrabajoPage } from './paginas/OrdenesTrabajoPage';
 import { ProveedoresPage } from './paginas/ProveedoresPage';
 import { UsuariosPage } from './paginas/UsuariosPage';
+
+// Los informes se bajan recién al entrar: traen la librería de gráficos, que
+// pesa, y el que entra a cargar un movimiento no tiene por qué esperarla.
+const InformesPage = lazy(() =>
+  import('./paginas/InformesPage').then((m) => ({ default: m.InformesPage })),
+);
+const MisResultadosPage = lazy(() =>
+  import('./paginas/MisResultadosPage').then((m) => ({ default: m.MisResultadosPage })),
+);
+const aPedido = (pagina: ReactNode) => <Suspense fallback={<Cargando />}>{pagina}</Suspense>;
 
 export function App() {
   return (
@@ -105,6 +117,14 @@ export function App() {
             </RutaConPermiso>
           }
         />
+        <Route
+          path="/informes"
+          element={
+            <RutaConPermiso permisos={[P.INFORMES_VER]}>{aPedido(<InformesPage />)}</RutaConPermiso>
+          }
+        />
+        {/* Sin permiso: cada uno ve lo suyo. */}
+        <Route path="/mis-resultados" element={aPedido(<MisResultadosPage />)} />
         <Route
           path="/calendario"
           element={

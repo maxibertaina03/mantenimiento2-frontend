@@ -5,6 +5,7 @@ import {
   ListTodo,
   Package,
   Send,
+  TrendingUp,
   Truck,
   Wrench,
   type LucideIcon,
@@ -318,6 +319,13 @@ export function InicioPage() {
           <h1>Hoy</h1>
           <p>{hoyEnPalabras()}</p>
         </div>
+        {/* Quien tiene tareas ve cómo viene con ellas, a un toque. */}
+        {puede(P.TAREAS_VER) && (
+          <Link to="/mis-resultados" className="btn btn-fantasma btn-sm">
+            <TrendingUp className="icono" aria-hidden />
+            Mis resultados
+          </Link>
+        )}
       </div>
 
       {/* En el celular va todo en columna, en este orden: primero lo que le

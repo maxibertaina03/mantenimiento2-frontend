@@ -32,7 +32,9 @@
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^7.18.4"
+    "react-is": "18.3.1",
+    "react-router-dom": "^7.18.4",
+    "recharts": "3.10.1"
   },
   "devDependencies": {
     "@tanstack/react-query-devtools": "^5.59.0",
