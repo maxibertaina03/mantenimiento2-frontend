@@ -95,20 +95,24 @@ async function ocr(imagenes: (Blob | HTMLCanvasElement)[], avance: Avance): Prom
     for (const [i, imagen] of imagenes.entries()) {
       if (!imagen) continue;
       paginaActual = i;
-      const { data } = await trabajador.recognize(imagen, {}, { blocks: true });
+      const { data } = await trabajador.recognize(
+        await prepararParaOcr(imagen),
+        {},
+        { blocks: true },
+      );
       for (const bloque of data.blocks ?? []) {
         for (const parrafo of bloque.paragraphs) {
           for (const renglon of parrafo.lines) {
+            // Todas las palabras de una línea del OCR van a la misma altura:
+            // en una foto apenas torcida, el precio de la derecha queda más
+            // arriba o más abajo que la descripción, y por altura sola caerían
+            // en renglones distintos.
+            const y = (renglon.bbox.y0 + renglon.bbox.y1) / 2;
+            const alto = renglon.bbox.y1 - renglon.bbox.y0;
             for (const w of renglon.words) {
               // Lo que el OCR leyó con muy poca seguridad es ruido.
               if (w.confidence < 30 || !w.text.trim()) continue;
-              palabras.push({
-                texto: w.text,
-                x: w.bbox.x0,
-                y: (w.bbox.y0 + w.bbox.y1) / 2,
-                alto: w.bbox.y1 - w.bbox.y0,
-                pagina: i + 1,
-              });
+              palabras.push({ texto: w.text, x: w.bbox.x0, y, alto, pagina: i + 1 });
             }
           }
         }
@@ -118,4 +122,37 @@ async function ocr(imagenes: (Blob | HTMLCanvasElement)[], avance: Avance): Prom
   } finally {
     await trabajador.terminate();
   }
+}
+
+/**
+ * La imagen, lista para el OCR: más grande (unos 3000 px de ancho) y en gris
+ * con todo el contraste. Las fotos de facturas tienen la letra chica, y así
+ * el OCR confunde menos los dígitos (un 9 con un 3, una coma con un punto).
+ */
+async function prepararParaOcr(imagen: Blob | HTMLCanvasElement): Promise<HTMLCanvasElement> {
+  const origen = imagen instanceof Blob ? await createImageBitmap(imagen) : imagen;
+  const escala = Math.min(3, Math.max(1, 3000 / origen.width));
+  const lienzo = document.createElement('canvas');
+  lienzo.width = Math.round(origen.width * escala);
+  lienzo.height = Math.round(origen.height * escala);
+  const ctx = lienzo.getContext('2d', { willReadFrequently: true })!;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(origen, 0, 0, lienzo.width, lienzo.height);
+  const datos = ctx.getImageData(0, 0, lienzo.width, lienzo.height);
+  const px = datos.data;
+  let min = 255;
+  let max = 0;
+  for (let i = 0; i < px.length; i += 4) {
+    const g = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+    px[i] = g;
+    if (g < min) min = g;
+    if (g > max) max = g;
+  }
+  const rango = Math.max(1, max - min);
+  for (let i = 0; i < px.length; i += 4) {
+    const v = ((px[i] - min) / rango) * 255;
+    px[i] = px[i + 1] = px[i + 2] = v;
+  }
+  ctx.putImageData(datos, 0, 0);
+  return lienzo;
 }

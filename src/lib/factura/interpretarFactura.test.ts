@@ -46,6 +46,39 @@ describe('interpretarRenglon', () => {
     });
   });
 
+  it('precio antes que la cantidad, con código de artículo largo', () => {
+    expect(
+      interpretarRenglon(
+        '3000153 MEDIO NIPLE ACX (25,4) - 1 PROCESADO 4.543,60 2,00 0,00 9.087,20',
+        0,
+      ),
+    ).toMatchObject({
+      codigo: '3000153',
+      descripcion: 'MEDIO NIPLE ACX (25,4) - 1 PROCESADO',
+      cantidad: 2,
+      precioUnitario: 4543.6,
+      cierra: true,
+    });
+  });
+
+  it('números a la yanqui y la unidad pegada a la cantidad', () => {
+    expect(
+      interpretarRenglon(
+        '5,00 MTS CABLE DE ACERO (GALVANIZADO) 6x19 - 6,3 mm 2,990.00 $ 14,950.00',
+        0,
+      ),
+    ).toMatchObject({ cantidad: 5, precioUnitario: 2990, cierra: true });
+  });
+
+  it('el importe no es el último número: después vienen el IVA y el total con IVA', () => {
+    expect(
+      interpretarRenglon(
+        'CARCASABIGBLUE PORTAFILTRO BIG BLUE 1.00 Ud 215,516.53 0.00 215,516.53 21.00 0.00 260,775.00',
+        0,
+      ),
+    ).toMatchObject({ cantidad: 1, precioUnitario: 215516.53, importe: 215516.53, cierra: true });
+  });
+
   it('con bonificación', () => {
     expect(interpretarRenglon('10 CINTA AISLADORA 19MM 500,00 10% 4.500,00', 0)).toMatchObject({
       cantidad: 10,
@@ -108,6 +141,21 @@ describe('la factura entera', () => {
       [0, 6050],
       [1, 12100],
     ]);
+  });
+});
+
+describe('renglones repetidos y descripciones en dos renglones', () => {
+  const p = (texto: string, y: number): Palabra => ({ texto, x: 10, y, alto: 10, pagina: 1 });
+
+  it('suma la continuación a la descripción y no repite el duplicado', () => {
+    const f = interpretarFactura([
+      p('KIT FILTROS VARIOS 3.00 Ud 40,636.36 0.00 121,909.09', 100),
+      p('CARTUCHO FILTRANTE 10 MICRONES', 112),
+      p('Total de unidades: 3', 130),
+      p('KIT FILTROS VARIOS 3.00 Ud 40,636.36 0.00 121,909.09', 300),
+    ]);
+    expect(f.items).toHaveLength(1);
+    expect(f.items[0].descripcion).toBe('KIT FILTROS VARIOS CARTUCHO FILTRANTE 10 MICRONES');
   });
 });
 

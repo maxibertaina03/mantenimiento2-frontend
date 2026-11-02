@@ -3,6 +3,7 @@ import { Cargando, EstadoVacio, MensajeError } from '../Estados';
 import { moneda } from '../ordenesCompra/formato';
 import type { PeriodoInforme } from '@/tipos/informe';
 import { COLOR, montoCorto, montoEntero } from '@/lib/formatoInforme';
+import { GastoPorMaterial } from './GastoPorMaterial';
 import { GraficoSerie } from './GraficoSerie';
 import { Barrita, Bloque, Kpi, Kpis } from './piezas';
 
@@ -73,6 +74,13 @@ export function PestanaCompras({ periodo }: { periodo: PeriodoInforme }) {
           />
         </Bloque>
       </div>
+
+      <Bloque
+        titulo="Gasto por material"
+        ayuda="Cuánto se compró de cada material y a qué precio. La plata suma solo los renglones con precio."
+      >
+        <GastoPorMaterial materiales={data.materiales} periodo={periodo} />
+      </Bloque>
 
       <Bloque titulo="Proveedores" ayuda="A quién se le compró más en el período.">
         {data.proveedores.length === 0 ? (

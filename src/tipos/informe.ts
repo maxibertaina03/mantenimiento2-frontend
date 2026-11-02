@@ -52,12 +52,30 @@ export interface InformeCompras {
     diasDeEntrega: number | null;
   };
   serie: { tramo: string; ordenes: number; monto: number }[];
+  materiales: GastoMaterial[];
   proveedores: {
     proveedor: string;
     ordenes: number;
     monto: number;
     diasDeEntrega: number | null;
   }[];
+}
+
+/** Lo que se gastó en un material en el período. */
+export interface GastoMaterial {
+  /** Null en los renglones de equipos. */
+  materialId: string | null;
+  material: string;
+  unidad: string;
+  cantidad: number;
+  /** Solo de los renglones con precio. */
+  gastado: number;
+  /** Ponderado por cantidad. */
+  precioPromedio: number | null;
+  ultimoPrecio: number | null;
+  renglonesSinPrecio: number;
+  ordenes: number;
+  proveedores: string[];
 }
 
 export interface ResultadoPersona {
