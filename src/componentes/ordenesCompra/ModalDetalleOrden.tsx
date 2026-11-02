@@ -5,6 +5,7 @@ import {
   PackageCheck,
   Pencil,
   Printer,
+  ScanText,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useComprobantes } from '@/api/comprobantes';
@@ -26,6 +27,7 @@ import { descargarPdfOrdenCompra } from '@/lib/pdfOrdenCompra';
 import { ETIQUETA_ESTADO_ORDEN, nombreDelRenglon } from '@/tipos/ordenCompra';
 import type { OrdenCompra } from '@/tipos/ordenCompra';
 import { CLASE_ESTADO, moneda } from './formato';
+import { PreciosDesdeFactura } from './PreciosDesdeFactura';
 import { ReclamarFaltante } from './ReclamarFaltante';
 import { RecibirMercaderia } from './RecibirMercaderia';
 
@@ -68,6 +70,7 @@ export function ModalDetalleOrden({
   const [editandoPrecios, setEditandoPrecios] = useState(false);
   const [precios, setPrecios] = useState<Record<string, number | undefined>>({});
   const [preciosGuardados, setPreciosGuardados] = useState(false);
+  const [desdeFactura, setDesdeFactura] = useState(false);
   const [mostrarRecepcion, setMostrarRecepcion] = useState(false);
   const [recienRecibida, setRecienRecibida] = useState(false);
   const [reclamando, setReclamando] = useState(false);
@@ -245,6 +248,19 @@ export function ModalDetalleOrden({
                 >
                   <Pencil className="icono" aria-hidden />
                   Precios
+                </button>
+              )}
+              {puedeCorregirPrecios && (
+                <button
+                  className="btn"
+                  title="Leer los precios de la factura del proveedor"
+                  onClick={() => {
+                    setPreciosGuardados(false);
+                    setDesdeFactura(true);
+                  }}
+                >
+                  <ScanText className="icono" aria-hidden />
+                  Desde la factura
                 </button>
               )}
               {orden.estado === 'RECIBIDA_PARCIAL' && (
@@ -538,6 +554,17 @@ export function ModalDetalleOrden({
       </div>
 
       {reclamando && <ReclamarFaltante orden={orden} onCerrar={() => setReclamando(false)} />}
+      {desdeFactura && (
+        <PreciosDesdeFactura
+          orden={orden}
+          onListo={(actualizada) => {
+            setOrden(actualizada);
+            setDesdeFactura(false);
+            setPreciosGuardados(true);
+          }}
+          onCerrar={() => setDesdeFactura(false)}
+        />
+      )}
     </Modal>
   );
 }
