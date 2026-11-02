@@ -4,6 +4,26 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.15.0] — 2026-11-02
+
+### Agregado
+
+- **Informes** (menú Informes): lo que pasó en un período, con tarjetas de números, gráficos y
+  tablas. Se elige el período (esta semana, este mes, el mes pasado, tres meses, el año o dos
+  fechas) y si se agrupa por día, semana o mes. Cuatro pestañas:
+  - **Trabajos:** órdenes por tipo, preventivo, horas de parada y equipos y sectores con más
+    órdenes;
+  - **Compras:** órdenes emitidas, plata comprada, proveedores y días de entrega;
+  - **Personal:** qué hizo cada uno y su cumplimiento de tareas (solo con el permiso «Ver los
+    resultados de cada persona»);
+  - **Pañol:** entradas y salidas, lo que más salió y lo que no se mueve.
+  - «Imprimir» saca la pestaña con el membrete y el período; se puede guardar como PDF.
+- **Mis resultados:** cada uno ve sus tareas, su cumplimiento y sus órdenes, sin permisos
+  especiales. Acceso desde el menú y desde Hoy.
+- **Elegir columnas al exportar:** Materiales, el historial de movimientos y el informe de la
+  toma de inventario preguntan qué columnas llevar antes de bajar el PDF o la planilla. La
+  próxima vez vienen marcadas las mismas.
+
 ## [1.14.1] — 2026-10-30
 
 ### Cambiado (para quien desarrolla)
@@ -309,6 +329,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.15.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.15.0
 [1.14.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.14.1
 [1.14.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.14.0
 [1.13.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.13.0
