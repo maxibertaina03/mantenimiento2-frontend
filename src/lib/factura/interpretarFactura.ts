@@ -47,6 +47,10 @@ export interface FacturaLeida {
 
 /** Unidades que suelen ir pegadas a la cantidad: no cortan la cola de números. */
 const UNIDADES = new Set([
+  'ud',
+  'uds',
+  'u.',
+  'un.',
   'u',
   'un',
   'uni',
@@ -167,6 +171,13 @@ export function interpretarRenglon(texto: string, indice: number): ItemLeido | n
   // Los números del principio: muchas facturas ponen la cantidad primero.
   const cabeza: number[] = [];
   let inicio = 0;
+  // Un número largo al principio es el código del artículo («3000153»), no
+  // una cantidad.
+  let codigoNumerico: string | null = null;
+  if (/^\d{5,}$/.test(tokens[0] ?? '') && corte > 1) {
+    codigoNumerico = tokens[0];
+    inicio = 1;
+  }
   while (inicio < corte) {
     const n = leerNumero(tokens[inicio]);
     if (n === null) break;
@@ -188,36 +199,59 @@ export function interpretarRenglon(texto: string, indice: number): ItemLeido | n
     codigo = descripcionTokens[0];
     descripcionTokens = descripcionTokens.slice(1);
   }
+  if (codigoNumerico !== null) codigo = codigoNumerico;
   // Si la cabeza tenía dos números, el primero suele ser un código numérico.
-  if (cabeza.length >= 2 && codigo === null) codigo = String(tokens[0]);
+  else if (cabeza.length >= 2 && codigo === null) codigo = String(tokens[0]);
 
   const bonificacion = porcentajes.length ? porcentajes[porcentajes.length - 1] : null;
   const importe = cola[cola.length - 1].valor;
-  const candidatosCantidad = [
-    ...cabeza.map((v, i) => ({ valor: v, pos: -1 - i })),
-    ...cola.slice(0, -1),
-  ];
-  const candidatosPrecio = cola.slice(0, -1);
+  const candidatosCantidad = [...cabeza.map((v, i) => ({ valor: v, pos: -1 - i })), ...cola];
 
-  for (const p of [...candidatosPrecio].reverse()) {
-    for (const c of candidatosCantidad) {
-      if (c.pos === p.pos || c.valor <= 0) continue;
-      const bruto = c.valor * p.valor;
-      const conBonif = bonificacion !== null ? bruto * (1 - bonificacion / 100) : bruto;
-      if (cerca(bruto, importe) || cerca(conBonif, importe)) {
-        return {
-          indice,
-          codigo,
-          descripcion: descripcionTokens.join(' '),
-          cantidad: c.valor,
-          precioUnitario: p.valor,
-          importe,
-          bonificacion: cerca(bruto, importe) ? null : bonificacion,
-          cierra: true,
-          textoOriginal: texto,
-        };
+  // Se buscan cantidad, precio e importe que cierren. El importe no siempre es
+  // el último número: hay facturas que después ponen el IVA y el total con
+  // IVA del renglón. Puede cerrar de más de una forma (2 × 4.543,60 y
+  // 4.543,60 × 2): se queda con la cantidad más creíble, un número redondo y
+  // chico, y con el importe más a la izquierda (el neto, antes del IVA).
+  const parejas: {
+    c: number;
+    p: number;
+    imp: number;
+    conBonif: boolean;
+    puntos: number;
+  }[] = [];
+  for (const [i, imp] of cola.entries()) {
+    for (const p of cola.slice(0, i)) {
+      for (const c of candidatosCantidad) {
+        if (c.pos === p.pos || c.pos === imp.pos || c.valor <= 0 || p.valor <= 0) continue;
+        const bruto = c.valor * p.valor;
+        const conBonif = bonificacion !== null ? bruto * (1 - bonificacion / 100) : bruto;
+        if (!cerca(bruto, imp.valor) && !cerca(conBonif, imp.valor)) continue;
+        // Un importe igual al precio con cantidad 1 cierra siempre: vale poco.
+        const trivial = c.valor === 1 && p.valor === imp.valor ? -1 : 0;
+        const redonda = Number.isInteger(c.valor) || Number.isInteger(c.valor * 2);
+        parejas.push({
+          c: c.valor,
+          p: p.valor,
+          imp: imp.valor,
+          conBonif: !cerca(bruto, imp.valor),
+          puntos: (redonda ? 4 : 0) + (c.valor <= p.valor ? 2 : 0) + trivial - i * 0.01,
+        });
       }
     }
+  }
+  if (parejas.length > 0) {
+    const mejor = parejas.sort((x, y) => y.puntos - x.puntos)[0];
+    return {
+      indice,
+      codigo,
+      descripcion: descripcionTokens.join(' '),
+      cantidad: mejor.c,
+      precioUnitario: mejor.p,
+      importe: mejor.imp,
+      bonificacion: mejor.conBonif ? bonificacion : null,
+      cierra: true,
+      textoOriginal: texto,
+    };
   }
 
   // No cierra: se propone el anteúltimo como precio, y queda marcado como dudoso.
@@ -235,6 +269,18 @@ export function interpretarRenglon(texto: string, indice: number): ItemLeido | n
     cierra: false,
     textoOriginal: texto,
   };
+}
+
+/** Un renglón sin precios, con texto, que no es un total: sigue la descripción de arriba. */
+function esContinuacion(texto: string): boolean {
+  const t = texto.trim();
+  return (
+    t.length >= 4 &&
+    t.length <= 120 &&
+    /\p{L}{3}/u.test(t) &&
+    !NO_ES_ITEM.test(t) &&
+    !/\d+[.,]\d{2}\s*$/.test(t)
+  );
 }
 
 /** La letra de la factura: por «FACTURA A» o por el código de comprobante (01, 06, 11). */
@@ -262,9 +308,28 @@ export function detectarCuits(textos: string[]): string[] {
 export function interpretarFactura(palabras: Palabra[]): FacturaLeida {
   const textos = armarRenglones(palabras).map((r) => r.map((p) => p.texto.trim()).join(' '));
   const items: ItemLeido[] = [];
+  const vistos = new Set<string>();
+  let anterior: ItemLeido | null = null;
   for (const texto of textos) {
     const item = interpretarRenglon(texto, items.length);
-    if (item) items.push(item);
+    if (item) {
+      // La misma factura en «Original» y «Duplicado»: el renglón va una vez.
+      const clave = `${item.descripcion}|${item.cantidad}|${item.precioUnitario}`;
+      if (vistos.has(clave)) {
+        anterior = null;
+        continue;
+      }
+      vistos.add(clave);
+      items.push(item);
+      anterior = item;
+    } else if (anterior && esContinuacion(texto)) {
+      // La descripción que siguió en el renglón de abajo (muchas facturas
+      // copian ahí la descripción de la orden de compra): ayuda a relacionar.
+      anterior.descripcion = `${anterior.descripcion} ${texto.trim()}`;
+      anterior = null;
+    } else {
+      anterior = null;
+    }
   }
   return {
     letra: detectarLetra(textos),

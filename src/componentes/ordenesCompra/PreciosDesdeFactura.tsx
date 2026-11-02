@@ -109,8 +109,14 @@ export function PreciosDesdeFactura({
             {
               itemIndice: s.itemIndice,
               precio: s.precioNeto ?? undefined,
-              // Solo lo seguro o probable viene tildado: lo dudoso lo decide la persona.
-              incluir: s.seguridad === 'ALTA' || s.seguridad === 'MEDIA',
+              // Viene tildado solo si el nombre se parece (seguro o probable) Y los
+              // números del renglón cierran (cantidad × precio = importe). Si el
+              // OCR leyó mal un número, el nombre puede coincidir igual: el
+              // precio, no. Eso lo decide la persona.
+              incluir:
+                (s.seguridad === 'ALTA' || s.seguridad === 'MEDIA') &&
+                s.itemIndice !== null &&
+                leida.items[s.itemIndice]?.cierra === true,
               seguridad: s.seguridad,
               porEquivalencia: s.porEquivalencia,
             },
