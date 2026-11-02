@@ -4,6 +4,22 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.17.0] — 2026-11-02
+
+### Agregado
+
+- **Gasto por material** en Informes → Compras: lo que se compró de cada material en el
+  período, con la cantidad, el precio promedio, el último precio, lo gastado y a qué
+  proveedores. Se busca por nombre y se exporta a PDF o planilla eligiendo columnas.
+
+### Arreglado
+
+- Precios desde la factura: lee mejor las facturas reales. Las fotos se preparan antes del
+  OCR (más grandes, en gris y con contraste) y los renglones salen enteros aunque la foto esté
+  un poco torcida. En los PDF, el importe se encuentra aunque después vengan el IVA y el total
+  del renglón, y la hoja «Duplicado» no repite renglones. Ahora solo viene tildado lo que se
+  parece y cuyos números cierran en la factura.
+
 ## [1.16.0] — 2026-11-02
 
 ### Agregado
@@ -347,6 +363,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.17.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.17.0
 [1.16.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.16.0
 [1.15.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.15.1
 [1.15.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.15.0
