@@ -12,6 +12,9 @@ código, commits y documentación (el manual está en `docs/manual`).
 ## Reglas
 
 - Ningún secreto ni dato real en el repo: es público.
+- Y tiene que seguir público: Vercel (plan Hobby) bloquea la publicación de un repo
+  privado cuando los commits tienen coautores. Si se vuelve privado, la web deja de
+  actualizarse sin ningún error en el CI.
 - Commits `tipo(ámbito): título` de hasta 72 caracteres
   (`node scripts/verificar-commits.mjs`). A main solo se llega por PR desde develop.
 - Colores, tamaños y radios salen de las variables de `src/index.css`; íconos de
