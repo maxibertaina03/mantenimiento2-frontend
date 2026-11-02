@@ -2,8 +2,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
-  FileSpreadsheet,
-  FileText,
   ImageIcon,
   Plus,
   QrCode,
@@ -34,6 +32,8 @@ import { EstanteriasMaterial } from '@/componentes/EstanteriasMaterial';
 import { Modal } from '@/componentes/Modal';
 import { descargarCsv, generarCsv, sufijoFechaArchivo } from '@/lib/csv';
 import { exportarPdf } from '@/lib/pdf';
+import { armarTabla, type ColumnaReporte } from '@/lib/columnasReporte';
+import { ElegirColumnas, type FormatoExportacion } from '@/componentes/ElegirColumnas';
 import { formatearNumero } from '@/lib/formato';
 import type { Material } from '@/tipos/material';
 import { tieneMouse } from '@/lib/dispositivo';
@@ -63,7 +63,24 @@ const ESQUEMA: EsquemaFiltros<Filtros> = {
   direccion: 'texto',
 };
 
-/** Unidades que se ofrecen aunque todavía no las use ningún material. */
+/** Lo que puede llevar la planilla de materiales; cada uno elige qué. */
+const COLUMNAS_EXPORTAR: ColumnaReporte<Material>[] = [
+  { clave: 'material', titulo: 'Material', valor: (m) => m.nombre },
+  { clave: 'categoria', titulo: 'Categoría', valor: (m) => m.categoriaNombre ?? '' },
+  { clave: 'unidad', titulo: 'Unidad', valor: (m) => m.unidad },
+  { clave: 'stock', titulo: 'Stock actual', valor: (m) => formatearNumero(m.stockActual) },
+  { clave: 'minimo', titulo: 'Stock mínimo', valor: (m) => formatearNumero(m.stockMinimo) },
+  { clave: 'bajoStock', titulo: 'Bajo stock', valor: (m) => (m.bajoStock ? 'SÍ' : 'NO') },
+  {
+    clave: 'ubicacion',
+    titulo: 'Ubicación',
+    valor: (m) =>
+      m.estanteriaNombre ? `${m.estanteriaNombre}${m.fila !== null ? ` · fila ${m.fila}` : ''}` : '',
+    porDefecto: false,
+  },
+  { clave: 'notas', titulo: 'Notas', valor: (m) => m.notas ?? '' },
+];
+
 export function MaterialesPage() {
   const navegar = useNavigate();
   const ubicacion = useLocation();
@@ -93,32 +110,16 @@ export function MaterialesPage() {
   const [modalUnidades, setModalUnidades] = useState(false);
   const [exportando, setExportando] = useState(false);
   const [errorExport, setErrorExport] = useState<string | null>(null);
+  const [eligiendoColumnas, setEligiendoColumnas] = useState(false);
 
   const totalPaginas = data ? Math.max(1, Math.ceil(data.total / LIMITE)) : 1;
 
-  const exportar = async (formato: 'csv' | 'pdf') => {
+  const exportar = async (formato: FormatoExportacion, elegidas: string[]) => {
     setErrorExport(null);
     setExportando(true);
     try {
       const todos = await obtenerTodosLosMateriales();
-      const encabezados = [
-        'Material',
-        'Categoría',
-        'Unidad',
-        'Stock actual',
-        'Stock mínimo',
-        'Bajo stock',
-        'Notas',
-      ];
-      const filas = todos.map((m) => [
-        m.nombre,
-        m.categoriaNombre ?? '',
-        m.unidad,
-        formatearNumero(m.stockActual),
-        formatearNumero(m.stockMinimo),
-        m.bajoStock ? 'SÍ' : 'NO',
-        m.notas ?? '',
-      ]);
+      const { encabezados, filas } = armarTabla(COLUMNAS_EXPORTAR, todos, elegidas);
 
       if (formato === 'csv') {
         descargarCsv(`materiales_stock_${sufijoFechaArchivo()}.csv`, generarCsv(encabezados, filas));
@@ -130,11 +131,13 @@ export function MaterialesPage() {
           encabezados,
           filas,
           nombreArchivo: `materiales_stock_${sufijoFechaArchivo()}.pdf`,
-          orientacion: 'landscape',
+          // Con pocas columnas entra parada, que se lee mejor.
+          orientacion: encabezados.length > 4 ? 'landscape' : 'portrait',
           resaltarFilas: todos.map((m) => m.bajoStock),
           leyenda: bajos > 0 ? `${bajos} bajo stock (resaltados)` : 'Todo OK',
         });
       }
+      setEligiendoColumnas(false);
     } catch (e) {
       setErrorExport(e instanceof Error ? e.message : 'No se pudo exportar.');
     } finally {
@@ -155,15 +158,10 @@ export function MaterialesPage() {
         {/* Lo que se usa poco va en menús: eran siete botones y el que
             importa, «Nuevo material», se perdía entre los demás. */}
         <div className="acciones-cabecera">
-          <MenuDesplegable
-            texto={exportando ? 'Exportando…' : 'Exportar'}
-            Icono={Download}
-            deshabilitado={exportando}
-            opciones={[
-              { texto: 'Planilla (CSV)', Icono: FileSpreadsheet, onElegir: () => exportar('csv') },
-              { texto: 'PDF', Icono: FileText, onElegir: () => exportar('pdf') },
-            ]}
-          />
+          <button className="btn" onClick={() => setEligiendoColumnas(true)}>
+            <Download className="icono" aria-hidden />
+            Exportar
+          </button>
           <button className="btn" onClick={() => setEtiquetas(true)}>
             <QrCode className="icono" aria-hidden />
             Etiquetas QR
@@ -379,6 +377,16 @@ Deja de aparecer al cargar ` +
       </Modal>
 
       {etiquetas && <EtiquetasQrMateriales onCerrar={() => setEtiquetas(false)} />}
+      {eligiendoColumnas && (
+        <ElegirColumnas
+          titulo="Exportar materiales"
+          reporte="materiales"
+          columnas={COLUMNAS_EXPORTAR}
+          exportando={exportando}
+          onExportar={(formato, elegidas) => void exportar(formato, elegidas)}
+          onCerrar={() => setEligiendoColumnas(false)}
+        />
+      )}
 
       <EstanteriasMaterial
         abierto={modalEstanterias}
