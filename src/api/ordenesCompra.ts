@@ -243,3 +243,57 @@ export function useRegistrarEnvioWhatsapp() {
     onSuccess: () => qc.invalidateQueries({ queryKey: clavesOrdenes.base }),
   });
 }
+
+/** Lo que el servidor propone para un renglón a partir de la factura. */
+export interface SugerenciaFactura {
+  renglonId: string;
+  itemIndice: number | null;
+  puntaje: number;
+  seguridad: 'ALTA' | 'MEDIA' | 'BAJA' | null;
+  /** Ya se había confirmado antes con este proveedor. */
+  porEquivalencia: boolean;
+  precioNeto: number | null;
+}
+
+export interface ItemFacturaParaSugerir {
+  indice: number;
+  codigo: string | null;
+  descripcion: string;
+  cantidad: number | null;
+  precioUnitario: number | null;
+}
+
+/** Proponer qué ítem de la factura es cada renglón. No guarda nada. */
+export function useSugerirDesdeFactura(id: string) {
+  return useMutation({
+    mutationFn: (datos: {
+      items: ItemFacturaParaSugerir[];
+      letra: 'A' | 'B' | 'C' | null;
+      alicuota: number;
+    }) =>
+      apiRequest<SugerenciaFactura[]>(`/ordenes-compra/${id}/factura/sugerencias`, {
+        method: 'POST',
+        body: datos,
+      }),
+  });
+}
+
+/** Cargar los precios confirmados y que aprenda cómo llama el proveedor a cada material. */
+export function useConfirmarPreciosFactura(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (datos: {
+      precios: { renglonId: string; precioUnitario: number }[];
+      equivalencias: {
+        materialId: string;
+        codigoProveedor: string | null;
+        descripcionProveedor: string;
+      }[];
+    }) =>
+      apiRequest<OrdenCompra>(`/ordenes-compra/${id}/factura/confirmar`, {
+        method: 'POST',
+        body: datos,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: clavesOrdenes.base }),
+  });
+}

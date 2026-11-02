@@ -1,0 +1,281 @@
+/**
+ * Sacar los renglones de una factura a partir de las palabras y su posición.
+ *
+ * Sin IA: las palabras salen del PDF (pdf.js) o de una foto (OCR), y acá se
+ * arman los renglones por su altura en la hoja. Un renglón es un ítem si tiene
+ * una descripción y números; de los números se busca la combinación que cierra
+ * cantidad × precio unitario (− bonificación) = importe. Si cierra, el precio
+ * es casi seguro; si no, se propone igual, marcado como dudoso, y la persona
+ * lo revisa.
+ */
+
+/** Una palabra (o un trozo de texto) con dónde está en la hoja. */
+export interface Palabra {
+  texto: string;
+  /** Desde la izquierda. */
+  x: number;
+  /** Desde arriba: más grande es más abajo. */
+  y: number;
+  /** El alto de la letra, para saber qué tan juntos están dos renglones. */
+  alto: number;
+  pagina: number;
+}
+
+export type LetraFactura = 'A' | 'B' | 'C';
+
+export interface ItemLeido {
+  indice: number;
+  codigo: string | null;
+  descripcion: string;
+  cantidad: number | null;
+  precioUnitario: number | null;
+  importe: number | null;
+  bonificacion: number | null;
+  /** Si los números cierran (cantidad × precio = importe). */
+  cierra: boolean;
+  /** El renglón tal cual se leyó, para mostrarlo. */
+  textoOriginal: string;
+}
+
+export interface FacturaLeida {
+  letra: LetraFactura | null;
+  cuits: string[];
+  items: ItemLeido[];
+  /** Cuántos renglones de texto había: si hay muchos y ningún ítem, algo falló. */
+  renglones: number;
+}
+
+/** Unidades que suelen ir pegadas a la cantidad: no cortan la cola de números. */
+const UNIDADES = new Set([
+  'u',
+  'un',
+  'uni',
+  'unid',
+  'unidad',
+  'unidades',
+  'kg',
+  'kgs',
+  'gr',
+  'mt',
+  'mts',
+  'm',
+  'ml',
+  'lt',
+  'lts',
+  'l',
+  'par',
+  'pares',
+  'jgo',
+  'juego',
+  'cja',
+  'caja',
+  'pza',
+  'pzas',
+  'rollo',
+  'bolsa',
+  'x',
+  'c/u',
+  'cu',
+]);
+
+/** Renglones que no son ítems: totales, impuestos, datos de la factura. */
+const NO_ES_ITEM =
+  /\b(sub ?total|total|iva|neto gravado|no gravado|exento|percep|percepci[oó]n|retenci[oó]n|ret\.|ingresos brutos|iibb|importe otros|son pesos|son:|cae\b|vto|vencimiento|cuit|fecha|factura|condici[oó]n|domicilio|p[aá]gina|hoja|remito|orden de compra|bonificaci[oó]n general|descuento general|transporte|saldo)\b/i;
+
+/** Convierte un número escrito a la manera argentina (o yanqui) a número. */
+export function leerNumero(textoCrudo: string): number | null {
+  const t = textoCrudo
+    .replace(/^\$|^ARS|^U\$S/i, '')
+    .replace(/\$$/, '')
+    .trim();
+  if (!/^-?[\d.,]+$/.test(t) || !/\d/.test(t)) return null;
+  const ultimoPunto = t.lastIndexOf('.');
+  const ultimaComa = t.lastIndexOf(',');
+  let limpio: string;
+  if (ultimoPunto >= 0 && ultimaComa >= 0) {
+    // Con los dos, el que va último es el decimal.
+    limpio =
+      ultimaComa > ultimoPunto ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, '');
+  } else if (ultimaComa >= 0) {
+    // Solo coma: decimal, salvo que sea un separador de miles (1,234,567).
+    limpio = /^-?\d{1,3}(,\d{3}){2,}$/.test(t) ? t.replace(/,/g, '') : t.replace(',', '.');
+  } else if (ultimoPunto >= 0) {
+    // Solo punto: de miles si hay grupos de tres (1.234 o 1.234.567), si no, decimal.
+    limpio = /^-?\d{1,3}(\.\d{3})+$/.test(t) ? t.replace(/\./g, '') : t;
+  } else {
+    limpio = t;
+  }
+  const n = Number(limpio);
+  return Number.isFinite(n) ? n : null;
+}
+
+function leerPorcentaje(t: string): number | null {
+  const m = /^-?([\d.,]+)\s*%$/.exec(t);
+  return m ? leerNumero(m[1]) : null;
+}
+
+/** Agrupa las palabras en renglones: misma página y casi la misma altura. */
+export function armarRenglones(palabras: Palabra[]): Palabra[][] {
+  const ordenadas = [...palabras]
+    .filter((p) => p.texto.trim() !== '')
+    .sort((a, b) => a.pagina - b.pagina || a.y - b.y || a.x - b.x);
+  const renglones: Palabra[][] = [];
+  let actual: Palabra[] = [];
+  let yActual = 0;
+  let altoActual = 0;
+  for (const p of ordenadas) {
+    const tolerancia = Math.max(2, Math.min(altoActual || p.alto, p.alto) * 0.5);
+    if (
+      actual.length > 0 &&
+      p.pagina === actual[0].pagina &&
+      Math.abs(p.y - yActual) <= tolerancia
+    ) {
+      actual.push(p);
+    } else {
+      if (actual.length) renglones.push(actual);
+      actual = [p];
+      yActual = p.y;
+      altoActual = p.alto;
+    }
+  }
+  if (actual.length) renglones.push(actual);
+  return renglones.map((r) => r.sort((a, b) => a.x - b.x));
+}
+
+const cerca = (a: number, b: number) => Math.abs(a - b) <= Math.max(0.02, Math.abs(b) * 0.005);
+
+/** Interpreta un renglón de texto. Null si no parece un ítem. */
+export function interpretarRenglon(texto: string, indice: number): ItemLeido | null {
+  if (NO_ES_ITEM.test(texto)) return null;
+  const tokens = texto.split(/\s+/).filter(Boolean);
+
+  // La cola de números del final: precio, importe, a veces la cantidad.
+  const cola: { valor: number; pos: number }[] = [];
+  const porcentajes: number[] = [];
+  let corte = tokens.length;
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    const t = tokens[i];
+    const n = leerNumero(t);
+    const pct = leerPorcentaje(t);
+    if (n !== null) cola.unshift({ valor: n, pos: i });
+    else if (pct !== null) porcentajes.unshift(pct);
+    else if (UNIDADES.has(t.toLowerCase()) || t === '$') {
+      // sigue
+    } else break;
+    corte = i;
+  }
+  // Los números del principio: muchas facturas ponen la cantidad primero.
+  const cabeza: number[] = [];
+  let inicio = 0;
+  while (inicio < corte) {
+    const n = leerNumero(tokens[inicio]);
+    if (n === null) break;
+    cabeza.push(n);
+    inicio++;
+  }
+
+  let descripcionTokens = tokens.slice(inicio, corte);
+  const letras = descripcionTokens.join(' ').replace(/[^\p{L}]/gu, '');
+  if (letras.length < 3 || cola.length + cabeza.length < 2 || cola.length < 1) return null;
+
+  // Un primer token corto con letras y números, si después hay más texto, es el código.
+  let codigo: string | null = null;
+  if (
+    descripcionTokens.length > 1 &&
+    /^[\p{L}\d][\p{L}\d\-./]{2,19}$/u.test(descripcionTokens[0]) &&
+    /\d/.test(descripcionTokens[0])
+  ) {
+    codigo = descripcionTokens[0];
+    descripcionTokens = descripcionTokens.slice(1);
+  }
+  // Si la cabeza tenía dos números, el primero suele ser un código numérico.
+  if (cabeza.length >= 2 && codigo === null) codigo = String(tokens[0]);
+
+  const bonificacion = porcentajes.length ? porcentajes[porcentajes.length - 1] : null;
+  const importe = cola[cola.length - 1].valor;
+  const candidatosCantidad = [
+    ...cabeza.map((v, i) => ({ valor: v, pos: -1 - i })),
+    ...cola.slice(0, -1),
+  ];
+  const candidatosPrecio = cola.slice(0, -1);
+
+  for (const p of [...candidatosPrecio].reverse()) {
+    for (const c of candidatosCantidad) {
+      if (c.pos === p.pos || c.valor <= 0) continue;
+      const bruto = c.valor * p.valor;
+      const conBonif = bonificacion !== null ? bruto * (1 - bonificacion / 100) : bruto;
+      if (cerca(bruto, importe) || cerca(conBonif, importe)) {
+        return {
+          indice,
+          codigo,
+          descripcion: descripcionTokens.join(' '),
+          cantidad: c.valor,
+          precioUnitario: p.valor,
+          importe,
+          bonificacion: cerca(bruto, importe) ? null : bonificacion,
+          cierra: true,
+          textoOriginal: texto,
+        };
+      }
+    }
+  }
+
+  // No cierra: se propone el anteúltimo como precio, y queda marcado como dudoso.
+  const precio = cola.length >= 2 ? cola[cola.length - 2].valor : null;
+  const cantidad =
+    cabeza[cabeza.length - 1] ?? (cola.length >= 3 ? cola[cola.length - 3].valor : null);
+  return {
+    indice,
+    codigo,
+    descripcion: descripcionTokens.join(' '),
+    cantidad,
+    precioUnitario: precio ?? importe,
+    importe: precio !== null ? importe : null,
+    bonificacion,
+    cierra: false,
+    textoOriginal: texto,
+  };
+}
+
+/** La letra de la factura: por «FACTURA A» o por el código de comprobante (01, 06, 11). */
+export function detectarLetra(textos: string[]): LetraFactura | null {
+  const todo = textos.join('\n');
+  const codigo = /C[OÓ]D(?:IGO)?\.?\s*(?:N[°º.]?\s*)?0*(1|6|11)\b/i.exec(todo);
+  if (codigo) return ({ '1': 'A', '6': 'B', '11': 'C' } as const)[codigo[1] as '1' | '6' | '11'];
+  const palabra = /FACTURA\s+([ABC])\b/i.exec(todo);
+  if (palabra) return palabra[1].toUpperCase() as LetraFactura;
+  // La letra sola, en su recuadro, en un renglón propio.
+  const sola = textos.find((t) => /^[ABC]$/.test(t.trim()));
+  return sola ? (sola.trim() as LetraFactura) : null;
+}
+
+export function detectarCuits(textos: string[]): string[] {
+  const vistos = new Set<string>();
+  for (const t of textos) {
+    for (const m of t.matchAll(/\b(20|23|24|27|30|33|34)-?(\d{8})-?(\d)\b/g)) {
+      vistos.add(`${m[1]}-${m[2]}-${m[3]}`);
+    }
+  }
+  return [...vistos];
+}
+
+export function interpretarFactura(palabras: Palabra[]): FacturaLeida {
+  const textos = armarRenglones(palabras).map((r) => r.map((p) => p.texto.trim()).join(' '));
+  const items: ItemLeido[] = [];
+  for (const texto of textos) {
+    const item = interpretarRenglon(texto, items.length);
+    if (item) items.push(item);
+  }
+  return {
+    letra: detectarLetra(textos),
+    cuits: detectarCuits(textos),
+    items,
+    renglones: textos.length,
+  };
+}
+
+/** El precio sin IVA: la A ya es neta, la B trae el IVA adentro, la C no lleva IVA. */
+export function aNeto(precio: number, letra: LetraFactura | null, alicuota: number): number {
+  const neto = letra === 'B' ? precio / (1 + alicuota / 100) : precio;
+  return Math.round(neto * 100) / 100;
+}
