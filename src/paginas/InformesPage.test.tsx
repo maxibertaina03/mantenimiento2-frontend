@@ -77,6 +77,20 @@ beforeEach(() => {
           diasDeEntrega: 3,
         },
         serie: [{ tramo: '2026-10-05', ordenes: 2, monto: 150000 }],
+        materiales: [
+          {
+            materialId: 'm1',
+            material: 'Rulemán 6204',
+            unidad: 'u',
+            cantidad: 12,
+            gastado: 120000,
+            precioPromedio: 10000,
+            ultimoPrecio: 11000,
+            renglonesSinPrecio: 1,
+            ordenes: 2,
+            proveedores: ['Rulemanes SA'],
+          },
+        ],
         proveedores: [{ proveedor: 'Rulemanes SA', ordenes: 2, monto: 150000, diasDeEntrega: 3 }],
       });
     }
@@ -136,8 +150,11 @@ describe('InformesPage', () => {
     mostrar(<InformesPage />);
     await userEvent.click(await screen.findByRole('tab', { name: 'Compras' }));
 
-    expect(await screen.findByText('Rulemanes SA')).toBeInTheDocument();
+    expect((await screen.findAllByText('Rulemanes SA')).length).toBeGreaterThan(0);
     expect(screen.getByText('1 orden sin precio, no sumada')).toBeInTheDocument();
+    // Lo gastado en cada material, con lo que quedó sin precio.
+    expect(screen.getByRole('link', { name: 'Rulemán 6204' })).toBeInTheDocument();
+    expect(screen.getByText(/1 sin precio/)).toBeInTheDocument();
   });
 
   it('sin permiso, no hay pestaña de personal ni se pide', async () => {
