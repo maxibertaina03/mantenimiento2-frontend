@@ -1,3 +1,4 @@
+import { armarTabla, clavesPorDefecto, type ColumnaReporte } from './columnasReporte';
 import { exportarPdf } from './pdf';
 import { formatearFecha, formatearNumero } from './formato';
 import { alcanceDeToma, type DetalleToma, type RenglonToma } from '@/tipos/inventario';
@@ -52,34 +53,45 @@ const RESULTADO: Record<string, string> = {
   RECONTAR: 'Volver a contar',
 };
 
+const diferencia = (r: RenglonToma) => (r.contado ?? 0) - (r.stockAlContar ?? 0);
+
+/** Lo que puede llevar el informe de la toma; cada uno elige qué. */
+export const COLUMNAS_INFORME_TOMA: ColumnaReporte<RenglonToma>[] = [
+  { clave: 'ubicacion', titulo: 'Ubicación', valor: ubicacionDe },
+  { clave: 'material', titulo: 'Material', valor: (r) => `${r.materialNombre} (${r.unidad})` },
+  { clave: 'figuraba', titulo: 'Figuraba', valor: (r) => formatearNumero(r.stockAlContar ?? 0) },
+  { clave: 'contado', titulo: 'Contado', valor: (r) => formatearNumero(r.contado ?? 0) },
+  {
+    clave: 'diferencia',
+    titulo: 'Diferencia',
+    valor: (r) => {
+      const d = diferencia(r);
+      return d === 0 ? '—' : `${d > 0 ? '+' : ''}${formatearNumero(d)}`;
+    },
+  },
+  {
+    clave: 'resultado',
+    titulo: 'Resultado',
+    valor: (r) => (r.resultado ? RESULTADO[r.resultado] : 'Sin confirmar'),
+  },
+];
+
 /** El informe de lo contado: qué figuraba, qué se contó, la diferencia y qué se hizo. */
-export async function descargarInforme({
-  toma,
-  renglones,
-  resumen,
-  reubicaciones,
-}: DetalleToma): Promise<void> {
+export async function descargarInforme(
+  { toma, renglones, resumen, reubicaciones }: DetalleToma,
+  elegidas: string[] = clavesPorDefecto(COLUMNAS_INFORME_TOMA),
+): Promise<void> {
   const contados = renglones.filter((r) => r.contado !== null);
-  const diferencia = (r: RenglonToma) => (r.contado ?? 0) - (r.stockAlContar ?? 0);
+  const { encabezados, filas } = armarTabla(COLUMNAS_INFORME_TOMA, contados, elegidas);
   await exportarPdf({
     titulo: `Toma de inventario ${toma.numero}`,
     subtitulo:
       `${alcanceDeToma(toma)} · ${resumen.contados} de ${resumen.total} contados · ` +
       `${resumen.ajustados} ajustados · ${resumen.sinDiferencia} sin diferencia`,
-    encabezados: ['Ubicación', 'Material', 'Figuraba', 'Contado', 'Diferencia', 'Resultado'],
-    filas: contados.map((r) => {
-      const d = diferencia(r);
-      return [
-        ubicacionDe(r),
-        `${r.materialNombre} (${r.unidad})`,
-        formatearNumero(r.stockAlContar ?? 0),
-        formatearNumero(r.contado ?? 0),
-        d === 0 ? '—' : `${d > 0 ? '+' : ''}${formatearNumero(d)}`,
-        r.resultado ? RESULTADO[r.resultado] : 'Sin confirmar',
-      ];
-    }),
+    encabezados,
+    filas,
     nombreArchivo: `${toma.numero}-informe.pdf`,
-    orientacion: 'landscape',
+    orientacion: encabezados.length > 4 ? 'landscape' : 'portrait',
     resaltarFilas: contados.map((r) => Math.abs(diferencia(r)) > 0.0005),
     leyenda:
       resumen.sinContar > 0

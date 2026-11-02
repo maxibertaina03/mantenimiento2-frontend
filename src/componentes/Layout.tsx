@@ -1,6 +1,7 @@
 import { UserButton } from '@clerk/clerk-react';
 import {
   CalendarDays,
+  ChartColumn,
   ClipboardCheck,
   Factory,
   History,
@@ -16,6 +17,7 @@ import {
   Settings2,
   ShieldCheck,
   ShoppingCart,
+  TrendingUp,
   Truck,
   Users,
   Wrench,
@@ -109,6 +111,14 @@ const GRUPOS: { titulo: string | null; opciones: Opcion[] }[] = [
         permiso: P.ORDENES_VER,
       },
       { a: '/proveedores', texto: 'Proveedores', Icono: Truck, permiso: P.PROVEEDORES_VER },
+    ],
+  },
+  {
+    titulo: 'Informes',
+    opciones: [
+      { a: '/informes', texto: 'Informes', Icono: ChartColumn, permiso: P.INFORMES_VER },
+      // Sin permiso: cada uno ve lo suyo.
+      { a: '/mis-resultados', texto: 'Mis resultados', Icono: TrendingUp },
     ],
   },
   {

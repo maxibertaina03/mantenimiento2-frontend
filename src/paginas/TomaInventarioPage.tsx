@@ -16,7 +16,9 @@ import { Modal } from '@/componentes/Modal';
 import { leerEscaneo, useEscaneoSuelto } from '@/lib/escaneo';
 import { formatearFecha, formatearNumero } from '@/lib/formato';
 import { P, usePuede } from '@/lib/permisos';
+import { ElegirColumnas } from '@/componentes/ElegirColumnas';
 import {
+  COLUMNAS_INFORME_TOMA,
   descargarInforme,
   descargarPlanilla,
   filasReubicados,
@@ -86,6 +88,7 @@ export function TomaInventarioPage() {
   const [reubicando, setReubicando] = useState<RenglonToma | null>(null);
   const [confirmandoCeros, setConfirmandoCeros] = useState(false);
   const [salteados, setSalteados] = useState<string[]>([]);
+  const [eligiendoInforme, setEligiendoInforme] = useState(false);
   const contarEnCero = useContarEnCero(id);
 
   // Escanear la etiqueta de un material (con el cursor fuera de un campo) lo trae.
@@ -227,7 +230,7 @@ export function TomaInventarioPage() {
             Planilla para contar
           </button>
           {resumen.contados > 0 && (
-            <button className="btn" onClick={() => void descargarInforme(data)}>
+            <button className="btn" onClick={() => setEligiendoInforme(true)}>
               <Printer className="icono" aria-hidden />
               Informe
             </button>
@@ -431,6 +434,20 @@ export function TomaInventarioPage() {
             ))}
           </ul>
         </section>
+      )}
+
+      {eligiendoInforme && (
+        <ElegirColumnas
+          titulo="Informe de la toma"
+          reporte="informe-toma"
+          columnas={COLUMNAS_INFORME_TOMA}
+          formatos={['pdf']}
+          onExportar={(_, elegidas) => {
+            void descargarInforme(data, elegidas);
+            setEligiendoInforme(false);
+          }}
+          onCerrar={() => setEligiendoInforme(false)}
+        />
       )}
 
       {reubicando && (

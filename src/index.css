@@ -3243,6 +3243,34 @@ tr:hover .nombre-material {
   width: calc(100% - 1.6rem);
 }
 
+/* Qué columnas lleva un reporte (ElegirColumnas): casillas en dos columnas,
+   grandes para el dedo. */
+.elegir-columnas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.elegir-columnas legend {
+  padding: 0;
+  margin-bottom: 0.4rem;
+}
+.formulario-modal label.elegir-columnas-opcion {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.5rem;
+  cursor: pointer;
+  font-weight: 400;
+}
+.formulario-modal .elegir-columnas-opcion input {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: none;
+}
+
 /* ─────────── El calendario en papel (CalendarioImpreso) ───────────
    Dos hojas pensadas para imprimir, en vez de la grilla de la pantalla: la
    semana del taller, con todo y casillas para tildar, y el mes resumido con la
@@ -4830,4 +4858,251 @@ label.casilla .icono {
   /* Tipo y rotación lado a lado; el buscador de equipo, abajo a todo el ancho. */
   .filtros-credenciales { grid-template-columns: 1fr 1fr; }
   .filtros-credenciales > :last-child { grid-column: 1 / -1; }
+}
+
+/* ─────────── Informes ───────────
+   Tarjetas de números arriba, gráficos y tablas abajo. Se imprime la pestaña
+   que se está mirando, con el membrete (`membrete-informe`). */
+
+.selector-periodo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.selector-periodo-atajos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.chip-periodo {
+  min-height: 2.25rem;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--texto-suave);
+  font: inherit;
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+.chip-periodo:hover {
+  color: var(--texto);
+}
+.chip-periodo.activo {
+  border-color: var(--primario);
+  background: var(--primario-suave);
+  color: var(--primario);
+}
+.chip-periodo:focus-visible {
+  outline: 2px solid var(--primario);
+  outline-offset: 1px;
+}
+.selector-periodo-campos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.campo-chico {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+.campo-chico input,
+.campo-chico select {
+  min-height: 2.25rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--texto);
+  font: inherit;
+  font-size: var(--texto-base);
+  font-weight: 400;
+}
+
+.contenido-informe {
+  margin-top: 1rem;
+}
+.kpis-informe {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.kpi-informe {
+  --tono: var(--primario);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--borde);
+  border-top: 3px solid var(--tono);
+  border-radius: var(--radio);
+  background: var(--panel);
+  box-shadow: var(--sombra);
+}
+.kpi-azul { --tono: var(--primario); }
+.kpi-verde { --tono: var(--exito); }
+.kpi-rojo { --tono: var(--peligro); }
+.kpi-ambar { --tono: var(--alerta); }
+.kpi-violeta { --tono: var(--info); }
+.kpi-gris { --tono: var(--borde-fuerte, #cbd5e1); }
+.kpi-informe-etiqueta {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+.kpi-informe-valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  /* Un nombre largo se corta con «…» (el completo, al pasar el mouse) en vez
+     de partirse en la mitad de una palabra. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kpi-informe-detalle {
+  font-size: var(--texto-xs);
+  color: var(--texto-suave);
+}
+
+.bloque-informe-titulo {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+}
+.bloque-informe-ayuda {
+  margin: 0 0 0.75rem;
+}
+.grilla-informe {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: 0 1.25rem;
+}
+.grafico-informe {
+  width: 100%;
+  min-width: 0;
+}
+
+.tabla-informe th,
+.tabla-informe td {
+  padding: 0.55rem 0.75rem;
+  white-space: nowrap;
+}
+/* El nombre y los títulos pueden ir en dos renglones: si no, la tabla se
+   sale de su bloque cuando van dos lado a lado. */
+.tabla-informe th,
+.tabla-informe td:first-child {
+  white-space: normal;
+}
+.tabla-informe td:first-child {
+  min-width: 9rem;
+}
+.tabla-informe .numero {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.barrita-informe {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 96px;
+}
+.barrita-informe-pista {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--panel-suave);
+  border: 1px solid var(--borde);
+  overflow: hidden;
+}
+.barrita-informe-relleno {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+.barrita-informe-texto {
+  min-width: 3.5rem;
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.membrete-informe {
+  align-items: center;
+  gap: 4mm;
+  padding-bottom: 3mm;
+  margin-bottom: 4mm;
+  border-bottom: 2px solid #c8102e;
+}
+.membrete-informe-titulo {
+  margin: 0;
+  font-size: 15pt;
+}
+.membrete-informe-periodo {
+  margin: 1mm 0 0;
+  font-size: 9pt;
+  color: #475569;
+}
+
+@media (max-width: 640px) {
+  .kpis-informe {
+    grid-template-columns: 1fr 1fr;
+  }
+  .kpi-informe-valor {
+    font-size: 1.3rem;
+  }
+  .selector-periodo-atajos {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .chip-periodo {
+    flex: none;
+  }
+}
+
+@media print {
+  .membrete-informe.solo-imprimir {
+    display: flex;
+  }
+  .kpi-informe,
+  .bloque-informe,
+  .barrita-informe-relleno {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .kpis-informe {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3mm;
+  }
+  .kpi-informe,
+  .bloque-informe {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+  .bloque-informe {
+    padding: 3mm 4mm;
+    margin-bottom: 4mm;
+  }
+  .grilla-informe {
+    grid-template-columns: 1fr 1fr;
+    gap: 0 4mm;
+  }
+  .tabla-informe {
+    box-shadow: none;
+  }
 }

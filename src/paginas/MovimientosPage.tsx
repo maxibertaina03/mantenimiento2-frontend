@@ -15,6 +15,8 @@ import { AccionesFila } from '@/componentes/AccionesFila';
 import { Modal } from '@/componentes/Modal';
 import { descargarCsv, generarCsv, sufijoFechaArchivo } from '@/lib/csv';
 import { exportarPdf } from '@/lib/pdf';
+import { armarTabla, posicionDe, type ColumnaReporte } from '@/lib/columnasReporte';
+import { ElegirColumnas, type FormatoExportacion } from '@/componentes/ElegirColumnas';
 import { formatearFecha, formatearNumero, isoADatetimeLocal } from '@/lib/formato';
 import { P, usePuede } from '@/lib/permisos';
 import {
@@ -30,6 +32,19 @@ import {
 } from '@/tipos/movimiento';
 
 const LIMITE = 20;
+
+/** Lo que puede llevar el historial exportado; cada uno elige qué. */
+const COLUMNAS_EXPORTAR: ColumnaReporte<Movimiento>[] = [
+  { clave: 'fecha', titulo: 'Fecha', valor: (m) => formatearFecha(m.fecha) },
+  { clave: 'material', titulo: 'Material', valor: (m) => m.materialNombre ?? m.materialId },
+  { clave: 'tipo', titulo: 'Tipo', valor: (m) => m.tipo },
+  { clave: 'motivo', titulo: 'Motivo', valor: (m) => m.motivo },
+  { clave: 'cantidad', titulo: 'Cantidad', valor: (m) => formatearNumero(m.cantidad) },
+  { clave: 'proveedor', titulo: 'Proveedor', valor: (m) => m.proveedorNombre ?? '' },
+  { clave: 'usuario', titulo: 'Usuario', valor: (m) => m.usuarioNombre ?? '' },
+  { clave: 'referencia', titulo: 'Referencia', valor: (m) => m.referenciaTrabajo ?? '' },
+  { clave: 'notas', titulo: 'Notas', valor: (m) => m.notas ?? '' },
+];
 
 export function MovimientosPage() {
   const { data: materiales } = useMateriales(1, 100);
@@ -56,6 +71,7 @@ export function MovimientosPage() {
   const [pagina, setPagina] = useState(1);
   const [exportando, setExportando] = useState(false);
   const [errorExport, setErrorExport] = useState<string | null>(null);
+  const [eligiendoColumnas, setEligiendoColumnas] = useState(false);
 
   // Construye los filtros para la API (fechaHasta inclusiva hasta fin del día).
   const filtros = (): FiltrosMovimientos => ({
@@ -93,33 +109,12 @@ export function MovimientosPage() {
     return partes.length ? partes.join(' · ') : 'Sin filtros';
   };
 
-  const exportar = async (formato: 'csv' | 'pdf') => {
+  const exportar = async (formato: FormatoExportacion, elegidas: string[]) => {
     setErrorExport(null);
     setExportando(true);
     try {
       const todos = await obtenerTodosLosMovimientos(filtros());
-      const encabezados = [
-        'Fecha',
-        'Material',
-        'Tipo',
-        'Motivo',
-        'Cantidad',
-        'Proveedor',
-        'Usuario',
-        'Referencia',
-        'Notas',
-      ];
-      const filas = todos.map((m) => [
-        formatearFecha(m.fecha),
-        m.materialNombre ?? m.materialId,
-        m.tipo,
-        m.motivo,
-        formatearNumero(m.cantidad),
-        m.proveedorNombre ?? '',
-        m.usuarioNombre ?? '',
-        m.referenciaTrabajo ?? '',
-        m.notas ?? '',
-      ]);
+      const { encabezados, filas, claves } = armarTabla(COLUMNAS_EXPORTAR, todos, elegidas);
 
       if (formato === 'csv') {
         descargarCsv(`movimientos_${sufijoFechaArchivo()}.csv`, generarCsv(encabezados, filas));
@@ -130,10 +125,12 @@ export function MovimientosPage() {
           encabezados,
           filas,
           nombreArchivo: `movimientos_${sufijoFechaArchivo()}.pdf`,
-          orientacion: 'landscape',
-          columnaTipo: 2,
+          orientacion: encabezados.length > 5 ? 'landscape' : 'portrait',
+          // El tipo se pinta donde haya quedado, si se eligió.
+          columnaTipo: posicionDe(claves, 'tipo'),
         });
       }
+      setEligiendoColumnas(false);
     } catch (e) {
       setErrorExport(e instanceof Error ? e.message : 'No se pudo exportar.');
     } finally {
@@ -147,19 +144,23 @@ export function MovimientosPage() {
     <>
       <div className="cabecera-pagina">
         <h1>Historial de movimientos</h1>
-        <div className="fila-acciones">
-          <button className="btn" onClick={() => exportar('csv')} disabled={exportando}>
-            <Download className="icono" aria-hidden />
-            {exportando ? 'Exportando…' : 'CSV'}
-          </button>
-          <button className="btn btn-primario" onClick={() => exportar('pdf')} disabled={exportando}>
-            <Download className="icono" aria-hidden />
-            {exportando ? 'Exportando…' : 'PDF'}
-          </button>
-        </div>
+        <button className="btn btn-primario" onClick={() => setEligiendoColumnas(true)}>
+          <Download className="icono" aria-hidden />
+          Exportar
+        </button>
       </div>
 
       {errorExport && <MensajeError error={new Error(errorExport)} />}
+      {eligiendoColumnas && (
+        <ElegirColumnas
+          titulo="Exportar movimientos"
+          reporte="movimientos"
+          columnas={COLUMNAS_EXPORTAR}
+          exportando={exportando}
+          onExportar={(formato, elegidas) => void exportar(formato, elegidas)}
+          onCerrar={() => setEligiendoColumnas(false)}
+        />
+      )}
 
       {/* ── Filtros ── */}
       <div className="panel">

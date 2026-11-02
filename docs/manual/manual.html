@@ -89,7 +89,7 @@
   <p>Cómo usar cada pantalla, para qué sirve y qué conviene cargar.
      Las imágenes son del sistema en funcionamiento, con los datos reales de la planta.</p>
   <div class="pie">
-    Versión de octubre de 2026 · pantallas v1.14.0 · servidor v1.12.0 · Vista de administrador<br>
+    Versión de noviembre de 2026 · pantallas v1.15.0 · servidor v1.13.0 · Vista de administrador<br>
     mantenimiento2-frontend.vercel.app
   </div>
 </div>
@@ -250,6 +250,15 @@
     <tr><td><strong>Salida</strong></td><td>Se usó material, normalmente para un trabajo.</td></tr>
     <tr><td><strong>Ajuste</strong></td><td>Se corrigió el stock al valor real contado en el estante.</td></tr>
   </table>
+
+  <p><strong>Exportar</strong> baja el historial en PDF o en planilla (CSV), con los filtros que
+    estén puestos. Antes se eligen las columnas; la próxima vez vienen marcadas las mismas. Lo
+    mismo en Materiales y en el informe de la toma de inventario.</p>
+
+  <figure>
+    <img src="capturas/elegir-columnas.png" alt="Elegir columnas al exportar">
+    <figcaption>Qué columnas lleva el reporte.</figcaption>
+  </figure>
 
   <div class="nota">
     <strong>Los movimientos no se borran</strong>
@@ -625,7 +634,44 @@
 </section>
 
 <section>
-  <h2><span class="numero">17</span>Usuarios y permisos</h2>
+  <h2><span class="numero">17</span>Informes</h2>
+  <p class="entrada">Lo que pasó en un período, en números y gráficos, para mirar o imprimir.</p>
+
+  <figure>
+    <img src="capturas/informes.png" alt="Informe de trabajos">
+    <figcaption>El informe de trabajos del mes: arriba los números, abajo el gráfico y los equipos.</figcaption>
+  </figure>
+
+  <p>Nada de esto se carga aparte: sale de lo que ya se registra todos los días. Arriba se elige el
+    período (esta semana, este mes, el mes pasado, los últimos tres meses, el año o dos fechas) y
+    si se agrupa por día, por semana o por mes.</p>
+  <ul>
+    <li><strong>Trabajos:</strong> cuántas órdenes se abrieron y se cerraron, cuánto es preventivo,
+      las horas de parada, cuánto tarda en cerrarse una orden y qué equipos y sectores piden más
+      trabajo.</li>
+    <li><strong>Compras:</strong> cuántas órdenes se emitieron, cuánta plata, a qué proveedores y
+      cuántos días tardan en entregar. La plata suma solo las órdenes con todos los precios
+      cargados, y avisa cuántas quedaron afuera.</li>
+    <li><strong>Personal:</strong> qué hizo cada uno (órdenes cerradas, tareas hechas y vencidas)
+      y su <strong>cumplimiento</strong>: de sus tareas que ya vencieron, cuántas hizo. Las de hoy
+      en adelante todavía no cuentan. Solo la ve quien tiene el permiso «Ver los resultados de cada
+      persona».</li>
+    <li><strong>Pañol:</strong> entradas, salidas y ajustes, lo que más salió y los materiales con
+      stock que no se mueven hace 90 días.</li>
+  </ul>
+  <p><strong>Imprimir</strong> saca la pestaña que se está mirando, con el logo y el período. Desde
+    el mismo diálogo de impresión se puede guardar como PDF.</p>
+
+  <div class="nota">
+    <strong>Mis resultados</strong>
+    Cada uno ve lo suyo, sin permisos especiales: en el menú, en «Mis resultados», o desde Hoy. Ahí
+    están sus tareas hechas y vencidas, su cumplimiento y sus órdenes, y nadie más que esa persona
+    ve esa pantalla con sus datos.
+  </div>
+</section>
+
+<section>
+  <h2><span class="numero">18</span>Usuarios y permisos</h2>
   <p class="entrada">Quién entra al sistema y qué puede hacer.</p>
 
   <figure>
@@ -652,7 +698,7 @@
 </section>
 
 <section>
-  <h2><span class="numero">18</span>La pistola de códigos y el QR</h2>
+  <h2><span class="numero">19</span>La pistola de códigos y el QR</h2>
   <p class="entrada">Escanear en vez de buscar.</p>
 
   <p>Cada caja del pañol, cada estante y cada máquina tienen una etiqueta con código QR. La
@@ -677,7 +723,7 @@
 </section>
 
 <section>
-  <h2><span class="numero">19</span>Cosas que conviene saber</h2>
+  <h2><span class="numero">20</span>Cosas que conviene saber</h2>
 
   <h3>La primera pantalla del día tarda</h3>
   <p>El servidor se duerme cuando nadie lo usa. La primera vez que alguien entra después de un
