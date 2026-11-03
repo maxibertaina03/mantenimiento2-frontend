@@ -4,6 +4,12 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.20.1] — 2026-11-03
+
+### Cambiado
+
+- **Exportar con vista previa:** la ventana ocupa casi toda la pantalla y la hoja de la vista previa usa todo el alto, así se ve completa (15 filas y todas las columnas) sin desplazarse.
+
 ## [1.20.0] — 2026-11-03
 
 ### Agregado
@@ -393,6 +399,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.20.1]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.20.1
 [1.20.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.20.0
 [1.19.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.19.0
 [1.18.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.18.0
