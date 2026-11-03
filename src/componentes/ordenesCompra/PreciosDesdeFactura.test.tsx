@@ -61,6 +61,9 @@ const ORDEN = {
 let confirmado: unknown = null;
 
 beforeEach(() => {
+  // jsdom no tiene URL de objetos: la factura se muestra al lado con una.
+  URL.createObjectURL = vi.fn(() => 'blob:factura');
+  URL.revokeObjectURL = vi.fn();
   confirmado = null;
   apiRequestMock.mockReset();
   apiRequestMock.mockImplementation((ruta: string, opciones?: { body?: unknown }) => {
@@ -112,6 +115,12 @@ async function abrirYLeer() {
 }
 
 describe('PreciosDesdeFactura', () => {
+  it('muestra la factura leída al lado de la revisión', async () => {
+    await abrirYLeer();
+    expect(screen.getByRole('region', { name: 'La factura leída' })).toBeInTheDocument();
+    expect(screen.getByTitle('Factura en PDF')).toHaveAttribute('src', 'blob:factura');
+  });
+
   it('lee la factura, detecta la B y propone: lo seguro tildado, lo dudoso no', async () => {
     await abrirYLeer();
 
