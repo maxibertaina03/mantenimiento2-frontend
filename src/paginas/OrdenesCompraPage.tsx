@@ -1,11 +1,8 @@
-import {
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Printer,
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useOrdenes } from '@/api/ordenesCompra';
+import { ChevronLeft, ChevronRight, Plus, Printer, SlidersHorizontal, X } from 'lucide-react';
+import { useState } from 'react';
+import { useOrdenes, type FiltrosOrdenes } from '@/api/ordenesCompra';
+import { ComboProveedor } from '@/componentes/ComboProveedor';
+import { useBusquedaDemorada, useListaEnUrl, type EsquemaFiltros } from '@/lib/listaEnUrl';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { formatearFecha } from '@/lib/formato';
 import { descargarPdfOrdenCompra } from '@/lib/pdfOrdenCompra';
@@ -20,6 +17,76 @@ import { ModalDetalleOrden } from '@/componentes/ordenesCompra/ModalDetalleOrden
 const LIMITE = 20;
 
 const ESTADOS = Object.keys(ETIQUETA_ESTADO_ORDEN) as EstadoOrdenCompra[];
+
+/** Todo lo que se puede filtrar, en la dirección: volver de una orden deja la lista igual. */
+interface Filtros extends FiltrosOrdenes {
+  buscar?: string;
+  estado?: EstadoOrdenCompra;
+  /** Solo para mostrar el proveedor elegido; filtra el id. */
+  proveedorNombre?: string;
+}
+
+const ESQUEMA: EsquemaFiltros<Filtros> = {
+  buscar: 'texto',
+  estado: 'texto',
+  proveedorId: 'texto',
+  proveedorNombre: 'texto',
+  fechaDesde: 'texto',
+  fechaHasta: 'texto',
+  precios: 'texto',
+  factura: 'texto',
+  atrasadas: 'si',
+  conProblemas: 'si',
+};
+
+/**
+ * Los atajos: lo que más se busca, a un toque. Cada uno es un filtro que se
+ * prende y se apaga, y se combinan entre sí (falta precio + sin factura = lo
+ * que hay que completar).
+ */
+const ATAJOS: {
+  texto: string;
+  ayuda: string;
+  activo: (f: Filtros) => boolean;
+  cambio: (activo: boolean) => Partial<Filtros>;
+}[] = [
+  {
+    texto: 'Falta precio',
+    ayuda: 'Al menos un renglón sin precio',
+    activo: (f) => f.precios === 'faltan',
+    cambio: (a) => ({ precios: a ? undefined : 'faltan' }),
+  },
+  {
+    texto: 'Sin factura',
+    ayuda: 'Sin factura adjunta en Comprobantes',
+    activo: (f) => f.factura === 'sin',
+    cambio: (a) => ({ factura: a ? undefined : 'sin' }),
+  },
+  {
+    texto: 'Atrasadas',
+    ayuda:
+      'Esperan mercadería y ya pasó la entrega estimada (o, sin fecha, más de 7 días de emitidas)',
+    activo: (f) => Boolean(f.atrasadas),
+    cambio: (a) => ({ atrasadas: !a }),
+  },
+  {
+    texto: 'Con problemas',
+    ayuda: 'Tuvieron una devolución o se cerraron con faltante',
+    activo: (f) => Boolean(f.conProblemas),
+    cambio: (a) => ({ conProblemas: !a }),
+  },
+];
+
+/** Cuántos filtros del panel están puestos (los atajos y el buscador se ven solos). */
+function filtrosDelPanel(f: Filtros): number {
+  return [
+    f.proveedorId,
+    f.fechaDesde,
+    f.fechaHasta,
+    f.precios === 'completos',
+    f.factura === 'con',
+  ].filter(Boolean).length;
+}
 
 /**
  * Con qué papel llegó la mercadería.
@@ -37,10 +104,13 @@ function comprobanteDe(orden: OrdenCompra): string {
 }
 
 export function OrdenesCompraPage() {
-  const [pagina, setPagina] = useState(1);
-  const [buscar, setBuscar] = useState('');
-  const [busquedaDebounced, setBusquedaDebounced] = useState('');
-  const [estado, setEstado] = useState<EstadoOrdenCompra | ''>('');
+  const { filtros, pagina, cambiarFiltros, reemplazarFiltros, irAPagina } =
+    useListaEnUrl<Filtros>(ESQUEMA);
+  const [buscar, setBuscar] = useBusquedaDemorada(filtros.buscar, (b) =>
+    cambiarFiltros({ buscar: b }),
+  );
+  const [panelAbierto, setPanelAbierto] = useState(() => filtrosDelPanel(filtros) > 0);
+  const setPagina = (cambio: (p: number) => number) => irAPagina(cambio(pagina));
   const [modalAlta, setModalAlta] = useState(false);
   const [ordenAbierta, setOrdenAbierta] = useState<OrdenCompra | null>(null);
   const [ordenAEnviar, setOrdenAEnviar] = useState<OrdenCompra | null>(null);
@@ -66,15 +136,11 @@ export function OrdenesCompraPage() {
       }
     : undefined;
 
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setBusquedaDebounced(buscar);
-      setPagina(1);
-    }, 300);
-    return () => clearTimeout(t);
-  }, [buscar]);
-
-  const { data, isLoading, error } = useOrdenes(pagina, LIMITE, busquedaDebounced, estado);
+  const { buscar: busquedaDebounced = '', estado = '', proveedorNombre, ...resto } = filtros;
+  void proveedorNombre;
+  const { data, isLoading, error } = useOrdenes(pagina, LIMITE, busquedaDebounced, estado, resto);
+  const hayFiltros = Object.keys(filtros).length > 0;
+  const enPanel = filtrosDelPanel(filtros);
   const totalPaginas = data ? Math.max(1, Math.ceil(data.total / LIMITE)) : 1;
 
   return (
@@ -90,16 +156,15 @@ export function OrdenesCompraPage() {
       <div className="grilla-filtros">
         <input
           type="search"
-          placeholder="Buscar por orden, proveedor, remito o factura…"
+          placeholder="Buscar por orden, proveedor, remito, factura o material…"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
         />
         <select
           value={estado}
-          onChange={(e) => {
-            setEstado(e.target.value as EstadoOrdenCompra | '');
-            setPagina(1);
-          }}
+          onChange={(e) =>
+            cambiarFiltros({ estado: (e.target.value || undefined) as EstadoOrdenCompra })
+          }
           aria-label="Filtrar por estado"
         >
           <option value="">Todos los estados</option>
@@ -109,14 +174,115 @@ export function OrdenesCompraPage() {
             </option>
           ))}
         </select>
+        <button
+          type="button"
+          className={enPanel > 0 ? 'btn btn-primario' : 'btn'}
+          aria-expanded={panelAbierto}
+          onClick={() => setPanelAbierto((v) => !v)}
+        >
+          <SlidersHorizontal className="icono" aria-hidden />
+          Más filtros{enPanel > 0 ? ` (${enPanel})` : ''}
+        </button>
       </div>
+
+      <div className="atajos-filtro" role="group" aria-label="Atajos">
+        {ATAJOS.map((a) => {
+          const activo = a.activo(filtros);
+          return (
+            <button
+              key={a.texto}
+              type="button"
+              className={`chip-periodo${activo ? ' activo' : ''}`}
+              aria-pressed={activo}
+              title={a.ayuda}
+              onClick={() => cambiarFiltros(a.cambio(activo))}
+            >
+              {a.texto}
+            </button>
+          );
+        })}
+        {hayFiltros && (
+          <button
+            type="button"
+            className="btn btn-fantasma btn-sm"
+            onClick={() => {
+              setBuscar('');
+              reemplazarFiltros({});
+            }}
+          >
+            <X className="icono" aria-hidden />
+            Limpiar filtros
+          </button>
+        )}
+      </div>
+
+      {panelAbierto && (
+        <div className="panel filtros-ordenes">
+          <div className="campo">
+            <span>Proveedor</span>
+            <ComboProveedor
+              key={filtros.proveedorId ?? 'ninguno'}
+              inicial={
+                filtros.proveedorId
+                  ? { id: filtros.proveedorId, nombre: filtros.proveedorNombre ?? '' }
+                  : null
+              }
+              onCambio={(p) => cambiarFiltros({ proveedorId: p?.id, proveedorNombre: p?.nombre })}
+            />
+          </div>
+          <label className="campo">
+            Desde
+            <input
+              type="date"
+              value={filtros.fechaDesde ?? ''}
+              max={filtros.fechaHasta}
+              onChange={(e) => cambiarFiltros({ fechaDesde: e.target.value || undefined })}
+            />
+          </label>
+          <label className="campo">
+            Hasta
+            <input
+              type="date"
+              value={filtros.fechaHasta ?? ''}
+              min={filtros.fechaDesde}
+              onChange={(e) => cambiarFiltros({ fechaHasta: e.target.value || undefined })}
+            />
+          </label>
+          <label className="campo">
+            Precios
+            <select
+              value={filtros.precios ?? ''}
+              onChange={(e) =>
+                cambiarFiltros({ precios: (e.target.value || undefined) as Filtros['precios'] })
+              }
+            >
+              <option value="">Todas</option>
+              <option value="completos">Con todos los precios</option>
+              <option value="faltan">Falta algún precio</option>
+            </select>
+          </label>
+          <label className="campo">
+            Factura
+            <select
+              value={filtros.factura ?? ''}
+              onChange={(e) =>
+                cambiarFiltros({ factura: (e.target.value || undefined) as Filtros['factura'] })
+              }
+            >
+              <option value="">Todas</option>
+              <option value="con">Con factura adjunta</option>
+              <option value="sin">Sin factura adjunta</option>
+            </select>
+          </label>
+        </div>
+      )}
 
       {isLoading && <Cargando />}
       {error && <MensajeError error={error} />}
 
       {data && data.datos.length === 0 && (
         <EstadoVacio>
-          {busquedaDebounced || estado
+          {hayFiltros
             ? 'No hay órdenes que coincidan con el filtro.'
             : 'Todavía no creaste ninguna orden de compra.'}
         </EstadoVacio>
@@ -177,7 +343,11 @@ export function OrdenesCompraPage() {
 
       {data && totalPaginas > 1 && (
         <div className="acciones paginacion">
-          <button className="btn btn-sm" disabled={pagina <= 1} onClick={() => setPagina((p) => p - 1)}>
+          <button
+            className="btn btn-sm"
+            disabled={pagina <= 1}
+            onClick={() => setPagina((p) => p - 1)}
+          >
             <ChevronLeft className="icono" aria-hidden />
             Anterior
           </button>
@@ -200,9 +370,7 @@ export function OrdenesCompraPage() {
         onCerrar={() => setModalAlta(false)}
         onEnviar={alEnviar}
       />
-      {ordenAEnviar && (
-        <EnviarOrden orden={ordenAEnviar} onCerrar={() => setOrdenAEnviar(null)} />
-      )}
+      {ordenAEnviar && <EnviarOrden orden={ordenAEnviar} onCerrar={() => setOrdenAEnviar(null)} />}
       {ordenAbierta && (
         <ModalDetalleOrden
           orden={ordenAbierta}

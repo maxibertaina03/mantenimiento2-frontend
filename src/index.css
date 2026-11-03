@@ -5210,3 +5210,26 @@ label.casilla .icono {
   color: var(--texto);
   font: inherit;
 }
+
+/* Órdenes de compra: los atajos de un toque y el panel de más filtros. */
+.atajos-filtro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.9rem;
+}
+.filtros-ordenes {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) repeat(4, minmax(140px, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+@media (max-width: 900px) {
+  .filtros-ordenes {
+    grid-template-columns: 1fr 1fr;
+  }
+  .filtros-ordenes > :first-child {
+    grid-column: 1 / -1;
+  }
+}

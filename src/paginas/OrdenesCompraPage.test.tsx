@@ -143,7 +143,9 @@ describe('OrdenesCompraPage — una sola ventana a la vez', () => {
     // Queda la de envío, y la de detalle ya no está.
     expect(await screen.findByRole('heading', { name: /Enviar OC-2026-0005/ })).toBeInTheDocument();
     await waitFor(() =>
-      expect(screen.queryByRole('heading', { name: /^Orden OC-2026-0005/ })).not.toBeInTheDocument(),
+      expect(
+        screen.queryByRole('heading', { name: /^Orden OC-2026-0005/ }),
+      ).not.toBeInTheDocument(),
     );
   });
 
@@ -187,14 +189,31 @@ describe('OrdenesCompraPage — cargar un precio que faltó, con la orden ya rec
     recibidaEn: '2026-09-20T10:00:00.000Z',
     remito: '0008-00006260',
     renglones: [
-      { ...orden.renglones[0], id: 'r1', materialNombre: 'Bandeja porta cable', cantidad: 3, precioUnitario: 48226.69, subtotal: 144680.07 },
-      { ...orden.renglones[0], id: 'r2', materialNombre: 'Controlador de temperatura', cantidad: 1, precioUnitario: null, subtotal: null },
+      {
+        ...orden.renglones[0],
+        id: 'r1',
+        materialNombre: 'Bandeja porta cable',
+        cantidad: 3,
+        precioUnitario: 48226.69,
+        subtotal: 144680.07,
+      },
+      {
+        ...orden.renglones[0],
+        id: 'r2',
+        materialNombre: 'Controlador de temperatura',
+        cantidad: 1,
+        precioUnitario: null,
+        subtotal: null,
+      },
     ],
     total: null,
   };
   const completa = {
     ...recibida,
-    renglones: [recibida.renglones[0], { ...recibida.renglones[1], precioUnitario: 125000, subtotal: 125000 }],
+    renglones: [
+      recibida.renglones[0],
+      { ...recibida.renglones[1], precioUnitario: 125000, subtotal: 125000 },
+    ],
     total: 269680.07,
   };
 
@@ -203,9 +222,13 @@ describe('OrdenesCompraPage — cargar un precio que faltó, con la orden ya rec
     apiRequestMock.mockImplementation((rutaCruda: string, opciones?: unknown) => {
       const ruta = String(rutaCruda ?? '');
       pedidos.push({ ruta, opciones });
-      if (ruta.startsWith('/usuarios/me')) return Promise.resolve({ id: 'u1', nombre: 'Máximo', rol: 'ADMIN' });
+      if (ruta.startsWith('/usuarios/me'))
+        return Promise.resolve({ id: 'u1', nombre: 'Máximo', rol: 'ADMIN' });
       if (ruta.startsWith('/permisos/mios')) {
-        return Promise.resolve({ rol: 'ADMIN', permisos: ['ordenes.ver', 'ordenes.editar', 'ordenes.recibir'] });
+        return Promise.resolve({
+          rol: 'ADMIN',
+          permisos: ['ordenes.ver', 'ordenes.editar', 'ordenes.recibir'],
+        });
       }
       if (ruta === '/ordenes-compra/oc-15/precios') return Promise.resolve(completa);
       if (ruta.endsWith('/comprobantes')) return Promise.resolve([]);
@@ -221,7 +244,10 @@ describe('OrdenesCompraPage — cargar un precio que faltó, con la orden ya rec
     expect(await screen.findByText('Sin precio')).toBeInTheDocument();
 
     await usuario.click(screen.getByRole('button', { name: /cargar o corregir precios/i }));
-    await usuario.type(screen.getByRole('spinbutton', { name: /precio de controlador/i }), '125000');
+    await usuario.type(
+      screen.getByRole('spinbutton', { name: /precio de controlador/i }),
+      '125000',
+    );
     await usuario.click(screen.getByRole('button', { name: /guardar precios/i }));
 
     expect(await screen.findByText(/precios guardados/i)).toBeInTheDocument();
@@ -241,8 +267,10 @@ describe('OrdenesCompraPage — cargar un precio que faltó, con la orden ya rec
   it('sin el permiso de editar órdenes, no se ofrece', async () => {
     apiRequestMock.mockImplementation((rutaCruda: string) => {
       const ruta = String(rutaCruda ?? '');
-      if (ruta.startsWith('/usuarios/me')) return Promise.resolve({ id: 'u2', nombre: 'Operario', rol: 'MANTENIMIENTO' });
-      if (ruta.startsWith('/permisos/mios')) return Promise.resolve({ rol: 'MANTENIMIENTO', permisos: ['ordenes.ver'] });
+      if (ruta.startsWith('/usuarios/me'))
+        return Promise.resolve({ id: 'u2', nombre: 'Operario', rol: 'MANTENIMIENTO' });
+      if (ruta.startsWith('/permisos/mios'))
+        return Promise.resolve({ rol: 'MANTENIMIENTO', permisos: ['ordenes.ver'] });
       if (ruta.endsWith('/comprobantes')) return Promise.resolve([]);
       if (ruta.startsWith('/ordenes-compra')) {
         return Promise.resolve({ datos: [recibida], total: 1, pagina: 1, limite: 20 });
@@ -254,7 +282,9 @@ describe('OrdenesCompraPage — cargar un precio que faltó, con la orden ya rec
 
     await usuario.click(await screen.findByRole('button', { name: /^ver$/i }));
     await screen.findByRole('heading', { name: /Orden OC-2026-0015/ });
-    expect(screen.queryByRole('button', { name: /cargar o corregir precios/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /cargar o corregir precios/i }),
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -417,8 +447,62 @@ describe('renglonesParaEnviar', () => {
   it('los renglones sin cantidad no se mandan', () => {
     expect(
       renglonesParaEnviar([
-        { clave: 'mat-1', materialId: 'm1', materialNombre: 'Reten', unidad: 'u', cantidad: undefined },
+        {
+          clave: 'mat-1',
+          materialId: 'm1',
+          materialNombre: 'Reten',
+          unidad: 'u',
+          cantidad: undefined,
+        },
       ]),
     ).toEqual([]);
+  });
+});
+
+describe('OrdenesCompraPage — filtros', () => {
+  const ultimaConsulta = () => {
+    const listados = apiRequestMock.mock.calls.filter(([r]) => r === '/ordenes-compra');
+    return (listados.at(-1)?.[1] as { query: Record<string, unknown> }).query;
+  };
+
+  it('los atajos piden lo que falta: sin precio y sin factura, combinados', async () => {
+    mostrar();
+    await screen.findByText(orden.numero);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Falta precio' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Sin factura' }));
+
+    await waitFor(() =>
+      expect(ultimaConsulta()).toMatchObject({ precios: 'faltan', factura: 'sin' }),
+    );
+    expect(screen.getByRole('button', { name: 'Falta precio' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('atrasadas y con problemas viajan como true; «Limpiar filtros» los saca', async () => {
+    mostrar();
+    await screen.findByText(orden.numero);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Atrasadas' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Con problemas' }));
+    await waitFor(() =>
+      expect(ultimaConsulta()).toMatchObject({ atrasadas: 'true', conProblemas: 'true' }),
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /Limpiar filtros/ }));
+    await waitFor(() => expect(ultimaConsulta().atrasadas).toBeUndefined());
+    expect(ultimaConsulta().conProblemas).toBeUndefined();
+  });
+
+  it('«Más filtros» ofrece proveedor, fechas, precios y factura', async () => {
+    mostrar();
+    await userEvent.click(screen.getByRole('button', { name: /Más filtros/ }));
+
+    await userEvent.selectOptions(screen.getByLabelText('Precios'), 'completos');
+    await waitFor(() => expect(ultimaConsulta()).toMatchObject({ precios: 'completos' }));
+    expect(screen.getByLabelText('Desde')).toBeInTheDocument();
+    expect(screen.getByLabelText('Factura')).toBeInTheDocument();
   });
 });

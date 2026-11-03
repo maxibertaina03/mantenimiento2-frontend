@@ -10,19 +10,56 @@ import type {
   RecibirOrdenInput,
 } from '@/tipos/ordenCompra';
 
+/** Los filtros del listado, además del buscador y el estado. */
+export interface FiltrosOrdenes {
+  proveedorId?: string;
+  fechaDesde?: string;
+  fechaHasta?: string;
+  /** `completos`: todos los renglones con precio; `faltan`: al menos uno sin. */
+  precios?: 'completos' | 'faltan';
+  factura?: 'con' | 'sin';
+  /** Esperan mercadería y ya deberían haber llegado. */
+  atrasadas?: boolean;
+  /** Tuvieron una devolución o se cerraron con faltante. */
+  conProblemas?: boolean;
+}
+
 export const clavesOrdenes = {
   base: ['ordenes-compra'] as const,
-  lista: (pagina: number, limite: number, buscar: string, estado: string) =>
-    ['ordenes-compra', 'lista', pagina, limite, buscar, estado] as const,
+  lista: (
+    pagina: number,
+    limite: number,
+    buscar: string,
+    estado: string,
+    filtros: FiltrosOrdenes = {},
+  ) => ['ordenes-compra', 'lista', pagina, limite, buscar, estado, filtros] as const,
   detalle: (id: string) => ['ordenes-compra', 'detalle', id] as const,
 };
 
-export function useOrdenes(pagina = 1, limite = 20, buscar = '', estado: EstadoOrdenCompra | '' = '') {
+export function useOrdenes(
+  pagina = 1,
+  limite = 20,
+  buscar = '',
+  estado: EstadoOrdenCompra | '' = '',
+  filtros: FiltrosOrdenes = {},
+) {
   return useQuery({
-    queryKey: clavesOrdenes.lista(pagina, limite, buscar, estado),
+    queryKey: clavesOrdenes.lista(pagina, limite, buscar, estado, filtros),
     queryFn: () =>
       apiRequest<RespuestaPaginada<OrdenCompra>>('/ordenes-compra', {
-        query: { pagina, limite, buscar: buscar || undefined, estado: estado || undefined },
+        query: {
+          pagina,
+          limite,
+          buscar: buscar || undefined,
+          estado: estado || undefined,
+          proveedorId: filtros.proveedorId,
+          fechaDesde: filtros.fechaDesde,
+          fechaHasta: filtros.fechaHasta,
+          precios: filtros.precios,
+          factura: filtros.factura,
+          atrasadas: filtros.atrasadas ? 'true' : undefined,
+          conProblemas: filtros.conProblemas ? 'true' : undefined,
+        },
       }),
   });
 }
