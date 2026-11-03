@@ -163,6 +163,13 @@ export interface FiltrosOrdenesTrabajo {
   asignadoAId?: string;
   /** EXTERNO: las de talleres de afuera. */
   ejecutor?: Ejecutor;
+  /** Abiertas desde / hasta (AAAA-MM-DD). */
+  fechaDesde?: string;
+  fechaHasta?: string;
+  /** Siguen abiertas hace más de 7 días. */
+  demoradas?: boolean;
+  /** Pararon la máquina (tienen horas de parada). */
+  conParada?: boolean;
 }
 
 /**

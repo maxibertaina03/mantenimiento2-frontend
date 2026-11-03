@@ -175,6 +175,8 @@ export function GastoPorMaterial({
           titulo="Exportar el gasto por material"
           reporte="gasto-por-material"
           columnas={COLUMNAS}
+          muestra={filtrados}
+          totalFilas={filtrados.length}
           onExportar={(formato, elegidas) => void exportar(formato, elegidas)}
           onCerrar={() => setExportando(false)}
         />

@@ -5233,3 +5233,81 @@ label.casilla .icono {
     grid-column: 1 / -1;
   }
 }
+
+/* Exportar con vista previa (ElegirColumnas): las columnas a la izquierda y
+   la hoja a la derecha, con el estilo del PDF (encabezado azul, filas
+   alternadas). En el celular, una debajo de la otra. */
+.exportar-con-previa {
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+.exportar-con-previa .elegir-columnas {
+  grid-template-columns: 1fr;
+}
+.elegir-columnas-lado {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.vista-previa-reporte {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.vista-previa-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+}
+.vista-previa-hoja {
+  overflow: auto;
+  max-height: 420px;
+  padding: 0.9rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: #fff;
+  box-shadow: inset 0 0 0 4px var(--panel-suave);
+}
+.vista-previa-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+  color: #1f2933;
+}
+.vista-previa-tabla th {
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+  text-align: left;
+  padding: 0.35rem 0.45rem;
+  white-space: nowrap;
+}
+.vista-previa-tabla td {
+  padding: 0.3rem 0.45rem;
+  border-bottom: 1px solid #eef1f4;
+  vertical-align: top;
+  max-width: 18rem;
+}
+.vista-previa-tabla tbody tr:nth-child(even) td {
+  background: #f6f8fa;
+}
+.vista-previa-vacia {
+  margin: 1.5rem 0;
+  text-align: center;
+}
+@media (max-width: 760px) {
+  .exportar-con-previa {
+    grid-template-columns: 1fr;
+  }
+  .exportar-con-previa .elegir-columnas {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  .vista-previa-hoja {
+    max-height: 300px;
+  }
+}

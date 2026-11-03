@@ -1,11 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/apiClient';
 import type { RespuestaPaginada } from '@/tipos/comunes';
-import type {
-  ActualizarProveedorInput,
-  CrearProveedorInput,
-  Proveedor,
-} from '@/tipos/proveedor';
+import type { ActualizarProveedorInput, CrearProveedorInput, Proveedor } from '@/tipos/proveedor';
 
 const claves = {
   base: ['proveedores'] as const,
@@ -22,12 +18,31 @@ export function useProveedor(id: string | null | undefined) {
   });
 }
 
-export function useProveedores(pagina = 1, limite = 20, buscar = '') {
+/** Los atajos del listado de proveedores. */
+export interface FiltrosProveedores {
+  sinCorreo?: boolean;
+  sinTelefono?: boolean;
+  conOrdenesSinPrecio?: boolean;
+}
+
+export function useProveedores(
+  pagina = 1,
+  limite = 20,
+  buscar = '',
+  filtros: FiltrosProveedores = {},
+) {
   return useQuery({
-    queryKey: claves.lista(pagina, limite, buscar),
+    queryKey: [...claves.lista(pagina, limite, buscar), filtros],
     queryFn: () =>
       apiRequest<RespuestaPaginada<Proveedor>>('/proveedores', {
-        query: { pagina, limite, buscar: buscar || undefined },
+        query: {
+          pagina,
+          limite,
+          buscar: buscar || undefined,
+          sinCorreo: filtros.sinCorreo ? 'true' : undefined,
+          sinTelefono: filtros.sinTelefono ? 'true' : undefined,
+          conOrdenesSinPrecio: filtros.conOrdenesSinPrecio ? 'true' : undefined,
+        },
       }),
   });
 }

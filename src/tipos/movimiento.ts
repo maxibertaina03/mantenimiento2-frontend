@@ -109,6 +109,9 @@ export interface FiltrosMovimientos {
   motivo?: MotivoMovimiento;
   fechaDesde?: string;
   fechaHasta?: string;
+  proveedorId?: string;
+  /** Parte de la referencia: «OC-2026-0036» trae lo que movió esa orden. */
+  referencia?: string;
   pagina?: number;
   limite?: number;
 }
