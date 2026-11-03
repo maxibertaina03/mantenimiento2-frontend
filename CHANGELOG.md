@@ -4,6 +4,16 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.20.0] — 2026-11-03
+
+### Agregado
+
+- **Vista previa al exportar:** las columnas a la izquierda y, a la derecha, cómo queda el reporte con las primeras filas reales y el estilo del PDF. Cambia al tildar o destildar. En Materiales, Historial, el informe de la toma y el gasto por material.
+- **Filtros nuevos:**
+  - Órdenes de trabajo: responsable, desde y hasta, «Demoradas (más de 7 días)» y «Con horas de parada».
+  - Historial de movimientos: proveedor y referencia (por ejemplo, todo lo que movió la OC-2026-0036).
+  - Proveedores: atajos «Con órdenes sin precio», «Sin correo» y «Sin teléfono».
+
 ## [1.19.0] — 2026-11-03
 
 ### Agregado
@@ -383,6 +393,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.20.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.20.0
 [1.19.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.19.0
 [1.18.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.18.0
 [1.17.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.17.0
