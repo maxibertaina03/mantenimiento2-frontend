@@ -39,6 +39,7 @@ const renglon = (id: string, nombre: string, recibida = 0): RenglonOrden => ({
   clasificacion: null,
   cantidadRecibida: recibida,
   pendiente: 10 - recibida,
+  cantidadDevuelta: 0,
 });
 
 const OC28 = {
@@ -67,6 +68,8 @@ const OC28 = {
   recepciones: [],
   cerradaConFaltante: false,
   motivoFaltante: null,
+  devoluciones: [],
+  estadoDevolucion: 'SIN_DEVOLUCION',
   creadoEn: '2026-10-01T10:00:00.000Z',
 } as OrdenCompra;
 

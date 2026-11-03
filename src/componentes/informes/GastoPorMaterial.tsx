@@ -28,6 +28,12 @@ const COLUMNAS: ColumnaReporte<GastoMaterial>[] = [
   { clave: 'proveedores', titulo: 'Proveedores', valor: (m) => m.proveedores.join(', ') },
   { clave: 'ordenes', titulo: 'Órdenes', valor: (m) => m.ordenes, porDefecto: false },
   {
+    clave: 'devuelto',
+    titulo: 'Devuelto',
+    valor: (m) => (m.devuelto > 0 ? moneda(m.devuelto) : ''),
+    porDefecto: false,
+  },
+  {
     clave: 'sinPrecio',
     titulo: 'Renglones sin precio',
     valor: (m) => m.renglonesSinPrecio,
@@ -124,6 +130,12 @@ export function GastoPorMaterial({
                     <span className="texto-suave texto-chico">
                       {' '}
                       · {m.renglonesSinPrecio} sin precio
+                    </span>
+                  )}
+                  {m.cantidadDevuelta > 0 && (
+                    <span className="texto-suave texto-chico">
+                      {' '}
+                      · devuelto {formatearNumero(m.cantidadDevuelta)}
                     </span>
                   )}
                 </td>

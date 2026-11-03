@@ -283,12 +283,19 @@ function esContinuacion(texto: string): boolean {
   );
 }
 
-/** La letra de la factura: por «FACTURA A» o por el código de comprobante (01, 06, 11). */
+/**
+ * La letra de la factura (o de la nota de crédito): por «FACTURA A» o por el
+ * código de comprobante.
+ */
 export function detectarLetra(textos: string[]): LetraFactura | null {
   const todo = textos.join('\n');
-  const codigo = /C[OÓ]D(?:IGO)?\.?\s*(?:N[°º.]?\s*)?0*(1|6|11)\b/i.exec(todo);
-  if (codigo) return ({ '1': 'A', '6': 'B', '11': 'C' } as const)[codigo[1] as '1' | '6' | '11'];
-  const palabra = /FACTURA\s+([ABC])\b/i.exec(todo);
+  const codigo = /C[OÓ]D(?:IGO)?\.?\s*(?:N[°º.]?\s*)?0*(1|2|3|6|7|8|11|12|13)\b/i.exec(todo);
+  // Factura, nota de débito y nota de crédito: 1/2/3 son A, 6/7/8 son B, 11/12/13 son C.
+  if (codigo) {
+    const n = Number(codigo[1]);
+    return n <= 3 ? 'A' : n <= 8 ? 'B' : 'C';
+  }
+  const palabra = /(?:FACTURA|NOTA DE CR[EÉ]DITO)\s+([ABC])\b/i.exec(todo);
   if (palabra) return palabra[1].toUpperCase() as LetraFactura;
   // La letra sola, en su recuadro, en un renglón propio.
   const sola = textos.find((t) => /^[ABC]$/.test(t.trim()));

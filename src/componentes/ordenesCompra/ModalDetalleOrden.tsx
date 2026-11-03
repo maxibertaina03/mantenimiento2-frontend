@@ -6,6 +6,7 @@ import {
   Pencil,
   Printer,
   ScanText,
+  Undo2,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useComprobantes } from '@/api/comprobantes';
@@ -27,11 +28,12 @@ import { descargarPdfOrdenCompra } from '@/lib/pdfOrdenCompra';
 import { ETIQUETA_ESTADO_ORDEN, nombreDelRenglon } from '@/tipos/ordenCompra';
 import type { OrdenCompra } from '@/tipos/ordenCompra';
 import { CLASE_ESTADO, moneda } from './formato';
+import { DevolverMercaderia } from './DevolverMercaderia';
 import { PreciosDesdeFactura } from './PreciosDesdeFactura';
 import { ReclamarFaltante } from './ReclamarFaltante';
 import { RecibirMercaderia } from './RecibirMercaderia';
 
-type Pestana = 'detalle' | 'entregas' | 'comprobantes' | 'envios';
+type Pestana = 'detalle' | 'entregas' | 'devoluciones' | 'comprobantes' | 'envios';
 
 /**
  * El detalle de una orden de compra.
@@ -74,6 +76,8 @@ export function ModalDetalleOrden({
   const [mostrarRecepcion, setMostrarRecepcion] = useState(false);
   const [recienRecibida, setRecienRecibida] = useState(false);
   const [reclamando, setReclamando] = useState(false);
+  const [devolviendo, setDevolviendo] = useState(false);
+  const [recienDevuelta, setRecienDevuelta] = useState(false);
   const [cerrandoConFaltante, setCerrandoConFaltante] = useState(false);
   const [motivoFaltante, setMotivoFaltante] = useState('');
 
@@ -91,10 +95,19 @@ export function ModalDetalleOrden({
       orden.estado === 'RECIBIDA_PARCIAL' ||
       orden.estado === 'RECIBIDA');
   /** Hay un formulario abierto: las acciones del encabezado se apartan. */
-  const formularioAbierto = mostrarRecepcion || cerrandoConFaltante || editandoPrecios;
+  const formularioAbierto =
+    mostrarRecepcion || cerrandoConFaltante || editandoPrecios || devolviendo;
+  const devoluciones = orden.devoluciones ?? [];
+  // Se devuelve de lo que ya llegó: de una orden recibida, toda o en parte.
+  const puedeDevolver =
+    puede(P.ORDENES_RECIBIR) &&
+    (orden.estado === 'RECIBIDA' || orden.estado === 'RECIBIDA_PARCIAL') &&
+    orden.renglones.some((r) => r.materialId && r.cantidadRecibida - r.cantidadDevuelta > 0.0005);
 
   const empezarAEditarPrecios = () => {
-    setPrecios(Object.fromEntries(orden.renglones.map((r) => [r.id, r.precioUnitario ?? undefined])));
+    setPrecios(
+      Object.fromEntries(orden.renglones.map((r) => [r.id, r.precioUnitario ?? undefined])),
+    );
     setPreciosGuardados(false);
     setPestana('detalle');
     setEditandoPrecios(true);
@@ -127,6 +140,9 @@ export function ModalDetalleOrden({
     ...(mostrarRecibido && recepciones.length > 0
       ? [{ id: 'entregas' as const, titulo: 'Entregas', cuenta: recepciones.length }]
       : []),
+    ...(devoluciones.length > 0
+      ? [{ id: 'devoluciones' as const, titulo: 'Devoluciones', cuenta: devoluciones.length }]
+      : []),
     ...(orden.estado !== 'BORRADOR'
       ? [
           {
@@ -146,7 +162,14 @@ export function ModalDetalleOrden({
         <div className="detalle-oc-cabecera">
           <div className="detalle-oc-titulo">
             <strong className="detalle-oc-proveedor">{orden.proveedorNombre ?? '—'}</strong>
-            <span className={CLASE_ESTADO[orden.estado]}>{ETIQUETA_ESTADO_ORDEN[orden.estado]}</span>
+            <span className={CLASE_ESTADO[orden.estado]}>
+              {ETIQUETA_ESTADO_ORDEN[orden.estado]}
+            </span>
+            {orden.estadoDevolucion !== 'SIN_DEVOLUCION' && (
+              <span className="badge badge-aviso">
+                {orden.estadoDevolucion === 'TOTAL' ? 'Devuelta' : 'Devuelta en parte'}
+              </span>
+            )}
             {orden.total !== null && (
               <span className="detalle-oc-total">{moneda(orden.total)}</span>
             )}
@@ -211,6 +234,20 @@ export function ModalDetalleOrden({
                       Recibir otra entrega
                     </>
                   )}
+                </button>
+              )}
+              {puedeDevolver && (
+                <button
+                  className="btn"
+                  title="Devolverle mercadería al proveedor, con su nota de crédito"
+                  onClick={() => {
+                    setRecienDevuelta(false);
+                    setPestana('detalle');
+                    setDevolviendo(true);
+                  }}
+                >
+                  <Undo2 className="icono" aria-hidden />
+                  Devolver al proveedor
                 </button>
               )}
               {orden.estado === 'RECIBIDA_PARCIAL' && (
@@ -291,8 +328,8 @@ export function ModalDetalleOrden({
             <Check className="icono" aria-hidden />
             {recienRecibida ? 'Entrega registrada. ' : ''}
             Llegó una parte y ya sumó al stock. Falta{' '}
-            {pendientes.length === 1 ? 'un renglón' : `${pendientes.length} renglones`}: reclamalo, o
-            recibilo cuando llegue.
+            {pendientes.length === 1 ? 'un renglón' : `${pendientes.length} renglones`}: reclamalo,
+            o recibilo cuando llegue.
           </div>
         )}
         {orden.estado === 'RECIBIDA' && orden.cerradaConFaltante && (
@@ -315,13 +352,32 @@ export function ModalDetalleOrden({
         {preciosGuardados && (
           <div className="alerta alerta-exito">
             <Check className="icono" aria-hidden />
-            Precios guardados. Descargá el PDF de nuevo (o enviáselo) para que el proveedor
-            tenga la orden completa.
+            Precios guardados. Descargá el PDF de nuevo (o enviáselo) para que el proveedor tenga la
+            orden completa.
           </div>
         )}
         {errorAccion && <MensajeError error={errorAccion} />}
 
+        {recienDevuelta && (
+          <div className="alerta alerta-exito">
+            <Check className="icono" aria-hidden />
+            Devolución registrada: lo devuelto salió del pañol. Adjuntá la nota de crédito en
+            Comprobantes si todavía no está.
+          </div>
+        )}
+
         {/* ── Los formularios, donde se está mirando ── */}
+        {devolviendo && (
+          <DevolverMercaderia
+            orden={orden}
+            onCancelar={() => setDevolviendo(false)}
+            onListo={(actualizada) => {
+              setOrden(actualizada);
+              setDevolviendo(false);
+              setRecienDevuelta(true);
+            }}
+          />
+        )}
         {mostrarRecepcion && (
           <RecibirMercaderia
             orden={orden}
@@ -429,6 +485,8 @@ export function ModalDetalleOrden({
                                 ) : (
                                   <Check className="icono icono-ok" aria-label="completo" />
                                 )}
+                                {r.cantidadDevuelta > 0 &&
+                                  ` · devuelto ${formatearNumero(r.cantidadDevuelta)}`}
                               </td>
                             )}
                             {editandoPrecios ? (
@@ -524,6 +582,31 @@ export function ModalDetalleOrden({
                 </ul>
               )}
 
+              {pestana === 'devoluciones' && (
+                <ul className="entregas-lista">
+                  {devoluciones.map((d) => (
+                    <li key={d.id}>
+                      <strong>{formatearFecha(d.fecha)}</strong>
+                      {d.notaCredito ? ` · Nota de crédito ${d.notaCredito}` : ''}
+                      {d.monto !== null ? ` · ${moneda(d.monto)} sin IVA` : ''}
+                      {d.registradaPorNombre ? ` · ${d.registradaPorNombre}` : ''}
+                      {d.motivo && <div className="texto-chico">{d.motivo}</div>}
+                      <div className="texto-suave texto-chico">
+                        {d.renglones
+                          .map((x) => {
+                            const renglon = orden.renglones.find((r) => r.id === x.renglonId);
+                            const que = `${formatearNumero(x.cantidad)} ${renglon?.unidad ?? ''} ${
+                              renglon ? (nombreDelRenglon(renglon) ?? '') : ''
+                            }`.trim();
+                            return x.salioDelPanol ? que : `${que} (no salió del pañol)`;
+                          })
+                          .join(' · ')}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
               {/* El papel del remito o la factura: se carga desde que la orden
                   salió, a veces antes de terminar de contar la mercadería. */}
               {pestana === 'comprobantes' && <ComprobantesOrden ordenId={orden.id} />}
@@ -534,7 +617,12 @@ export function ModalDetalleOrden({
                     {envios.data.map((e) => (
                       <li key={e.id}>
                         <span>
-                          {e.via === 'CORREO' ? <Mail className="icono" aria-hidden /> : <MessageCircle className="icono" aria-hidden />} {e.esReclamo ? 'Reclamo · ' : ''}
+                          {e.via === 'CORREO' ? (
+                            <Mail className="icono" aria-hidden />
+                          ) : (
+                            <MessageCircle className="icono" aria-hidden />
+                          )}{' '}
+                          {e.esReclamo ? 'Reclamo · ' : ''}
                           {e.destinatarios}
                           {!e.automatico && <span className="texto-suave"> (a mano)</span>}
                         </span>

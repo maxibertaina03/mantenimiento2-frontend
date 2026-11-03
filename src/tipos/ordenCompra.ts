@@ -56,6 +56,8 @@ export interface RenglonOrden {
   cantidadRecibida: number;
   /** Lo que falta entregar. */
   pendiente: number;
+  /** Lo que se le devolvió al proveedor. */
+  cantidadDevuelta: number;
 }
 
 /** Una entrega del proveedor: lo que llegó en un remito. */
@@ -68,6 +70,25 @@ export interface RecepcionOrden {
   recibidaPorNombre: string | null;
   renglones: { renglonId: string; cantidad: number }[];
 }
+
+/** Mercadería devuelta al proveedor, con su nota de crédito. */
+export interface DevolucionOrden {
+  id: string;
+  fecha: string;
+  notaCredito: string | null;
+  motivo: string | null;
+  registradaPorNombre: string | null;
+  renglones: {
+    renglonId: string;
+    cantidad: number;
+    precioUnitario: number | null;
+    salioDelPanol: boolean;
+  }[];
+  /** Lo que acredita, sin IVA. Null si a algún renglón le falta el precio. */
+  monto: number | null;
+}
+
+export type EstadoDevolucion = 'SIN_DEVOLUCION' | 'PARCIAL' | 'TOTAL';
 
 /**
  * Qué se compra en un renglón: el material del pañol, o el equipo.
@@ -107,6 +128,9 @@ export interface OrdenCompra {
   /** Se cerró con lo que llegó: el proveedor no entregó todo. */
   cerradaConFaltante: boolean;
   motivoFaltante: string | null;
+  /** Lo devuelto al proveedor, de la primera devolución a la última. */
+  devoluciones: DevolucionOrden[];
+  estadoDevolucion: EstadoDevolucion;
   creadoEn: string;
 }
 

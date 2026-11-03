@@ -1,5 +1,6 @@
 import { dibujarMembrete, EMPRESA, GRIS, NEGRO, ROJO } from './pdfMembrete';
 import { formatearFechaSola, formatearNumero } from './formato';
+import { PEDIDO_FACTURA_PDF } from './pedidoFactura';
 import { nombreDelRenglon, type OrdenCompra } from '@/tipos/ordenCompra';
 
 function moneda(valor: number | null): string {
@@ -141,6 +142,22 @@ async function construirPdf(orden: OrdenCompra) {
     const lineas = doc.splitTextToSize(orden.observaciones, anchoPagina - margen * 2);
     doc.text(lineas, margen, y);
     y += lineas.length * 4.4 + 6;
+  }
+
+  // ── Factura digital ──
+  // Un recuadro que se vea: es lo que hace que la factura llegue en PDF y el
+  // precio se cargue leyéndola.
+  {
+    const texto = doc.splitTextToSize(PEDIDO_FACTURA_PDF, anchoPagina - margen * 2 - 8);
+    const alto = texto.length * 4.4 + 4;
+    doc.setDrawColor(...ROJO);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(margen, y - 4, anchoPagina - margen * 2, alto, 1.5, 1.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...NEGRO);
+    doc.text(texto, margen + 4, y + 0.5);
+    y += alto + 4;
   }
 
   // ── Cerrada con faltante ──

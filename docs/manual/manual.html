@@ -89,7 +89,7 @@
   <p>Cómo usar cada pantalla, para qué sirve y qué conviene cargar.
      Las imágenes son del sistema en funcionamiento, con los datos reales de la planta.</p>
   <div class="pie">
-    Versión de noviembre de 2026 · pantallas v1.15.0 · servidor v1.13.0 · Vista de administrador<br>
+    Versión de noviembre de 2026 · pantallas v1.18.0 · servidor v1.16.0 · Vista de administrador<br>
     mantenimiento2-frontend.vercel.app
   </div>
 </div>
@@ -400,6 +400,20 @@
       entrega.</li>
     <li><strong>Reclamar lo que falta:</strong> arma el mensaje al proveedor con lo que no llegó.</li>
     <li><strong>Comprobantes:</strong> la foto o el PDF del remito o la factura queda guardado con la orden.</li>
+  </ul>
+
+  <h3>Devolver al proveedor</h3>
+  <p>Si algo de una orden ya recibida se devuelve (vino fallado, no era el modelo), <strong>«Devolver
+    al proveedor»</strong> registra la devolución con su nota de crédito. Se puede devolver todo o una
+    parte.</p>
+  <ul>
+    <li>Lo devuelto <strong>sale del pañol</strong>: queda una salida con motivo «Devolución» en el
+      historial. Si algo ya se usó y no está en el estante, se desmarca «Sale del pañol».</li>
+    <li><strong>«Leer la nota de crédito»</strong> la lee como una factura (PDF o foto) y completa
+      cantidades y precios; se revisan antes de confirmar. Queda adjunta en Comprobantes.</li>
+    <li>Si la orden no tenía precios, los de la nota de crédito los completan.</li>
+    <li>La orden queda marcada «Devuelta» o «Devuelta en parte», con la pestaña Devoluciones. En
+      Informes, el gasto descuenta lo devuelto.</li>
   </ul>
 
   <h3>Precios desde la factura</h3>
