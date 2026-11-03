@@ -5,7 +5,7 @@ import {
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useUsuarioActual } from '@/api/usuarios';
-import { useOrdenesTrabajo } from '@/api/ordenesTrabajo';
+import { useOrdenesTrabajo, useAsignables } from '@/api/ordenesTrabajo';
 import { useSectores } from '@/api/sectores';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { formatearFecha } from '@/lib/formato';
@@ -44,6 +44,12 @@ export function OrdenesTrabajoPage() {
   const [modalAlta, setModalAlta] = useState(false);
   const [ordenAbierta, setOrdenAbierta] = useState<string | null>(null);
   const [soloMias, setSoloMias] = useState(false);
+  const [responsable, setResponsable] = useState('');
+  const [fechaDesde, setFechaDesde] = useState('');
+  const [fechaHasta, setFechaHasta] = useState('');
+  const [demoradas, setDemoradas] = useState(false);
+  const [conParada, setConParada] = useState(false);
+  const { data: asignables } = useAsignables();
   // Lo que está en un taller de afuera. Desde «Hoy» se llega ya filtrado.
   const [parametros] = useSearchParams();
   const [afuera, setAfuera] = useState(parametros.get('afuera') === '1');
@@ -62,8 +68,12 @@ export function OrdenesTrabajoPage() {
     estado: afuera ? 'ABIERTA' : estado || undefined,
     tipo: tipo || undefined,
     ubicacionId: sector || undefined,
-    asignadoAId: soloMias ? (yo?.id ?? undefined) : undefined,
+    asignadoAId: soloMias ? (yo?.id ?? undefined) : responsable || undefined,
     ejecutor: afuera ? 'EXTERNO' : undefined,
+    fechaDesde: fechaDesde || undefined,
+    fechaHasta: fechaHasta || undefined,
+    demoradas,
+    conParada,
   });
 
   const ordenes = data?.datos ?? [];
@@ -163,6 +173,48 @@ export function OrdenesTrabajoPage() {
             ))}
           </select>
         )}
+        {asignables && asignables.length > 1 && (
+          <select
+            value={soloMias ? '' : responsable}
+            disabled={soloMias}
+            onChange={(e) => {
+              setResponsable(e.target.value);
+              setPagina(1);
+            }}
+            aria-label="Filtrar por responsable"
+          >
+            <option value="">Todos los responsables</option>
+            {asignables.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.nombre}
+              </option>
+            ))}
+          </select>
+        )}
+        <label className="campo-chico">
+          Desde
+          <input
+            type="date"
+            value={fechaDesde}
+            max={fechaHasta || undefined}
+            onChange={(e) => {
+              setFechaDesde(e.target.value);
+              setPagina(1);
+            }}
+          />
+        </label>
+        <label className="campo-chico">
+          Hasta
+          <input
+            type="date"
+            value={fechaHasta}
+            min={fechaDesde || undefined}
+            onChange={(e) => {
+              setFechaHasta(e.target.value);
+              setPagina(1);
+            }}
+          />
+        </label>
         {/* Lo primero que quiere ver cualquiera al entrar: qué le toca a él. */}
         {yo && (
           <label className="casilla">
@@ -188,6 +240,28 @@ export function OrdenesTrabajoPage() {
           />
           <Truck className="icono" aria-hidden />
           En talleres externos
+        </label>
+        <label className="casilla" title="Siguen abiertas hace más de 7 días">
+          <input
+            type="checkbox"
+            checked={demoradas}
+            onChange={(e) => {
+              setDemoradas(e.target.checked);
+              setPagina(1);
+            }}
+          />
+          Demoradas (más de 7 días)
+        </label>
+        <label className="casilla">
+          <input
+            type="checkbox"
+            checked={conParada}
+            onChange={(e) => {
+              setConParada(e.target.checked);
+              setPagina(1);
+            }}
+          />
+          Con horas de parada
         </label>
       </div>
 

@@ -61,6 +61,10 @@ export function useOrdenesTrabajo(
           deSusMaquinas: filtros.ubicacionId && filtros.deSusMaquinas ? 'true' : undefined,
           asignadoAId: filtros.asignadoAId || undefined,
           ejecutor: filtros.ejecutor || undefined,
+          fechaDesde: filtros.fechaDesde || undefined,
+          fechaHasta: filtros.fechaHasta || undefined,
+          demoradas: filtros.demoradas ? 'true' : undefined,
+          conParada: filtros.conParada ? 'true' : undefined,
         },
       }),
   });

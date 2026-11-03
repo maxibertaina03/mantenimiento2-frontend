@@ -1,14 +1,11 @@
-import {
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   useActualizarProveedor,
   useCrearProveedor,
   useEliminarProveedor,
   useProveedores,
+  type FiltrosProveedores,
 } from '@/api/proveedores';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { AccionesFila, DatoFicha } from '@/componentes/AccionesFila';
@@ -16,7 +13,13 @@ import { Modal } from '@/componentes/Modal';
 import type { CrearProveedorInput, Proveedor } from '@/tipos/proveedor';
 import { tieneMouse } from '@/lib/dispositivo';
 
-const FORM_VACIO: CrearProveedorInput = { nombre: '', cuit: '', email: '', telefono: '', notas: '' };
+const FORM_VACIO: CrearProveedorInput = {
+  nombre: '',
+  cuit: '',
+  email: '',
+  telefono: '',
+  notas: '',
+};
 const LIMITE = 20;
 
 export function ProveedoresPage() {
@@ -32,7 +35,17 @@ export function ProveedoresPage() {
     return () => clearTimeout(t);
   }, [buscar]);
 
-  const { data, isLoading, error, isFetching } = useProveedores(pagina, LIMITE, busquedaDebounced);
+  const [atajos, setAtajos] = useState<FiltrosProveedores>({});
+  const { data, isLoading, error, isFetching } = useProveedores(
+    pagina,
+    LIMITE,
+    busquedaDebounced,
+    atajos,
+  );
+  const alternar = (clave: keyof FiltrosProveedores) => {
+    setAtajos((a) => ({ ...a, [clave]: !a[clave] }));
+    setPagina(1);
+  };
   const eliminar = useEliminarProveedor();
   const [edicion, setEdicion] = useState<Proveedor | null>(null);
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -78,42 +91,67 @@ export function ProveedoresPage() {
         {isFetching && <span className="texto-suave">buscando…</span>}
       </div>
 
+      <div className="atajos-filtro" role="group" aria-label="Atajos">
+        {(
+          [
+            [
+              'conOrdenesSinPrecio',
+              'Con órdenes sin precio',
+              'Tienen órdenes emitidas o recibidas a las que les falta algún precio',
+            ],
+            ['sinCorreo', 'Sin correo', 'No se les puede mandar la orden por mail'],
+            ['sinTelefono', 'Sin teléfono', 'No se les puede mandar la orden por WhatsApp'],
+          ] as const
+        ).map(([clave, texto, ayuda]) => (
+          <button
+            key={clave}
+            type="button"
+            className={`chip-periodo${atajos[clave] ? ' activo' : ''}`}
+            aria-pressed={Boolean(atajos[clave])}
+            title={ayuda}
+            onClick={() => alternar(clave)}
+          >
+            {texto}
+          </button>
+        ))}
+      </div>
+
       {isLoading && <Cargando />}
       {error && <MensajeError error={error} />}
       {eliminar.error && <MensajeError error={eliminar.error} />}
 
       {data && (
         <div className="tabla-scroll tabla-cards-contenedor">
-        <table className="tabla tabla-cards">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>CUIT</th>
-              <th>Email</th>
-              <th>Teléfono</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.datos.map((p) => (
-              <tr key={p.id} className="fila-clickeable" onClick={() => setDetalle(p)}>
-                <td data-etiqueta="Nombre">{p.nombre}</td>
-                <td data-etiqueta="CUIT">{p.cuit ?? '—'}</td>
-                <td data-etiqueta="Email">{p.email ?? '—'}</td>
-                <td data-etiqueta="Teléfono">{p.telefono ?? '—'}</td>
-                {/* stopPropagation: los botones no deben abrir la ficha. */}
-                <td className="celda-acciones" onClick={(e) => e.stopPropagation()}>
-                  <AccionesFila
-                    descripcion={p.nombre}
-                    onVer={() => setDetalle(p)}
-                    onEditar={() => abrirEdicion(p)}
-                    onEliminar={() => borrar(p)}
-                  />
-                </td>
+          <table className="tabla tabla-cards">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>CUIT</th>
+                <th>Email</th>
+                <th>Teléfono</th>
+                <th></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data.datos.map((p) => (
+                <tr key={p.id} className="fila-clickeable" onClick={() => setDetalle(p)}>
+                  <td data-etiqueta="Nombre">{p.nombre}</td>
+                  <td data-etiqueta="CUIT">{p.cuit ?? '—'}</td>
+                  <td data-etiqueta="Email">{p.email ?? '—'}</td>
+                  <td data-etiqueta="Teléfono">{p.telefono ?? '—'}</td>
+                  {/* stopPropagation: los botones no deben abrir la ficha. */}
+                  <td className="celda-acciones" onClick={(e) => e.stopPropagation()}>
+                    <AccionesFila
+                      descripcion={p.nombre}
+                      onVer={() => setDetalle(p)}
+                      onEditar={() => abrirEdicion(p)}
+                      onEliminar={() => borrar(p)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 

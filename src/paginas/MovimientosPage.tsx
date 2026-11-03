@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { useState } from 'react';
 import { useMateriales } from '@/api/materiales';
+import { ComboProveedor } from '@/componentes/ComboProveedor';
 import {
   obtenerTodosLosMovimientos,
   useActualizarMovimiento,
@@ -68,6 +69,8 @@ export function MovimientosPage() {
   const [motivo, setMotivo] = useState<MotivoMovimiento | ''>('');
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
+  const [proveedor, setProveedor] = useState<{ id: string; nombre: string } | null>(null);
+  const [referencia, setReferencia] = useState('');
   const [pagina, setPagina] = useState(1);
   const [exportando, setExportando] = useState(false);
   const [errorExport, setErrorExport] = useState<string | null>(null);
@@ -80,6 +83,8 @@ export function MovimientosPage() {
     motivo: motivo || undefined,
     fechaDesde: fechaDesde || undefined,
     fechaHasta: fechaHasta ? `${fechaHasta}T23:59:59.999` : undefined,
+    proveedorId: proveedor?.id,
+    referencia: referencia.trim() || undefined,
   });
 
   const { data, isLoading, error, isFetching } = useMovimientos({ ...filtros(), pagina, limite: LIMITE });
@@ -95,6 +100,8 @@ export function MovimientosPage() {
     setMotivo('');
     setFechaDesde('');
     setFechaHasta('');
+    setProveedor(null);
+    setReferencia('');
     setPagina(1);
   };
 
@@ -106,6 +113,8 @@ export function MovimientosPage() {
     if (motivo) partes.push(`Motivo: ${motivo}`);
     if (fechaDesde) partes.push(`Desde: ${fechaDesde}`);
     if (fechaHasta) partes.push(`Hasta: ${fechaHasta}`);
+    if (proveedor) partes.push(`Proveedor: ${proveedor.nombre}`);
+    if (referencia.trim()) partes.push(`Referencia: ${referencia.trim()}`);
     return partes.length ? partes.join(' · ') : 'Sin filtros';
   };
 
@@ -156,6 +165,9 @@ export function MovimientosPage() {
           titulo="Exportar movimientos"
           reporte="movimientos"
           columnas={COLUMNAS_EXPORTAR}
+          muestra={data?.datos ?? []}
+          totalFilas={data?.total}
+          orientacion={(n) => (n > 5 ? 'apaisada' : 'vertical')}
           exportando={exportando}
           onExportar={(formato, elegidas) => void exportar(formato, elegidas)}
           onCerrar={() => setEligiendoColumnas(false)}
@@ -218,6 +230,23 @@ export function MovimientosPage() {
               type="date"
               value={fechaHasta}
               onChange={(e) => enFiltro(setFechaHasta)(e.target.value)}
+            />
+          </div>
+          <div className="campo">
+            <label>Proveedor</label>
+            <ComboProveedor
+              key={proveedor?.id ?? 'ninguno'}
+              inicial={proveedor}
+              onCambio={(p) => enFiltro(setProveedor)(p ? { id: p.id, nombre: p.nombre } : null)}
+            />
+          </div>
+          <div className="campo">
+            <label>Referencia</label>
+            <input
+              type="search"
+              placeholder="OC-2026-0036, OT-2026-0012…"
+              value={referencia}
+              onChange={(e) => enFiltro(setReferencia)(e.target.value)}
             />
           </div>
           <div className="campo" style={{ display: 'flex', alignItems: 'flex-end' }}>

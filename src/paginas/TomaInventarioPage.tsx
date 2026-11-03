@@ -441,6 +441,7 @@ export function TomaInventarioPage() {
           titulo="Informe de la toma"
           reporte="informe-toma"
           columnas={COLUMNAS_INFORME_TOMA}
+          muestra={renglones.filter((r) => r.contado !== null)}
           formatos={['pdf']}
           onExportar={(_, elegidas) => {
             void descargarInforme(data, elegidas);

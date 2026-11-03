@@ -289,8 +289,23 @@ describe('el trabajo es de quien lo tiene asignado', () => {
 
   it('la lista dice de quien es cada trabajo', async () => {
     mostrar();
-    expect(await screen.findByText('Facundo')).toBeInTheDocument();
+    // En la tabla; el nombre también está en el filtro por responsable.
+    const enLaTabla = (await screen.findAllByText('Facundo')).filter((e) => e.closest('td'));
+    expect(enLaTabla.length).toBeGreaterThan(0);
     expect(screen.getByText(/\(vos\)/)).toBeInTheDocument();
+  });
+
+  it('los filtros nuevos viajan al servidor: demoradas y con parada', async () => {
+    mostrar();
+    await userEvent.click(await screen.findByLabelText(/Demoradas/));
+    await userEvent.click(screen.getByLabelText('Con horas de parada'));
+    await waitFor(() => {
+      const listados = apiRequestMock.mock.calls.filter(([r]) => r === '/ordenes-trabajo');
+      expect((listados.at(-1)?.[1] as { query: object }).query).toMatchObject({
+        demoradas: 'true',
+        conParada: 'true',
+      });
+    });
   });
 
   it('REGRESION: un trabajo de otro se ve pero no se puede cargar ni cerrar', async () => {

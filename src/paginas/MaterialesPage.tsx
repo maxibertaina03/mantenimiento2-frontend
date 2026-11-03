@@ -382,6 +382,8 @@ Deja de aparecer al cargar ` +
           titulo="Exportar materiales"
           reporte="materiales"
           columnas={COLUMNAS_EXPORTAR}
+          muestra={data?.datos ?? []}
+          totalFilas={data?.total}
           exportando={exportando}
           onExportar={(formato, elegidas) => void exportar(formato, elegidas)}
           onCerrar={() => setEligiendoColumnas(false)}
