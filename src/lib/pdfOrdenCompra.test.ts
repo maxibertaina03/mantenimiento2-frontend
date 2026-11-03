@@ -99,6 +99,7 @@ const orden: OrdenCompra = {
     clasificacion: null,
     cantidadRecibida: 0,
     pendiente: 100,
+    cantidadDevuelta: 0,
     },
   ],
   total: 125050,
@@ -106,6 +107,8 @@ const orden: OrdenCompra = {
   recepciones: [],
   cerradaConFaltante: false,
   motivoFaltante: null,
+  devoluciones: [],
+  estadoDevolucion: 'SIN_DEVOLUCION',
   creadoEn: '2026-08-25T10:00:00.000Z',
 };
 

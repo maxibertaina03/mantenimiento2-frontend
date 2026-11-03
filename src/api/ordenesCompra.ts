@@ -297,3 +297,35 @@ export function useConfirmarPreciosFactura(id: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: clavesOrdenes.base }),
   });
 }
+
+export interface DatosDevolucion {
+  fecha?: string;
+  notaCredito?: string;
+  motivo?: string;
+  renglones: {
+    renglonId: string;
+    cantidad: number;
+    precioUnitario: number | null;
+    moverStock: boolean;
+  }[];
+}
+
+/**
+ * Devolverle al proveedor mercadería que ya llegó. Mueve stock (salidas por
+ * devolución), así que se invalidan también los materiales y su historial.
+ */
+export function useDevolverOrden(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (datos: DatosDevolucion) =>
+      apiRequest<OrdenCompra>(`/ordenes-compra/${id}/devoluciones`, {
+        method: 'POST',
+        body: datos,
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: clavesOrdenes.base });
+      void qc.invalidateQueries({ queryKey: clavesMateriales.base });
+      void qc.invalidateQueries({ queryKey: ['movimientos'] });
+    },
+  });
+}

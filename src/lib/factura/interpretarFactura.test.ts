@@ -164,6 +164,9 @@ describe('detectar la letra', () => {
     expect(detectarLetra(['ORIGINAL', 'COD. 01'])).toBe('A');
     expect(detectarLetra(['Código N° 006'])).toBe('B');
     expect(detectarLetra(['COD. 11'])).toBe('C');
+    // Notas de crédito: 03 es A, 08 es B, 13 es C.
+    expect(detectarLetra(['Nota de Crédito', 'A', 'COD.03'])).toBe('A');
+    expect(detectarLetra(['COD. 08'])).toBe('B');
   });
 
   it('por la letra sola en su recuadro', () => {

@@ -1,3 +1,4 @@
+import { PEDIDO_FACTURA_DIGITAL } from '@/lib/pedidoFactura';
 import { nombreDelRenglon, type OrdenCompra } from '@/tipos/ordenCompra';
 
 /**
@@ -142,6 +143,8 @@ export function armarMensaje(orden: OrdenCompra): MensajeOrden {
   }
 
   lineas.push(
+    '',
+    PEDIDO_FACTURA_DIGITAL,
     '',
     'La orden en PDF va adjunta.',
     '',

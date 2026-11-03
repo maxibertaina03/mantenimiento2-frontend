@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/apiClient';
 
-export type TipoComprobante = 'REMITO' | 'FACTURA' | 'OTRO';
+export type TipoComprobante = 'REMITO' | 'FACTURA' | 'NOTA_CREDITO' | 'OTRO';
 
 export const TIPOS_COMPROBANTE: { valor: TipoComprobante; etiqueta: string }[] = [
   { valor: 'REMITO', etiqueta: 'Remito' },
   { valor: 'FACTURA', etiqueta: 'Factura' },
+  { valor: 'NOTA_CREDITO', etiqueta: 'Nota de crédito' },
   { valor: 'OTRO', etiqueta: 'Otro' },
 ];
 

@@ -49,6 +49,9 @@ export interface InformeCompras {
     conFaltante: number;
     monto: number;
     sinPrecio: number;
+    /** Lo que acreditaron las notas de crédito del período. */
+    devuelto: number;
+    devolucionesSinPrecio: number;
     diasDeEntrega: number | null;
   };
   serie: { tramo: string; ordenes: number; monto: number }[];
@@ -76,6 +79,9 @@ export interface GastoMaterial {
   renglonesSinPrecio: number;
   ordenes: number;
   proveedores: string[];
+  /** Lo devuelto al proveedor (ya descontado de cantidad y gastado). */
+  cantidadDevuelta: number;
+  devuelto: number;
 }
 
 export interface ResultadoPersona {

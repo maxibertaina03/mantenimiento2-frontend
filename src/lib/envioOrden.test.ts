@@ -41,6 +41,7 @@ const orden: OrdenCompra = {
     clasificacion: null,
     cantidadRecibida: 0,
     pendiente: 100,
+    cantidadDevuelta: 0,
     },
   ],
   total: 125050,
@@ -48,6 +49,8 @@ const orden: OrdenCompra = {
   recepciones: [],
   cerradaConFaltante: false,
   motivoFaltante: null,
+  devoluciones: [],
+  estadoDevolucion: 'SIN_DEVOLUCION',
   creadoEn: '2026-08-28T10:00:00.000Z',
 };
 
@@ -119,6 +122,13 @@ describe('armarMensaje', () => {
 
   it('el cuerpo lista los materiales con su cantidad y unidad', () => {
     expect(armarMensaje(orden).cuerpo).toContain('Cable 2.5mm — 100 m');
+  });
+
+  it('les pide la factura en formato digital a Administración', () => {
+    const { cuerpo } = armarMensaje(orden);
+    expect(cuerpo).toContain('factura en formato digital (PDF)');
+    expect(cuerpo).toContain('administracion@lacteoslastres.com.ar');
+    expect(cuerpo).toContain('3534 40-3519');
   });
 
   it('incluye el total y las observaciones', () => {
@@ -219,8 +229,10 @@ describe('enlaceCorreo con la casilla que manda el servidor', () => {
     // El valor bueno lo da /ordenes-compra/configuracion-envio: la constante
     // del frontend quedo solo como reserva.
     const url = enlaceCorreo(orden, 'proveedor@x.com', 'otra-casilla@empresa.com');
-    expect(url).toContain(encodeURIComponent('otra-casilla@empresa.com'));
-    expect(url).not.toContain(encodeURIComponent(MAIL_ADMINISTRACION_POR_DEFECTO));
+    // La copia va a la casilla del servidor. (El cuerpo nombra a Administración
+    // al pedir la factura digital: eso no es la copia.)
+    const cc = new URLSearchParams(url.split('?')[1]).get('cc');
+    expect(cc).toBe('otra-casilla@empresa.com');
   });
 
   it('sin dato del servidor cae en la de reserva', () => {

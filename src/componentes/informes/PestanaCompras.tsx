@@ -51,6 +51,14 @@ export function PestanaCompras({ periodo }: { periodo: PeriodoInforme }) {
           tono={r.conFaltante > 0 ? 'rojo' : 'gris'}
           detalle="se cerraron sin llegar todo"
         />
+        {r.devuelto > 0 && (
+          <Kpi
+            etiqueta="Devuelto"
+            valor={montoEntero(r.devuelto)}
+            tono="ambar"
+            detalle="notas de crédito: ya descontado del gasto por material"
+          />
+        )}
       </Kpis>
 
       <div className="grilla-informe">
