@@ -4,6 +4,12 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.19.0] — 2026-11-03
+
+### Agregado
+
+- **Órdenes de compra, filtros:** atajos de un toque (Falta precio, Sin factura, Atrasadas, Con problemas), combinables, y «Más filtros» con proveedor, fechas, precios y factura. El buscador también encuentra por material. Los filtros quedan en la dirección: volver de una orden deja la lista como estaba.
+
 ## [1.18.0] — 2026-11-03
 
 ### Agregado
@@ -377,6 +383,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.19.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.19.0
 [1.18.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.18.0
 [1.17.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.17.0
 [1.16.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.16.0
