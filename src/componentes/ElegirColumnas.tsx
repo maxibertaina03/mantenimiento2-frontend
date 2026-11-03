@@ -12,7 +12,7 @@ import { Modal } from './Modal';
 export type FormatoExportacion = 'pdf' | 'csv';
 
 /** Cuántas filas muestra la vista previa: alcanza para ver cómo queda. */
-const FILAS_DE_MUESTRA = 8;
+const FILAS_DE_MUESTRA = 15;
 
 /**
  * Antes de bajar un reporte, qué columnas lleva, y cómo queda.
@@ -109,9 +109,9 @@ export function ElegirColumnas<T>({
       abierto
       onCerrar={onCerrar}
       avisarSiHayCambios={false}
-      tamano={conPrevia ? 'ancho' : 'normal'}
+      tamano={conPrevia ? 'completo' : 'normal'}
     >
-      <div className="formulario-modal">
+      <div className={`formulario-modal${conPrevia ? ' exportar-completo' : ''}`}>
         {conPrevia ? (
           <div className="exportar-con-previa">
             {eleccion}

@@ -7,10 +7,11 @@ interface Props {
   onCerrar: () => void;
   /**
    * 'ancho' para formularios de varias columnas (alta de equipo, orden de
-   * compra). Por defecto es angosto, que sirve para confirmaciones y ABMs
+   * compra). 'completo' ocupa casi toda la pantalla: para lo que se mira
+   * entero, como la vista previa de un reporte. Por defecto es angosto, que sirve para confirmaciones y ABMs
    * cortos.
    */
-  tamano?: 'normal' | 'ancho';
+  tamano?: 'normal' | 'ancho' | 'completo';
   /**
    * Si se cargó algo, preguntar antes de cerrar con la ✕. Por defecto sí. Los
    * botones «Cancelar» del propio formulario cierran directo: ahí la intención
@@ -110,7 +111,7 @@ export function Modal({
       }}
     >
       <div
-        className={`modal ${tamano === 'ancho' ? 'modal-ancho' : ''}`}
+        className={`modal ${tamano === 'ancho' ? 'modal-ancho' : tamano === 'completo' ? 'modal-completo' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-label={titulo}

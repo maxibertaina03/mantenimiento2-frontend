@@ -899,6 +899,17 @@ button.combo-item:hover {
   flex-direction: column;
   max-height: 86vh;
 }
+/* Casi toda la pantalla: para lo que se mira entero (la vista previa de un
+   reporte). El cuerpo se estira y lo de adentro reparte el alto. */
+.modal-completo {
+  max-width: min(1400px, 96vw);
+  height: 92vh;
+  max-height: 92vh;
+}
+.modal-completo .modal-cuerpo {
+  display: flex;
+  flex-direction: column;
+}
 /* Variante para formularios de varias columnas. */
 .modal-ancho {
   max-width: 760px;
@@ -993,7 +1004,8 @@ button.combo-item:hover {
     padding: 0;
   }
   .modal,
-  .modal-ancho {
+  .modal-ancho,
+  .modal-completo {
     max-width: none;
     max-height: 92vh;
     border-radius: var(--radio-grande) var(--radio-grande) 0 0;
@@ -5243,6 +5255,27 @@ label.casilla .icono {
   gap: 1.25rem;
   align-items: start;
 }
+/* En el modal completo, la vista previa llena todo el alto que queda. */
+.exportar-completo {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.exportar-completo .exportar-con-previa {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: stretch;
+}
+.exportar-completo .vista-previa-reporte {
+  min-height: 0;
+}
+.exportar-completo .vista-previa-hoja {
+  flex: 1 1 auto;
+  max-height: none;
+  min-height: 0;
+}
+.exportar-completo .vista-previa-tabla {
+  font-size: 0.78rem;
+}
 .exportar-con-previa .elegir-columnas {
   grid-template-columns: 1fr;
 }
@@ -5309,5 +5342,11 @@ label.casilla .icono {
   }
   .vista-previa-hoja {
     max-height: 300px;
+  }
+}
+@media (max-width: 760px) {
+  /* Apiladas, la vista previa no tiene de dónde sacar alto: lleva uno propio. */
+  .exportar-completo .vista-previa-hoja {
+    min-height: 280px;
   }
 }
