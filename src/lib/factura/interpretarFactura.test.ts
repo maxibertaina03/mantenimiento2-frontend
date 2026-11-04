@@ -180,3 +180,11 @@ describe('detectar la letra', () => {
     ]);
   });
 });
+
+describe('el CUIT propio', () => {
+  it('no cuenta: en la factura la empresa es el cliente, no el proveedor', () => {
+    expect(
+      detectarCuits(['CUIT: 30-62988223-1', 'Cliente LACTEOS LAS TRES CUIT 30-66938972-4']),
+    ).toEqual(['30-62988223-1']);
+  });
+});

@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, Plus, Printer, SlidersHorizontal, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useOrdenes, type FiltrosOrdenes } from '@/api/ordenesCompra';
 import { ComboProveedor } from '@/componentes/ComboProveedor';
 import { useBusquedaDemorada, useListaEnUrl, type EsquemaFiltros } from '@/lib/listaEnUrl';
@@ -13,6 +14,7 @@ import { P, usePuede } from '@/lib/permisos';
 import { CLASE_ESTADO, moneda } from '@/componentes/ordenesCompra/formato';
 import { ModalNuevaOrden } from '@/componentes/ordenesCompra/ModalNuevaOrden';
 import { ModalDetalleOrden } from '@/componentes/ordenesCompra/ModalDetalleOrden';
+import type { VueltaDeFactura } from '@/paginas/PreciosFacturaPage';
 
 const LIMITE = 20;
 
@@ -112,7 +114,18 @@ export function OrdenesCompraPage() {
   const [panelAbierto, setPanelAbierto] = useState(() => filtrosDelPanel(filtros) > 0);
   const setPagina = (cambio: (p: number) => number) => irAPagina(cambio(pagina));
   const [modalAlta, setModalAlta] = useState(false);
-  const [ordenAbierta, setOrdenAbierta] = useState<OrdenCompra | null>(null);
+  // Al volver de «Precios desde la factura» se reabre el detalle de esa orden.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [vuelta] = useState(() => location.state as VueltaDeFactura | null);
+  const [ordenAbierta, setOrdenAbierta] = useState<OrdenCompra | null>(
+    vuelta?.abrirOrden ?? null,
+  );
+  useEffect(() => {
+    // Que recargar la página no la vuelva a abrir.
+    if (vuelta) navigate({ search: location.search }, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [ordenAEnviar, setOrdenAEnviar] = useState<OrdenCompra | null>(null);
   // Mandarle la orden a un tercero usando la casilla de la empresa no es lo
   // mismo que prepararla, por eso tiene permiso propio. Quien no lo tenga
@@ -374,6 +387,9 @@ export function OrdenesCompraPage() {
       {ordenAbierta && (
         <ModalDetalleOrden
           orden={ordenAbierta}
+          preciosRecienGuardados={
+            vuelta?.abrirOrden.id === ordenAbierta.id && Boolean(vuelta.preciosGuardados)
+          }
           onCerrar={() => setOrdenAbierta(null)}
           onEnviar={alEnviar}
         />

@@ -118,7 +118,7 @@ describe('PreciosDesdeFactura', () => {
   it('muestra la factura leída al lado de la revisión', async () => {
     await abrirYLeer();
     expect(screen.getByRole('region', { name: 'La factura leída' })).toBeInTheDocument();
-    expect(screen.getByTitle('Factura en PDF')).toHaveAttribute('src', 'blob:factura');
+    expect(screen.getByTitle('Factura en PDF')).toHaveAttribute('src', 'blob:factura#view=Fit');
   });
 
   it('lee la factura, detecta la B y propone: lo seguro tildado, lo dudoso no', async () => {

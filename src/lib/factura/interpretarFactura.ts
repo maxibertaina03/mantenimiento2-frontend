@@ -302,6 +302,12 @@ export function detectarLetra(textos: string[]): LetraFactura | null {
   return sola ? (sola.trim() as LetraFactura) : null;
 }
 
+/**
+ * El CUIT de Lácteos Las Tres: en toda factura aparece como cliente. No es el
+ * del proveedor, así que no cuenta para compararlo con el de la orden.
+ */
+export const CUIT_PROPIO = '30-66938972-4';
+
 export function detectarCuits(textos: string[]): string[] {
   const vistos = new Set<string>();
   for (const t of textos) {
@@ -309,6 +315,7 @@ export function detectarCuits(textos: string[]): string[] {
       vistos.add(`${m[1]}-${m[2]}-${m[3]}`);
     }
   }
+  vistos.delete(CUIT_PROPIO);
   return [...vistos];
 }
 

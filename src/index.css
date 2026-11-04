@@ -5205,6 +5205,25 @@ label.casilla .icono {
   }
 }
 
+/* Precios desde la factura es una página entera. Al revisar ocupa todo el
+   alto y todo el ancho: la factura y los renglones se ven sin desplazarse. */
+.contenido > .pagina-factura.comparando {
+  max-width: none;
+  height: calc(100dvh - 2.75rem);
+  display: flex;
+  flex-direction: column;
+}
+.contenido:has(> .pagina-factura.comparando) {
+  padding-bottom: 1rem;
+}
+.pagina-factura.comparando .cabecera-pagina {
+  margin-bottom: 0.9rem;
+}
+.pagina-factura > .formulario-modal:not(.factura-comparar),
+.pagina-factura > .leyendo-factura {
+  max-width: 760px;
+}
+
 /* La revisión a la izquierda y la factura original a la derecha, para
    comparar. Cada lado se desplaza solo; los botones quedan siempre abajo. */
 .factura-comparar {
@@ -5223,8 +5242,31 @@ label.casilla .icono {
   overflow-y: auto;
   padding-right: 0.25rem;
 }
+.factura-comparar .revision-factura {
+  gap: 0.45rem;
+}
+/* Renglones compactos: nuestro material, el ítem de la factura, el precio y
+   la casilla, en una sola franja. */
 .factura-comparar .revision-renglon {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) 8.5rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) 11.5rem;
+  padding: 0.55rem 0.75rem;
+  align-items: center;
+}
+.factura-comparar .revision-precio {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+.factura-comparar .revision-precio input[type='number'],
+.factura-comparar .revision-precio input:not([type]) {
+  min-width: 0;
+}
+.formulario-modal.factura-comparar .revision-precio label.casilla {
+  padding: 0;
+  border: 0;
+  background: none;
+  min-height: 0;
+  white-space: nowrap;
 }
 .factura-original {
   display: flex;
@@ -5257,11 +5299,14 @@ label.casilla .icono {
 .factura-original-vista img {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: contain;
   cursor: zoom-in;
 }
+/* Ampliada: a tamaño real, para leer un número dudoso. */
 .factura-original-vista.ampliada img {
   width: auto;
+  height: auto;
   max-width: none;
   cursor: zoom-out;
 }
@@ -5276,6 +5321,9 @@ label.casilla .icono {
 }
 @media (max-width: 760px) {
   /* En el teléfono, una debajo de la otra: la factura con alto propio. */
+  .contenido > .pagina-factura.comparando {
+    height: auto;
+  }
   .factura-comparar {
     display: flex;
     flex-direction: column;
@@ -5289,7 +5337,7 @@ label.casilla .icono {
   }
   .factura-original-vista {
     flex: none;
-    height: 60vh;
+    height: 70vh;
   }
 }
 
