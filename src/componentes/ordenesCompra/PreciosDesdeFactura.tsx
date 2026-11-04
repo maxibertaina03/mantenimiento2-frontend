@@ -24,6 +24,7 @@ import {
   type ItemLeido,
   type LetraFactura,
 } from '@/lib/factura/interpretarFactura';
+import { factorAutomatico, metrosPorUnidad, porUnidad } from '@/lib/factura/porMetro';
 import { formatearNumero } from '@/lib/formato';
 import { esAceptado, leerComprobante } from '@/lib/leerComprobante';
 import { P, usePuede } from '@/lib/permisos';
@@ -38,6 +39,8 @@ interface Fila {
   incluir: boolean;
   seguridad: Seguridad;
   porEquivalencia: boolean;
+  /** Por cuánto se multiplicó el precio de la factura: 6 si vende por metro barras de 6 m. */
+  factor: number;
 }
 
 const ETIQUETA_SEGURIDAD: Record<NonNullable<Seguridad>, { texto: string; clase: string }> = {
@@ -116,23 +119,32 @@ export function PreciosDesdeFactura({
       setLetra(leida.letra);
       setFilas(
         Object.fromEntries(
-          sugerencias.map((s) => [
-            s.renglonId,
-            {
-              itemIndice: s.itemIndice,
-              precio: s.precioNeto ?? undefined,
-              // Viene tildado solo si el nombre se parece (seguro o probable) Y los
-              // números del renglón cierran (cantidad × precio = importe). Si el
-              // OCR leyó mal un número, el nombre puede coincidir igual: el
-              // precio, no. Eso lo decide la persona.
-              incluir:
-                (s.seguridad === 'ALTA' || s.seguridad === 'MEDIA') &&
-                s.itemIndice !== null &&
-                leida.items[s.itemIndice]?.cierra === true,
-              seguridad: s.seguridad,
-              porEquivalencia: s.porEquivalencia,
-            },
-          ]),
+          sugerencias.map((s) => {
+            // Si vende por metro lo que pedimos por barra, el precio va por barra.
+            const renglon = orden.renglones.find((r) => r.id === s.renglonId);
+            const cantidad = s.itemIndice === null ? null : leida.items[s.itemIndice]?.cantidad;
+            const factor = renglon
+              ? factorAutomatico(nombreDelRenglon(renglon), renglon.cantidad, cantidad ?? null)
+              : 1;
+            return [
+              s.renglonId,
+              {
+                itemIndice: s.itemIndice,
+                precio: s.precioNeto === null ? undefined : porUnidad(s.precioNeto, factor),
+                // Viene tildado solo si el nombre se parece (seguro o probable) Y los
+                // números del renglón cierran (cantidad × precio = importe). Si el
+                // OCR leyó mal un número, el nombre puede coincidir igual: el
+                // precio, no. Eso lo decide la persona.
+                incluir:
+                  (s.seguridad === 'ALTA' || s.seguridad === 'MEDIA') &&
+                  s.itemIndice !== null &&
+                  leida.items[s.itemIndice]?.cierra === true,
+                seguridad: s.seguridad,
+                porEquivalencia: s.porEquivalencia,
+                factor,
+              },
+            ];
+          }),
         ),
       );
     } catch (e) {
@@ -187,7 +199,10 @@ export function PreciosDesdeFactura({
           return [
             id,
             item?.precioUnitario
-              ? { ...f, precio: aNeto(item.precioUnitario, nuevaLetra, nuevaAlicuota) }
+              ? {
+                  ...f,
+                  precio: porUnidad(aNeto(item.precioUnitario, nuevaLetra, nuevaAlicuota), f.factor),
+                }
               : f,
           ];
         }),
@@ -197,16 +212,36 @@ export function PreciosDesdeFactura({
 
   const elegirItem = (renglonId: string, indice: number | null) => {
     const item = indice === null ? null : factura!.items[indice];
+    const renglon = orden.renglones.find((r) => r.id === renglonId)!;
+    const factor = factorAutomatico(
+      nombreDelRenglon(renglon),
+      renglon.cantidad,
+      item?.cantidad ?? null,
+    );
     setFilas((fs) => ({
       ...fs,
       [renglonId]: {
         itemIndice: indice,
-        precio: item?.precioUnitario ? aNeto(item.precioUnitario, letra, alicuota) : undefined,
+        precio: item?.precioUnitario
+          ? porUnidad(aNeto(item.precioUnitario, letra, alicuota), factor)
+          : undefined,
         incluir: indice !== null,
         seguridad: null,
         porEquivalencia: false,
+        factor,
       },
     }));
+  };
+
+  /** Pasar el precio de la factura (por metro) a nuestra unidad, o volver al de la factura. */
+  const cambiarFactor = (renglonId: string, factor: number) => {
+    const f = filas[renglonId];
+    const item = f.itemIndice === null ? null : factura!.items[f.itemIndice];
+    if (!item?.precioUnitario) return;
+    cambiarFila(renglonId, {
+      factor,
+      precio: porUnidad(aNeto(item.precioUnitario, letra, alicuota), factor),
+    });
   };
 
   const cambiarFila = (renglonId: string, cambio: Partial<Fila>) =>
@@ -363,6 +398,7 @@ export function PreciosDesdeFactura({
                 const item = f.itemIndice === null ? null : factura.items[f.itemIndice];
                 const otraCantidad =
                   item?.cantidad != null && item.cantidad !== r.cantidad && item.cantidad !== 0;
+                const metros = metrosPorUnidad(nombreDelRenglon(r));
                 return (
                   <li key={r.id} className={`revision-renglon${f.incluir ? ' incluido' : ''}`}>
                     <div className="revision-nuestro">
@@ -397,11 +433,35 @@ export function PreciosDesdeFactura({
                           </option>
                         ))}
                       </select>
-                      {otraCantidad && (
+                      {f.factor > 1 && item && (
+                        <span className="texto-chico por-metro">
+                          {item.cantidad !== null
+                            ? `Viene por metro: ${formatearNumero(item.cantidad)} m son ${formatearNumero(item.cantidad / f.factor)} ${r.unidad} de ${formatearNumero(f.factor)} m.`
+                            : 'Viene por metro.'}{' '}
+                          El precio va por {r.unidad} (× {formatearNumero(f.factor)}).{' '}
+                          <button
+                            type="button"
+                            className="btn-enlace"
+                            onClick={() => cambiarFactor(r.id, 1)}
+                          >
+                            Usar el de la factura
+                          </button>
+                        </span>
+                      )}
+                      {f.factor === 1 && otraCantidad && (
                         <span className="texto-chico texto-alerta">
                           La factura dice {formatearNumero(item!.cantidad!)}: si viene por caja o por
                           paquete, ajustá el precio por unidad.
                         </span>
+                      )}
+                      {f.factor === 1 && metros !== null && item?.precioUnitario && (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-por-metro"
+                          onClick={() => cambiarFactor(r.id, metros)}
+                        >
+                          Viene por metro (× {formatearNumero(metros)})
+                        </button>
                       )}
                     </label>
                     <div className="revision-precio">
