@@ -18,6 +18,7 @@ import { MaterialDetallePage } from './paginas/MaterialDetallePage';
 import { MovimientosPage } from './paginas/MovimientosPage';
 import { NuevoMovimientoPage } from './paginas/NuevoMovimientoPage';
 import { OrdenesCompraPage } from './paginas/OrdenesCompraPage';
+import { PreciosFacturaPage } from './paginas/PreciosFacturaPage';
 import { CalendarioPage } from './paginas/CalendarioPage';
 import { PendientesPage } from './paginas/PendientesPage';
 import { SectorPage } from './paginas/SectorPage';
@@ -146,6 +147,14 @@ export function App() {
           element={
             <RutaConPermiso permisos={[P.ORDENES_VER]}>
               <OrdenesCompraPage />
+            </RutaConPermiso>
+          }
+        />
+        <Route
+          path="/ordenes-compra/:id/factura"
+          element={
+            <RutaConPermiso permisos={[P.ORDENES_EDITAR]}>
+              <PreciosFacturaPage />
             </RutaConPermiso>
           }
         />

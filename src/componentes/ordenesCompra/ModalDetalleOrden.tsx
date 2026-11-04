@@ -9,6 +9,7 @@ import {
   Undo2,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useComprobantes } from '@/api/comprobantes';
 import {
   useAnularOrden,
@@ -29,7 +30,6 @@ import { ETIQUETA_ESTADO_ORDEN, nombreDelRenglon } from '@/tipos/ordenCompra';
 import type { OrdenCompra } from '@/tipos/ordenCompra';
 import { CLASE_ESTADO, moneda } from './formato';
 import { DevolverMercaderia } from './DevolverMercaderia';
-import { PreciosDesdeFactura } from './PreciosDesdeFactura';
 import { ReclamarFaltante } from './ReclamarFaltante';
 import { RecibirMercaderia } from './RecibirMercaderia';
 
@@ -50,10 +50,13 @@ export function ModalDetalleOrden({
   orden: ordenDeLaLista,
   onCerrar,
   onEnviar,
+  preciosRecienGuardados = false,
 }: {
   orden: OrdenCompra;
   onCerrar: () => void;
   onEnviar?: (orden: OrdenCompra) => void;
+  /** Vuelve de cargar los precios desde la factura: se avisa que quedaron. */
+  preciosRecienGuardados?: boolean;
 }) {
   // La orden llega de la lista. Al corregir precios o recibir, el servidor
   // devuelve la nueva, y es la que tienen que usar la tabla, el PDF y el envío.
@@ -71,8 +74,8 @@ export function ModalDetalleOrden({
 
   const [editandoPrecios, setEditandoPrecios] = useState(false);
   const [precios, setPrecios] = useState<Record<string, number | undefined>>({});
-  const [preciosGuardados, setPreciosGuardados] = useState(false);
-  const [desdeFactura, setDesdeFactura] = useState(false);
+  const [preciosGuardados, setPreciosGuardados] = useState(preciosRecienGuardados);
+  const navigate = useNavigate();
   const [mostrarRecepcion, setMostrarRecepcion] = useState(false);
   const [recienRecibida, setRecienRecibida] = useState(false);
   const [reclamando, setReclamando] = useState(false);
@@ -291,10 +294,7 @@ export function ModalDetalleOrden({
                 <button
                   className="btn"
                   title="Leer los precios de la factura del proveedor"
-                  onClick={() => {
-                    setPreciosGuardados(false);
-                    setDesdeFactura(true);
-                  }}
+                  onClick={() => navigate(`/ordenes-compra/${orden.id}/factura`)}
                 >
                   <ScanText className="icono" aria-hidden />
                   Desde la factura
@@ -642,17 +642,6 @@ export function ModalDetalleOrden({
       </div>
 
       {reclamando && <ReclamarFaltante orden={orden} onCerrar={() => setReclamando(false)} />}
-      {desdeFactura && (
-        <PreciosDesdeFactura
-          orden={orden}
-          onListo={(actualizada) => {
-            setOrden(actualizada);
-            setDesdeFactura(false);
-            setPreciosGuardados(true);
-          }}
-          onCerrar={() => setDesdeFactura(false)}
-        />
-      )}
     </Modal>
   );
 }
