@@ -5196,6 +5196,13 @@ label.casilla .icono {
 .texto-alerta {
   color: var(--alerta);
 }
+/* El precio de la factura pasado a nuestra unidad (por metro → por barra). */
+.por-metro {
+  color: var(--exito);
+}
+.btn-por-metro {
+  align-self: flex-start;
+}
 .factura-sin-usar summary {
   cursor: pointer;
 }
