@@ -5605,3 +5605,134 @@ label.casilla .icono {
     min-height: 280px;
   }
 }
+
+/* ─── Solicitudes de trabajo ─── */
+/* El número de sin revisar, al final de la opción del menú. */
+.sidebar nav a .contador-pestana {
+  margin-left: auto;
+}
+.lista-solicitudes {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.tarjeta-solicitud {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--borde);
+  border-left: 4px solid var(--primario);
+  border-radius: var(--radio);
+  background: var(--panel);
+  font: inherit;
+  cursor: pointer;
+}
+.tarjeta-solicitud:hover {
+  border-color: var(--borde-fuerte, var(--borde));
+  box-shadow: var(--sombra-hover);
+}
+.tarjeta-solicitud.urgente {
+  border-left-color: var(--color-error, #dc2626);
+  background: #fef2f2;
+}
+.tarjeta-solicitud-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+.tarjeta-solicitud-texto {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.detalle-solicitud-texto {
+  white-space: pre-wrap;
+  font-size: 1.02rem;
+}
+.fotos-solicitud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+.foto-solicitud {
+  position: relative;
+  display: block;
+  width: 7.5rem;
+  height: 7.5rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  overflow: hidden;
+  background: var(--panel-suave);
+}
+.foto-solicitud img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.foto-solicitud-cargando {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+}
+.foto-solicitud-quitar {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  padding: 0.15rem;
+  min-height: 0;
+}
+.foto-solicitud-agregar {
+  min-height: 3rem;
+}
+.urgencia-solicitud {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.urgencia-solicitud legend {
+  margin-bottom: 0.35rem;
+  font-weight: 500;
+}
+.urgencia-solicitud .casilla.urgencia-urgente:has(input:checked) {
+  background: #fef2f2;
+  border-color: var(--color-error, #dc2626);
+  color: var(--color-error, #b91c1c);
+}
+.caja-accion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.8rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--panel-suave);
+}
+.acciones-solicitud {
+  flex-wrap: wrap;
+}
+.sector-de-usuario {
+  display: block;
+  margin-top: 0.35rem;
+}
+@media (max-width: 640px) {
+  /* En el celular, los campos de la solicitud más grandes: se carga con el pulgar. */
+  .nueva-solicitud textarea,
+  .nueva-solicitud select {
+    font-size: 1rem;
+  }
+  .foto-solicitud {
+    width: 6.5rem;
+    height: 6.5rem;
+  }
+}

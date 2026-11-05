@@ -3,6 +3,7 @@ import {
   CircleAlert,
   Factory,
   ListTodo,
+  MessageSquareWarning,
   Package,
   Send,
   TrendingUp,
@@ -11,11 +12,12 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useCoberturaAlertas, useMaterialesBajoStock } from '@/api/materiales';
 import { useOrdenes } from '@/api/ordenesCompra';
 import { useOrdenesTrabajo } from '@/api/ordenesTrabajo';
 import { usePendientes } from '@/api/pendientes';
+import { useSolicitudes } from '@/api/solicitudes';
 import { usePlanesQueVencen, useResumenEquipos } from '@/api/equipos';
 import { Cargando } from '@/componentes/Estados';
 import { textoVencimiento } from '@/componentes/PlanesEquipo';
@@ -31,6 +33,7 @@ const MAXIMO_EN_LISTA = 6;
 const NO_OPERATIVOS = ['EN_REPARACION', 'FUERA_DE_SERVICIO'] as const;
 
 type Clave =
+  | 'solicitudes'
   | 'parados'
   | 'servicios'
   | 'pendientes'
@@ -43,6 +46,7 @@ type Clave =
 type Tono = 'rojo' | 'ambar' | 'azul' | 'verde' | 'gris' | 'violeta';
 
 const ICONO: Record<Clave, LucideIcon> = {
+  solicitudes: MessageSquareWarning,
   parados: CircleAlert,
   servicios: Wrench,
   pendientes: ListTodo,
@@ -102,6 +106,9 @@ export function InicioPage() {
   const veEquipos = puede(P.EQUIPOS_VER);
   const veTrabajos = puede(P.TRABAJOS_VER);
   const vePendientes = puede(P.PENDIENTES_VER);
+  const veSolicitudes = puede(P.SOLICITUDES_VER);
+  // Un sector no tiene calendario, pañol ni compras: su inicio son sus solicitudes.
+  const esSector = puede(P.SOLICITUDES_CREAR) && !puede(P.TAREAS_VER) && !veSolicitudes;
   /** La tarjeta abierta. `null`: la primera; 'ninguna': se cerró a propósito. */
   const [abierta, setAbierta] = useState<Clave | 'ninguna' | null>(null);
 
@@ -124,6 +131,10 @@ export function InicioPage() {
     veTrabajos,
   );
 
+  // Lo que avisaron los sectores y nadie revisó todavía.
+  const solicitudes = useSolicitudes({ estado: 'NUEVA' }, veSolicitudes);
+
+  if (esSector) return <Navigate to="/solicitudes" replace />;
   if (bajoStock.isLoading || emitidas.isLoading) return <Cargando />;
 
   const faltantes = bajoStock.data ?? [];
@@ -143,7 +154,37 @@ export function InicioPage() {
   const totalParados = parados.reduce((suma, x) => suma + x.cuantos, 0);
 
   // En orden de urgencia: lo parado frena la producción; lo sin enviar, nada todavía.
+  const nuevas = solicitudes.data ?? [];
+  const nuevasUrgentes = nuevas.filter((x) => x.urgencia === 'URGENTE').length;
   const tarjetas: Tarjeta[] = ([
+    {
+      clave: 'solicitudes' as const,
+      cuantos: nuevas.length,
+      titulo: 'Solicitudes',
+      detalle:
+        nuevasUrgentes === 1
+          ? '1 urgente'
+          : nuevasUrgentes > 1
+            ? `${nuevasUrgentes} urgentes`
+            : 'sin revisar',
+      urgente: nuevasUrgentes > 0,
+      tono: nuevasUrgentes > 0 ? 'rojo' : 'ambar',
+      ir: { a: '/solicitudes?estado=NUEVA', texto: 'Ver las solicitudes' },
+      contenido: (
+        <ul className="lista-inicio">
+          {nuevas.slice(0, MAXIMO_EN_LISTA).map((x) => (
+            <li key={x.id}>
+              <Link to="/solicitudes?estado=NUEVA">{x.descripcion}</Link>
+              <span className="texto-suave">
+                {x.urgencia === 'URGENTE' ? 'urgente · ' : ''}
+                {x.sectorNombre}
+                {x.equipoNombre ? ` · ${x.equipoNombre}` : ''}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
     {
       clave: 'parados' as const,
       cuantos: totalParados,

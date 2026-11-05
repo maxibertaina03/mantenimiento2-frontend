@@ -31,7 +31,15 @@ export function useUsuarios(pagina = 1, limite = 100, habilitado = true) {
 export function useActualizarUsuario() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...datos }: { id: string; rol?: RolUsuario; nombre?: string }) =>
+    mutationFn: ({
+      id,
+      ...datos
+    }: {
+      id: string;
+      rol?: RolUsuario;
+      nombre?: string;
+      sectorId?: string | null;
+    }) =>
       apiRequest<Usuario>(`/usuarios/${id}`, { method: 'PATCH', body: datos }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['usuarios'] });

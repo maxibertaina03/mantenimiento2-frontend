@@ -15,6 +15,8 @@ export interface Usuario {
   email: string;
   idExterno: string | null;
   rol: RolUsuario;
+  /** El sector del que reporta (rol Sector). */
+  sectorId?: string | null;
   creadoEn: string;
   actualizadoEn: string;
 }
