@@ -70,7 +70,64 @@ beforeEach(() => {
           }),
         ],
         hechas: [],
+        ordenesAbiertas: [
+          {
+            id: 'o1',
+            numero: 'OT-2026-0160',
+            titulo: 'Cambiar o-ring',
+            sobre: 'Tina 2',
+            asignadoAId: 'u1',
+            asignadoANombre: 'Facundo',
+            abiertaEn: new Date().toISOString(),
+            cerradaEn: null,
+            tallerNombre: null,
+            solicitudNumero: 'SOL-2026-0001',
+            urgencia: 'URGENTE',
+          },
+        ],
+        ordenesCerradas: [],
+        solicitudesNuevas: [
+          {
+            id: 's1',
+            numero: 'SOL-2026-0002',
+            descripcion: 'No arranca la cinta 3',
+            sectorNombre: 'Envasado',
+            equipoNombre: 'Cinta 3',
+            urgencia: 'URGENTE',
+            solicitadaPorNombre: 'Envasado',
+            creadoEn: new Date().toISOString(),
+          },
+        ],
       });
+    }
+    if (ruta === '/solicitudes/s1') {
+      return Promise.resolve({
+        id: 's1',
+        numero: 'SOL-2026-0002',
+        descripcion: 'No arranca la cinta 3',
+        sectorId: 'sec',
+        sectorNombre: 'Envasado',
+        equipoId: 'eq',
+        equipoNombre: 'Cinta 3',
+        urgencia: 'URGENTE',
+        estado: 'NUEVA',
+        solicitadaPorId: 'u9',
+        solicitadaPorNombre: 'Envasado',
+        creadoEn: new Date().toISOString(),
+        revisadaPorId: null,
+        revisadaPorNombre: null,
+        revisadaEn: null,
+        motivoRechazo: null,
+        notaResolucion: null,
+        resueltaEn: null,
+        ordenTrabajoId: null,
+        ordenTrabajoNumero: null,
+        ordenTrabajoAsignadoANombre: null,
+        fotos: [],
+      });
+    }
+    if (ruta.startsWith('/ordenes-trabajo/asignables')) {
+      return Promise.resolve([{ id: 'u1', nombre: 'Facundo', puedeTrabajar: true }]);
     }
     if (opciones?.method === 'POST') return Promise.resolve(tarea('x', 'x'));
     return Promise.resolve([]);
@@ -133,5 +190,34 @@ describe('TableroTareas', () => {
     permisos = ['tareas.ver', 'tareas.editar', 'tareas.asignar'];
     abrir();
     expect(await screen.findByLabelText('Mover «Engrasar rodillos» a')).toBeInTheDocument();
+  });
+
+  it('la orden abierta va en proceso y la solicitud nueva en pendiente', async () => {
+    permisos = ['tareas.ver', 'tareas.editar', 'trabajos.editar', 'solicitudes.gestionar'];
+    abrir();
+    expect(
+      within(await screen.findByLabelText('En proceso')).getByText('Orden OT-2026-0160'),
+    ).toBeInTheDocument();
+    expect(within(screen.getByLabelText('Pendiente')).getByText('Solicitud SOL-2026-0002')).toBeInTheDocument();
+    // Una orden abierta solo va a Listo.
+    const moverOrden = screen.getByLabelText('Mover «Tina 2» a');
+    expect([...moverOrden.querySelectorAll('option')].map((o) => o.textContent)).toEqual([
+      'Mover a…',
+      'Listo',
+    ]);
+  });
+
+  it('llevar la solicitud a En proceso abre «generar la orden», sin llamar a nada', async () => {
+    permisos = ['tareas.ver', 'tareas.editar', 'trabajos.editar', 'solicitudes.gestionar'];
+    abrir();
+    await userEvent.selectOptions(await screen.findByLabelText('Mover «Cinta 3» a'), 'enProceso');
+    expect(await screen.findByLabelText('Quién la hace')).toBeInTheDocument();
+    expect(llamadas()).toEqual([]);
+  });
+
+  it('sin permiso sobre solicitudes, la tarjeta se ve pero no se mueve', async () => {
+    abrir();
+    await screen.findByText('Solicitud SOL-2026-0002');
+    expect(screen.queryByLabelText('Mover «Cinta 3» a')).not.toBeInTheDocument();
   });
 });
