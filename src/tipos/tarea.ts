@@ -4,14 +4,20 @@
  * Reflejo del dominio del backend. Se repite acá y no se comparte porque son
  * dos proyectos que se despliegan por separado.
  */
-export const ESTADOS_TAREA = ['PENDIENTE', 'HECHA', 'CANCELADA'] as const;
+export const ESTADOS_TAREA = ['PENDIENTE', 'EN_PROCESO', 'HECHA', 'CANCELADA'] as const;
 export type EstadoTarea = (typeof ESTADOS_TAREA)[number];
 
 export const ETIQUETA_ESTADO_TAREA: Record<EstadoTarea, string> = {
   PENDIENTE: 'Pendiente',
+  EN_PROCESO: 'En proceso',
   HECHA: 'Hecha',
   CANCELADA: 'Cancelada',
 };
+
+/** Lo que falta hacer: pendiente, o en proceso (alguien la tomó). */
+export function estaPorHacer(estado: EstadoTarea): boolean {
+  return estado === 'PENDIENTE' || estado === 'EN_PROCESO';
+}
 
 export interface Tarea {
   id: string;
@@ -40,6 +46,8 @@ export interface Tarea {
   cadaDias?: number | null;
   ordenTrabajoId: string | null;
   ordenTrabajoNumero: string | null;
+  /** Desde cuándo está en proceso (ISO): cuando alguien la tomó en el tablero. */
+  enProcesoDesde?: string | null;
   creadaPorId: string | null;
   creadoEn: string;
   /** Las veces que se postergó, de la primera a la última. */
@@ -119,3 +127,15 @@ export function comoSeRepite(cadaDias: number): string {
   if (cadaDias === 30) return 'Todos los meses';
   return `Cada ${cadaDias} días`;
 }
+
+/** El tablero: las tres columnas. */
+export interface Tablero {
+  /** Lo del período y lo atrasado. */
+  pendientes: Tarea[];
+  /** Lo que alguien tomó, de la fecha que sea. */
+  enProceso: Tarea[];
+  /** Lo terminado en el período. */
+  hechas: Tarea[];
+}
+
+export type AlcanceTablero = 'hoy' | 'semana';

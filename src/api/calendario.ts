@@ -7,6 +7,8 @@ import type {
   CrearRutinaInput,
   CrearTareaInput,
   Rutina,
+  AlcanceTablero,
+  Tablero,
   Tarea,
 } from '@/tipos/tarea';
 
@@ -16,6 +18,7 @@ export const clavesCalendario = {
     ['calendario', 'mes', desde, hasta, asignadoAId ?? ''] as const,
   mias: ['calendario', 'mias'] as const,
   rutinas: (todas: boolean) => ['calendario', 'rutinas', todas] as const,
+  tablero: (alcance: AlcanceTablero) => ['calendario', 'tablero', alcance] as const,
 };
 
 /**
@@ -52,6 +55,59 @@ export function useMisTareas(habilitado = true) {
     queryFn: () => apiRequest<Tarea[]>('/calendario/mias'),
   });
 }
+
+/**
+ * El tablero: pendiente, en proceso y listo. Se refresca solo cada 20 s, así
+ * todos ven lo mismo sin recargar: lo que tomó un compañero aparece en proceso.
+ */
+export function useTablero(alcance: AlcanceTablero) {
+  return useQuery({
+    queryKey: clavesCalendario.tablero(alcance),
+    queryFn: () => apiRequest<Tablero>('/calendario/tablero', { query: { alcance } }),
+    refetchInterval: 20_000,
+  });
+}
+
+/**
+ * Tomar o soltar una tarea en el tablero. La tarjeta se mueve en el acto; si
+ * el servidor dice que no (la tomó otro, ya no es tuya), vuelve a su lugar.
+ */
+function useMoverEnTablero(accion: 'tomar' | 'soltar') {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (tarea: Tarea) =>
+      apiRequest<Tarea>(`/calendario/${tarea.id}/${accion}`, { method: 'POST' }),
+    onMutate: async (tarea: Tarea) => {
+      const clave = ['calendario', 'tablero'];
+      await qc.cancelQueries({ queryKey: clave });
+      const antes = qc.getQueriesData<Tablero>({ queryKey: clave });
+      qc.setQueriesData<Tablero>({ queryKey: clave }, (tablero) => {
+        if (!tablero) return tablero;
+        const sinElla = (lista: Tarea[]) => lista.filter((t) => t.id !== tarea.id);
+        const movida: Tarea = {
+          ...tarea,
+          estado: accion === 'tomar' ? 'EN_PROCESO' : 'PENDIENTE',
+          enProcesoDesde: accion === 'tomar' ? new Date().toISOString() : null,
+        };
+        return {
+          pendientes:
+            accion === 'soltar' ? [...sinElla(tablero.pendientes), movida] : sinElla(tablero.pendientes),
+          enProceso:
+            accion === 'tomar' ? [...sinElla(tablero.enProceso), movida] : sinElla(tablero.enProceso),
+          hechas: tablero.hechas,
+        };
+      });
+      return { antes };
+    },
+    onError: (_e, _t, contexto) => {
+      for (const [clave, datos] of contexto?.antes ?? []) qc.setQueryData(clave, datos);
+    },
+    onSettled: () => void qc.invalidateQueries({ queryKey: clavesCalendario.base }),
+  });
+}
+
+export const useTomarTarea = () => useMoverEnTablero('tomar');
+export const useSoltarTarea = () => useMoverEnTablero('soltar');
 
 export function useRutinas(todas = false, habilitado = true) {
   return useQuery({

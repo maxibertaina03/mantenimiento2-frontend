@@ -1,7 +1,7 @@
 import { colorDeTarea } from '@/lib/coloresUsuario';
 import { DIAS, MESES, aIso, semanasDe, textoDia, textoSemana } from '@/lib/fechasCalendario';
 import { agruparPorTitulo } from '@/lib/agruparTareas';
-import type { Tarea } from '@/tipos/tarea';
+import { estaPorHacer, type Tarea } from '@/tipos/tarea';
 
 export type ModoImpresion = { tipo: 'semana'; semana: number } | { tipo: 'mes' };
 
@@ -50,7 +50,7 @@ export function CalendarioImpreso({
 }) {
   const tareasDe = (dia: Date) =>
     (porDia.get(aIso(dia)) ?? []).filter((t) =>
-      soloPendientes ? t.estado === 'PENDIENTE' : t.estado !== 'CANCELADA',
+      soloPendientes ? estaPorHacer(t.estado) : t.estado !== 'CANCELADA',
     );
 
   const pie = (

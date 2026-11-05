@@ -3094,6 +3094,118 @@ tr:hover .nombre-material {
 .calendario-tarea.estado-cancelada {
   opacity: 0.45;
 }
+/* En proceso: alguien la tomó. Un subrayado de puntos, que también se ve en
+   blanco y negro. */
+.calendario-tarea.estado-en_proceso .calendario-tarea-titulo {
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+/* ─── Tablero: pendiente → en proceso → listo ─── */
+.tablero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.tablero-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+}
+.tablero-barra .atajos-filtro {
+  margin: 0;
+}
+.tablero-solapas {
+  display: none;
+}
+.tablero-columnas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+  align-items: start;
+}
+.tablero-columna {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 12rem;
+  padding: 0.75rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--panel-suave);
+  transition: background 0.15s, border-color 0.15s;
+}
+.tablero-columna.encima {
+  border-color: var(--primario);
+  background: var(--primario-suave);
+}
+.tablero-columna-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.2rem;
+  font-size: 0.95rem;
+}
+.tablero-enProceso .tablero-columna-titulo {
+  color: var(--alerta);
+}
+.tablero-hechas .tablero-columna-titulo {
+  color: var(--exito);
+}
+.tablero-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--borde);
+  border-left: 4px solid var(--primario);
+  border-radius: var(--radio);
+  background: var(--panel);
+  touch-action: manipulation;
+}
+.tablero-tarjeta.movible {
+  cursor: grab;
+}
+.tablero-tarjeta.arrastrando {
+  position: relative;
+  z-index: 10;
+  cursor: grabbing;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+}
+.tablero-tarjeta:focus-visible {
+  outline: 2px solid var(--primario);
+  outline-offset: 2px;
+}
+.tablero-hechas .tablero-tarjeta {
+  opacity: 0.75;
+}
+.tablero-tarjeta-titulo {
+  font-size: 0.92rem;
+}
+.tablero-en-proceso {
+  color: var(--alerta);
+  font-weight: 600;
+}
+.tablero-mover {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.8rem;
+  width: auto;
+}
+@media (max-width: 760px) {
+  /* En el teléfono, una columna por vez, con solapas para cambiar. */
+  .tablero-solapas {
+    display: flex;
+  }
+  .tablero-columnas {
+    grid-template-columns: 1fr;
+  }
+  .tablero-columna:not(.visible-movil) {
+    display: none;
+  }
+}
 
 /* ─── Referencia de colores ─── */
 /* ─────────── Pestanias de clasificacion ───────────
