@@ -1,6 +1,7 @@
 import {
   ChevronLeft,
   ChevronRight,
+  Kanban,
   Plus,
   Printer,
   Repeat,
@@ -9,7 +10,14 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { flushSync } from 'react-dom';
-import { useAsignarTarea, useCalendario, useCancelarTarea } from '@/api/calendario';
+import {
+  useAsignarTarea,
+  useCalendario,
+  useCancelarTarea,
+  useSoltarTarea,
+  useTomarTarea,
+} from '@/api/calendario';
+import { TableroTareas } from '@/componentes/calendario/TableroTareas';
 import { useAsignables } from '@/api/ordenesTrabajo';
 import { colorDeTarea, coloresPorPersona } from '@/lib/coloresUsuario';
 import { useUsuarios } from '@/api/usuarios';
@@ -27,7 +35,7 @@ import { Cargando, MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
 import { DIAS, MESES, aIso, diasDelMes, semanasDe } from '@/lib/fechasCalendario';
 import { P, usePuede } from '@/lib/permisos';
-import { ETIQUETA_ESTADO_TAREA } from '@/tipos/tarea';
+import { ETIQUETA_ESTADO_TAREA, estaPorHacer } from '@/tipos/tarea';
 import type { Tarea } from '@/tipos/tarea';
 
 /**
@@ -56,12 +64,19 @@ export function CalendarioPage() {
   // y lo programado a mano, una tarea importante se perdía entre diez
   // «Purga». Se recuerda en la dirección (?vista=diarias).
   const [params, setParams] = useSearchParams();
-  const vista: 'tareas' | 'rutinas' = params.get('vista') === 'diarias' ? 'rutinas' : 'tareas';
-  const cambiarVista = (v: 'tareas' | 'rutinas') =>
+  // El tablero (pendiente → en proceso → listo) es la tercera: ?vista=tablero.
+  const vista: 'tareas' | 'rutinas' | 'tablero' =
+    params.get('vista') === 'diarias'
+      ? 'rutinas'
+      : params.get('vista') === 'tablero'
+        ? 'tablero'
+        : 'tareas';
+  const cambiarVista = (v: 'tareas' | 'rutinas' | 'tablero') =>
     setParams(
       (actual) => {
         const nuevos = new URLSearchParams(actual);
         if (v === 'rutinas') nuevos.set('vista', 'diarias');
+        else if (v === 'tablero') nuevos.set('vista', 'tablero');
         else nuevos.delete('vista');
         return nuevos;
       },
@@ -142,7 +157,7 @@ export function CalendarioPage() {
   );
   /** Cuántas pendientes hay en cada pestaña, para mostrarlo en la solapa. */
   const pendientesPorVista = useMemo(() => {
-    const pend = (data?.tareas ?? []).filter((t) => t.estado === 'PENDIENTE');
+    const pend = (data?.tareas ?? []).filter((t) => estaPorHacer(t.estado));
     return {
       tareas: pend.filter((t) => !esDeTodosLosDias(t)).length,
       rutinas: pend.filter((t) => esDeTodosLosDias(t)).length,
@@ -180,7 +195,7 @@ export function CalendarioPage() {
   };
 
   const hoy = aIso(new Date());
-  const pendientes = tareasDeLaVista.filter((t) => t.estado === 'PENDIENTE');
+  const pendientes = tareasDeLaVista.filter((t) => estaPorHacer(t.estado));
   const sinRepartir = pendientes.filter((t) => t.asignadoAId === null);
 
   return (
@@ -191,7 +206,9 @@ export function CalendarioPage() {
           <p className="texto-suave">
             {vista === 'rutinas'
               ? 'Lo que se hace todos los días (purgas, recorridas), aparte para que no tape lo importante.'
-              : 'Los services que vencen y lo que se programó a mano, cada cosa con su responsable.'}
+              : vista === 'tablero'
+                ? 'En qué está cada uno: lo pendiente, lo que alguien tomó y lo que ya se terminó.'
+                : 'Los services que vencen y lo que se programó a mano, cada cosa con su responsable.'}
           </p>
         </div>
         <div className="fila-acciones">
@@ -209,10 +226,12 @@ export function CalendarioPage() {
               </button>
             </>
           )}
-          <button className="btn" onClick={() => setEligiendoImpresion(true)}>
-            <Printer className="icono" aria-hidden />
-            Imprimir
-          </button>
+          {vista !== 'tablero' && (
+            <button className="btn" onClick={() => setEligiendoImpresion(true)}>
+              <Printer className="icono" aria-hidden />
+              Imprimir
+            </button>
+          )}
         </div>
       </div>
 
@@ -243,143 +262,159 @@ export function CalendarioPage() {
             <span className="contador-pestana">{pendientesPorVista.rutinas}</span>
           )}
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={vista === 'tablero'}
+          className={`solapa ${vista === 'tablero' ? 'activa' : ''}`}
+          onClick={() => cambiarVista('tablero')}
+        >
+          <Kanban className="icono" aria-hidden />
+          Tablero
+        </button>
       </div>
 
-      {data && tareasDeLaVista.length === 0 && (
-        <p className="texto-suave no-imprimir">
-          {vista === 'rutinas'
-            ? 'Este mes no hay nada que se repita todos los días.'
-            : 'Este mes no hay services ni tareas programadas.'}
-        </p>
-      )}
+      {vista === 'tablero' && <TableroTareas colores={colores} />}
 
-      <div className="barra-calendario no-imprimir">
-        <button className="btn btn-sm" onClick={() => mover(-1)}>
-          <ChevronLeft className="icono" aria-hidden />
-          Anterior
-        </button>
-        <strong>
-          {MESES[ancla.getMonth()]} de {ancla.getFullYear()}
-        </strong>
-        <button className="btn btn-sm" onClick={() => mover(1)}>
-          Siguiente
-          <ChevronRight className="icono" aria-hidden />
-        </button>
-        <button className="btn btn-sm" onClick={() => setAncla(new Date())}>
-          Hoy
-        </button>
-
-        {yo && (
-          <label className="casilla">
-            <input
-              type="checkbox"
-              checked={soloMias}
-              onChange={(e) => setSoloMias(e.target.checked)}
-            />
-            Solo las mías
-          </label>
-        )}
-      </div>
-
-      {isLoading && <Cargando />}
-      {error && <MensajeError error={error} />}
-      {cancelar.error && <MensajeError error={cancelar.error} />}
-
-      {sinRepartir.length > 0 && (
-        <p className="aviso-escaneo es-error no-imprimir">
-          {sinRepartir.length === 1
-            ? 'Hay una tarea sin repartir en este mes.'
-            : `Hay ${sinRepartir.length} tareas sin repartir en este mes.`}{' '}
-          Mientras no tengan responsable, todos suponen que las hace otro.
-        </p>
-      )}
-
-      {personasConTareas.length > 0 && (
-        <div className="calendario-referencias no-imprimir">
-          {personasConTareas.map((p) => (
-            <span className="calendario-referencia" key={p.id}>
-              <span className="calendario-marca" style={{ background: p.color }} />
-              {p.nombre}
-            </span>
-          ))}
-          {hayHuerfanas && (
-            <span className="calendario-referencia">
-              <span className="calendario-marca calendario-marca-sin-asignar" />
-              sin repartir
-            </span>
+      {vista !== 'tablero' && (
+        <>
+          {data && tareasDeLaVista.length === 0 && (
+            <p className="texto-suave no-imprimir">
+              {vista === 'rutinas'
+                ? 'Este mes no hay nada que se repita todos los días.'
+                : 'Este mes no hay services ni tareas programadas.'}
+            </p>
           )}
-        </div>
-      )}
 
-      {/* La pantalla. El papel tiene su propia vista, más abajo. */}
-      <div className="calendario no-imprimir">
-        {DIAS.map((d) => (
-          <div className="calendario-cabecera" key={d}>
-            {d}
-          </div>
-        ))}
+          <div className="barra-calendario no-imprimir">
+            <button className="btn btn-sm" onClick={() => mover(-1)}>
+              <ChevronLeft className="icono" aria-hidden />
+              Anterior
+            </button>
+            <strong>
+              {MESES[ancla.getMonth()]} de {ancla.getFullYear()}
+            </strong>
+            <button className="btn btn-sm" onClick={() => mover(1)}>
+              Siguiente
+              <ChevronRight className="icono" aria-hidden />
+            </button>
+            <button className="btn btn-sm" onClick={() => setAncla(new Date())}>
+              Hoy
+            </button>
 
-        {dias.map((dia) => {
-          const iso = aIso(dia);
-          const delMes = dia.getMonth() === ancla.getMonth();
-          const tareas = porDia.get(iso) ?? [];
-
-          return (
-            <div
-              key={iso}
-              className={[
-                'calendario-dia',
-                delMes ? '' : 'otro-mes',
-                iso === hoy ? 'es-hoy' : '',
-                tareas.length > 0 ? 'con-tareas' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              // Doble clic sobre la casilla abre el día entero. Es un atajo,
-              // no el único camino: el "+N más" hace lo mismo y se ve, que es
-              // lo que encuentra quien no sabe que el atajo existe.
-              onDoubleClick={() => tareas.length > 0 && setDiaDetalle(iso)}
-            >
-              <div className="calendario-numero">
-                <span>
-                  {/* Solo se ve en la agenda del celular, donde los días van
-                      uno debajo del otro y no hay encabezado de columnas. */}
-                  <span className="calendario-dia-semana">{DIAS[(dia.getDay() + 6) % 7]}</span>
-                  {dia.getDate()}
-                </span>
-                {puede(P.TAREAS_EDITAR) && delMes && (
-                  <button
-                    className="calendario-agregar no-imprimir"
-                    title="Programar una tarea este día"
-                    onClick={() => setDiaElegido(iso)}
-                  >
-                    +
-                  </button>
-                )}
-              </div>
-
-              {tareas.slice(0, TAREAS_VISIBLES).map((t) => (
-                <TareaEnCalendario
-                  key={t.id}
-                  tarea={t}
-                  colores={colores}
-                  onAbrir={() => setTareaAbierta(t)}
+            {yo && (
+              <label className="casilla">
+                <input
+                  type="checkbox"
+                  checked={soloMias}
+                  onChange={(e) => setSoloMias(e.target.checked)}
                 />
+                Solo las mías
+              </label>
+            )}
+          </div>
+
+          {isLoading && <Cargando />}
+          {error && <MensajeError error={error} />}
+          {cancelar.error && <MensajeError error={cancelar.error} />}
+
+          {sinRepartir.length > 0 && (
+            <p className="aviso-escaneo es-error no-imprimir">
+              {sinRepartir.length === 1
+                ? 'Hay una tarea sin repartir en este mes.'
+                : `Hay ${sinRepartir.length} tareas sin repartir en este mes.`}{' '}
+              Mientras no tengan responsable, todos suponen que las hace otro.
+            </p>
+          )}
+
+          {personasConTareas.length > 0 && (
+            <div className="calendario-referencias no-imprimir">
+              {personasConTareas.map((p) => (
+                <span className="calendario-referencia" key={p.id}>
+                  <span className="calendario-marca" style={{ background: p.color }} />
+                  {p.nombre}
+                </span>
               ))}
-
-              {tareas.length > TAREAS_VISIBLES && (
-                <button
-                  className="calendario-mas no-imprimir"
-                  onClick={() => setDiaDetalle(iso)}
-                >
-                  +{tareas.length - TAREAS_VISIBLES} más
-                </button>
+              {hayHuerfanas && (
+                <span className="calendario-referencia">
+                  <span className="calendario-marca calendario-marca-sin-asignar" />
+                  sin repartir
+                </span>
               )}
-
             </div>
-          );
-        })}
-      </div>
+          )}
+
+          {/* La pantalla. El papel tiene su propia vista, más abajo. */}
+          <div className="calendario no-imprimir">
+            {DIAS.map((d) => (
+              <div className="calendario-cabecera" key={d}>
+                {d}
+              </div>
+            ))}
+
+            {dias.map((dia) => {
+              const iso = aIso(dia);
+              const delMes = dia.getMonth() === ancla.getMonth();
+              const tareas = porDia.get(iso) ?? [];
+
+              return (
+                <div
+                  key={iso}
+                  className={[
+                    'calendario-dia',
+                    delMes ? '' : 'otro-mes',
+                    iso === hoy ? 'es-hoy' : '',
+                    tareas.length > 0 ? 'con-tareas' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  // Doble clic sobre la casilla abre el día entero. Es un atajo,
+                  // no el único camino: el "+N más" hace lo mismo y se ve, que es
+                  // lo que encuentra quien no sabe que el atajo existe.
+                  onDoubleClick={() => tareas.length > 0 && setDiaDetalle(iso)}
+                >
+                  <div className="calendario-numero">
+                    <span>
+                      {/* Solo se ve en la agenda del celular, donde los días van
+                          uno debajo del otro y no hay encabezado de columnas. */}
+                      <span className="calendario-dia-semana">{DIAS[(dia.getDay() + 6) % 7]}</span>
+                      {dia.getDate()}
+                    </span>
+                    {puede(P.TAREAS_EDITAR) && delMes && (
+                      <button
+                        className="calendario-agregar no-imprimir"
+                        title="Programar una tarea este día"
+                        onClick={() => setDiaElegido(iso)}
+                      >
+                        +
+                      </button>
+                    )}
+                  </div>
+
+                  {tareas.slice(0, TAREAS_VISIBLES).map((t) => (
+                    <TareaEnCalendario
+                      key={t.id}
+                      tarea={t}
+                      colores={colores}
+                      onAbrir={() => setTareaAbierta(t)}
+                    />
+                  ))}
+
+                  {tareas.length > TAREAS_VISIBLES && (
+                    <button
+                      className="calendario-mas no-imprimir"
+                      onClick={() => setDiaDetalle(iso)}
+                    >
+                      +{tareas.length - TAREAS_VISIBLES} más
+                    </button>
+                  )}
+
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {impresion && (
         <CalendarioImpreso
@@ -503,7 +538,7 @@ function TareasDelDia({
   onCerrar: () => void;
 }) {
   const dia = new Date(`${fecha}T00:00:00`);
-  const pendientes = tareas.filter((t) => t.estado === 'PENDIENTE').length;
+  const pendientes = tareas.filter((t) => estaPorHacer(t.estado)).length;
 
   return (
     <Modal
@@ -553,11 +588,16 @@ function DetalleTarea({
   const [postergando, setPostergando] = useState(false);
   const cancelar = useCancelarTarea();
   const asignar = useAsignarTarea();
+  const tomar = useTomarTarea();
+  const soltar = useSoltarTarea();
   const [nuevoDuenio, setNuevoDuenio] = useState('');
 
-  // La suya, o una que no es de nadie. La de otro se ve y no se toca.
+  // La suya, o una que no es de nadie. La de otro se ve y no se toca, salvo
+  // el encargado, que reparte el trabajo y mueve el de todos.
   const esMia = !!yo && (tarea.asignadoAId === null || tarea.asignadoAId === yo.id);
-  const sePuedeHacer = tarea.estado === 'PENDIENTE' && puede(P.TAREAS_EDITAR) && esMia;
+  const porHacer = estaPorHacer(tarea.estado);
+  const laMueve = puede(P.TAREAS_EDITAR) && (esMia || puede(P.TAREAS_ASIGNAR));
+  const sePuedeHacer = porHacer && laMueve;
 
   if (completando) {
     return <HacerTareas tareas={[tarea]} inicialId={tarea.id} onCerrar={onCerrar} />;
@@ -566,8 +606,7 @@ function DetalleTarea({
     return <PostergarTarea tarea={tarea} onCerrar={onCerrar} />;
   }
   // Lo vencido no se posterga: se hace.
-  const sePuedePostergar =
-    tarea.estado === 'PENDIENTE' && puede(P.TAREAS_EDITAR) && !vencio(tarea.fecha);
+  const sePuedePostergar = porHacer && puede(P.TAREAS_EDITAR) && !vencio(tarea.fecha);
 
   return (
     <Modal titulo={tarea.titulo} abierto onCerrar={onCerrar}>
@@ -614,14 +653,27 @@ function DetalleTarea({
           </p>
         )}
 
-        {tarea.estado === 'PENDIENTE' && !esMia && (
+        {tarea.estado === 'EN_PROCESO' && tarea.enProcesoDesde && (
+          <p className="texto-suave texto-chico">
+            En proceso desde el{' '}
+            {new Date(tarea.enProcesoDesde).toLocaleString('es-AR', {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+            .
+          </p>
+        )}
+
+        {porHacer && !esMia && !puede(P.TAREAS_ASIGNAR) && (
           <p className="aviso-escaneo es-error">
             Esta tarea es de {tarea.asignadoANombre}. Podés verla, pero la hace quien la tiene a
             cargo.
           </p>
         )}
 
-        {tarea.estado === 'PENDIENTE' && puede(P.TAREAS_ASIGNAR) && (
+        {porHacer && puede(P.TAREAS_ASIGNAR) && (
           <label className="campo">
             Darle la tarea a alguien
             <div className="fila-acciones">
@@ -653,8 +705,11 @@ function DetalleTarea({
           </label>
         )}
 
+        {tomar.error && <MensajeError error={tomar.error} />}
+        {soltar.error && <MensajeError error={soltar.error} />}
+
         <div className="acciones">
-          {tarea.estado === 'PENDIENTE' && puede(P.TAREAS_EDITAR) && (
+          {porHacer && puede(P.TAREAS_EDITAR) && (
             <button
               type="button"
               className="btn btn-peligro"
@@ -670,6 +725,26 @@ function DetalleTarea({
           {sePuedePostergar && (
             <button type="button" className="btn" onClick={() => setPostergando(true)}>
               Postergar
+            </button>
+          )}
+          {tarea.estado === 'PENDIENTE' && laMueve && (
+            <button
+              type="button"
+              className="btn"
+              disabled={tomar.isPending}
+              onClick={() => tomar.mutate(tarea, { onSuccess: onCerrar })}
+            >
+              Empezar (en proceso)
+            </button>
+          )}
+          {tarea.estado === 'EN_PROCESO' && laMueve && (
+            <button
+              type="button"
+              className="btn"
+              disabled={soltar.isPending}
+              onClick={() => soltar.mutate(tarea, { onSuccess: onCerrar })}
+            >
+              Soltar
             </button>
           )}
           {sePuedeHacer && (
