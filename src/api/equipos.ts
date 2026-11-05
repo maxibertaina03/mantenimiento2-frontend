@@ -365,6 +365,31 @@ export function useRepuestos(equipoId: string, habilitado = true) {
 }
 
 /** En qué equipos va un material, para su ficha. */
+/** Una máquina que nombra lo que se escribió. */
+export interface EquipoSugerido {
+  id: string;
+  nombre: string;
+  ubicacionNombre: string | null;
+  puntaje: number;
+  completa: boolean;
+  /** La única que el texto nombra sin dudas: se puede atar sola. */
+  elegida: boolean;
+}
+
+/**
+ * Qué máquina nombra un texto: «cambio de rodamiento de desmigadora» →
+ * Desmigadora. Para el alta de tareas: quien escribe ya dijo la máquina.
+ */
+export function useSugerirEquipos(texto: string, habilitado = true) {
+  const limpio = texto.trim();
+  return useQuery({
+    enabled: habilitado && limpio.length >= 4,
+    queryKey: ['equipos', 'sugerir', limpio.toLowerCase()],
+    queryFn: () => apiRequest<EquipoSugerido[]>('/equipos/sugerir', { query: { texto: limpio } }),
+    staleTime: 60_000,
+  });
+}
+
 export function useEquiposDeMaterial(materialId: string, habilitado = true) {
   return useQuery({
     queryKey: ['equipos', 'de-material', materialId] as const,

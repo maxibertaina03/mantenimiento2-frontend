@@ -5758,3 +5758,21 @@ label.casilla .icono {
     height: 6.5rem;
   }
 }
+
+/* La máquina que se reconoció en lo que se escribió, o las opciones. */
+.sugerencia-equipo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin-top: 0.35rem;
+  font-weight: 400;
+  color: var(--texto-suave);
+}
+.sugerencia-equipo .icono {
+  width: 14px;
+  height: 14px;
+}
+.sugerencia-equipo .chip-periodo {
+  font-size: 0.8rem;
+}
