@@ -4,6 +4,18 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.24.0] — 2026-11-05
+
+### Agregado
+
+- **Tablero en el calendario:** una pestaña nueva, «Tablero», con tres columnas: **Pendiente** (con lo atrasado), **En proceso** y **Listo**. Se ve lo de hoy o lo de la semana.
+  - Las tarjetas se **arrastran** de una columna a otra, o se mueven con «Mover a…», que en el celular es lo cómodo.
+  - A **En proceso**: «estoy en esto». Queda la hora y, si no era de nadie, pasa a tu nombre.
+  - A **Listo**: se cierra como siempre («Hecha, sin novedad» o «Hubo algo»), así queda la orden de trabajo con sus materiales.
+  - Cada uno mueve las suyas y las que no tienen dueño; el encargado, todas.
+  - Se actualiza solo cada 20 segundos. Las rutinas de todos los días no aparecen.
+- **Detalle de una tarea:** botones «Empezar (en proceso)» y «Soltar», y desde cuándo está en proceso.
+
 ## [1.23.0] — 2026-11-03
 
 ### Agregado
@@ -419,6 +431,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.24.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.24.0
 [1.23.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.23.0
 [1.22.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.22.0
 [1.21.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.21.0
