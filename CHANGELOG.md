@@ -4,6 +4,17 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.25.0] — 2026-11-05
+
+### Agregado
+
+- **Solicitudes de trabajo:** cada sector le avisa a mantenimiento lo que pasa, sin llamar por teléfono.
+  - **El sector** carga la solicitud desde el celular: qué pasa, la máquina (si es sobre una), qué tan urgente es y hasta 3 fotos sacadas con la cámara. Después la sigue en «Mis solicitudes»: si está nueva, en curso, resuelta (con lo que se hizo) o rechazada (con el motivo).
+  - **Mantenimiento** ve las de todos los sectores, las nuevas primero y las urgentes arriba, con filtros por estado y sector. Desde el detalle **genera la orden de trabajo** (sobre la máquina o el sector, con lo que contó el sector), la **resuelve sin orden** si era algo menor, o la **rechaza** diciendo por qué.
+  - Al cerrar la orden de trabajo, la solicitud queda resuelta sola.
+  - En el menú, «Solicitudes» muestra cuántas hay sin revisar (en rojo si hay urgentes), y en **Hoy** hay una tarjeta con las nuevas.
+- **Rol Sector:** en **Usuarios** se elige el rol «Sector» y de qué sector es. Quien tiene ese rol entra directo a sus solicitudes y no ve el resto del sistema.
+
 ## [1.24.0] — 2026-11-05
 
 ### Agregado
@@ -431,6 +442,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.25.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.25.0
 [1.24.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.24.0
 [1.23.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.23.0
 [1.22.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.22.0
