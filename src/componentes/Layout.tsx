@@ -10,8 +10,9 @@ import {
   ListTodo,
   MapPin,
   Menu,
-  MoreHorizontal,
+  MessageSquareWarning,
   Monitor,
+  MoreHorizontal,
   Package,
   PackagePlus,
   Settings2,
@@ -26,6 +27,7 @@ import {
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { BannerServidor } from './Estados';
+import { useContadorSolicitudes } from '@/api/solicitudes';
 import { P, usePuede, type Permiso } from '@/lib/permisos';
 import { PanelLogo } from './PanelLogo';
 import { VersionSistema } from './VersionSistema';
@@ -43,6 +45,10 @@ interface Opcion {
   permiso?: Permiso;
   /** Solo se marca activa en esa dirección exacta, no en las de abajo. */
   exacta?: boolean;
+  /** Se esconde si el rol tiene este permiso (ej.: un acceso que es solo para un sector). */
+  ocultarCon?: Permiso;
+  /** Lleva al lado cuántas solicitudes hay sin revisar. */
+  contador?: boolean;
 }
 
 /**
@@ -85,6 +91,13 @@ const GRUPOS: { titulo: string | null; opciones: Opcion[] }[] = [
     opciones: [
       { a: '/calendario', texto: 'Calendario', Icono: CalendarDays, permiso: P.TAREAS_VER },
       { a: '/pendientes', texto: 'Pendientes', Icono: ListTodo, permiso: P.PENDIENTES_VER },
+      {
+        a: '/solicitudes',
+        texto: 'Solicitudes',
+        Icono: MessageSquareWarning,
+        permiso: P.SOLICITUDES_CREAR,
+        contador: true,
+      },
       {
         a: '/ordenes-trabajo',
         texto: 'Órdenes de trabajo',
@@ -162,7 +175,34 @@ const BARRA_INFERIOR: Opcion[] = [
     permiso: P.MOVIMIENTOS_CREAR,
   },
   { a: '/calendario', texto: 'Calendario', Icono: CalendarDays, permiso: P.TAREAS_VER },
+  // Para un sector, que no tiene calendario ni pañol: sus solicitudes a mano.
+  {
+    a: '/solicitudes',
+    texto: 'Solicitudes',
+    Icono: MessageSquareWarning,
+    permiso: P.SOLICITUDES_CREAR,
+    ocultarCon: P.TAREAS_VER,
+  },
 ];
+
+/** El número de solicitudes sin revisar, para quien las revisa. */
+function ContadorSolicitudes() {
+  const puede = usePuede();
+  const { data } = useContadorSolicitudes(puede(P.SOLICITUDES_VER));
+  if (!data?.nuevas) return null;
+  return (
+    <span
+      className={`contador-pestana${data.urgentes > 0 ? ' contador-pestana-alerta' : ''}`}
+      title={
+        data.urgentes > 0
+          ? `${data.nuevas} sin revisar, ${data.urgentes} urgente(s)`
+          : `${data.nuevas} sin revisar`
+      }
+    >
+      {data.nuevas}
+    </span>
+  );
+}
 
 /** Estructura general: menú lateral + área de contenido.
  *  En celular el menú se vuelve un cajón deslizable (hamburguesa). */
@@ -198,15 +238,18 @@ export function Layout() {
         </div>
         <nav onClick={cerrar}>
           {GRUPOS.map(({ titulo, opciones }) => {
-            const visibles = opciones.filter((o) => !o.permiso || puede(o.permiso));
+            const visibles = opciones.filter(
+              (o) => (!o.permiso || puede(o.permiso)) && !(o.ocultarCon && puede(o.ocultarCon)),
+            );
             if (visibles.length === 0) return null;
             return (
               <div key={titulo ?? 'inicio'} role="group" aria-label={titulo ?? 'Inicio'}>
                 {titulo && <div className="grupo-menu">{titulo}</div>}
-                {visibles.map(({ a, texto, Icono, exacta }) => (
+                {visibles.map(({ a, texto, Icono, exacta, contador }) => (
                   <NavLink key={a} to={a} end={exacta} className={claseNav}>
                     <Icono className="icono" aria-hidden />
                     {texto}
+                    {contador && <ContadorSolicitudes />}
                   </NavLink>
                 ))}
               </div>
@@ -231,7 +274,9 @@ export function Layout() {
       </main>
 
       <nav className="barra-inferior" aria-label="Accesos rápidos">
-        {BARRA_INFERIOR.filter((o) => !o.permiso || puede(o.permiso)).map(
+        {BARRA_INFERIOR.filter(
+          (o) => (!o.permiso || puede(o.permiso)) && !(o.ocultarCon && puede(o.ocultarCon)),
+        ).map(
           ({ a, texto, Icono }) => (
             <NavLink key={a} to={a} className={claseNav}>
               <Icono className="icono" aria-hidden />

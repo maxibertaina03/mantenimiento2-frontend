@@ -80,7 +80,7 @@ beforeEach(() => {
 });
 
 describe('UsuariosPage', () => {
-  it('REGRESION: el desplegable ofrece los CINCO roles', async () => {
+  it('REGRESION: el desplegable ofrece los SEIS roles', async () => {
     // Ofrecía dos. Elegir uno que el servidor no conoce devolvía
     // "rol must be one of the following values", que no le dice nada a nadie.
     servidor();
@@ -94,6 +94,7 @@ describe('UsuariosPage', () => {
       'Administrativo',
       'Mantenimiento',
       'Encargado de planta',
+      'Sector',
     ]);
   });
 

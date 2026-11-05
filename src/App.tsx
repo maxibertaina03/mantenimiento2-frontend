@@ -21,6 +21,7 @@ import { OrdenesCompraPage } from './paginas/OrdenesCompraPage';
 import { PreciosFacturaPage } from './paginas/PreciosFacturaPage';
 import { CalendarioPage } from './paginas/CalendarioPage';
 import { PendientesPage } from './paginas/PendientesPage';
+import { SolicitudesPage } from './paginas/SolicitudesPage';
 import { SectorPage } from './paginas/SectorPage';
 import { SectoresPage } from './paginas/SectoresPage';
 import { OrdenesTrabajoPage } from './paginas/OrdenesTrabajoPage';
@@ -142,6 +143,9 @@ export function App() {
             </RutaConPermiso>
           }
         />
+        {/* Sin RutaConPermiso: entra quien carga (ve las suyas) o quien ve todas.
+            La página decide cuál; el servidor igual lo controla. */}
+        <Route path="/solicitudes" element={<SolicitudesPage />} />
         <Route
           path="/ordenes-compra"
           element={

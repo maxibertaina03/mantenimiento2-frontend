@@ -4,6 +4,7 @@ import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { formatearFecha } from '@/lib/formato';
 import type { RolUsuario } from '@/tipos/usuario';
 import { ROLES, usePermisosPorRol } from '@/api/permisos';
+import { useSectores } from '@/api/sectores';
 import { P, usePuede } from '@/lib/permisos';
 
 /**
@@ -24,6 +25,9 @@ export function UsuariosPage() {
   const puede = usePuede();
   const permisosPorRol = usePermisosPorRol(puede(P.PERMISOS_ADMINISTRAR));
   const actualizar = useActualizarUsuario();
+  // Para el rol Sector: de qué sector reporta cada uno.
+  const hayDeSector = (data?.datos ?? []).some((u) => u.rol === 'SECTOR');
+  const { data: sectores } = useSectores(hayDeSector && puede(P.TRABAJOS_VER));
   const [guardando, setGuardando] = useState<string | null>(null);
 
   const cambiarRol = async (id: string, rol: RolUsuario, nombre: string) => {
@@ -109,6 +113,32 @@ export function UsuariosPage() {
                     </select>
                     {guardando === u.id && (
                       <span className="texto-suave texto-chico"> guardando…</span>
+                    )}
+                    {u.rol === 'SECTOR' && (
+                      <select
+                        className="sector-de-usuario"
+                        value={u.sectorId ?? ''}
+                        disabled={guardando === u.id}
+                        aria-label={`Sector de ${u.nombre}`}
+                        onChange={async (e) => {
+                          setGuardando(u.id);
+                          try {
+                            await actualizar.mutateAsync({
+                              id: u.id,
+                              sectorId: e.target.value || null,
+                            });
+                          } finally {
+                            setGuardando(null);
+                          }
+                        }}
+                      >
+                        <option value="">Elegí el sector</option>
+                        {sectores?.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.nombre}
+                          </option>
+                        ))}
+                      </select>
                     )}
                   </td>
                 </tr>
