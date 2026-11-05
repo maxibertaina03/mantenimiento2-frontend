@@ -90,11 +90,11 @@ function useMoverEnTablero(accion: 'tomar' | 'soltar') {
           enProcesoDesde: accion === 'tomar' ? new Date().toISOString() : null,
         };
         return {
+          ...tablero,
           pendientes:
             accion === 'soltar' ? [...sinElla(tablero.pendientes), movida] : sinElla(tablero.pendientes),
           enProceso:
             accion === 'tomar' ? [...sinElla(tablero.enProceso), movida] : sinElla(tablero.enProceso),
-          hechas: tablero.hechas,
         };
       });
       return { antes };

@@ -19,6 +19,7 @@ export const clavesSolicitudes = {
 function invalidar(qc: ReturnType<typeof useQueryClient>) {
   void qc.invalidateQueries({ queryKey: clavesSolicitudes.base });
   void qc.invalidateQueries({ queryKey: ['ordenes-trabajo'] });
+  void qc.invalidateQueries({ queryKey: ['calendario', 'tablero'] });
 }
 
 export function useSolicitudes(filtros: FiltrosSolicitudes, habilitado = true) {

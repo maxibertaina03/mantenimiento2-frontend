@@ -3187,9 +3187,31 @@ tr:hover .nombre-material {
   color: var(--alerta);
   font-weight: 600;
 }
+.tablero-tarjeta-etiqueta {
+  color: var(--texto-suave);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.tablero-tarjeta-solicitud {
+  background: var(--alerta-suave);
+}
+.tablero-solicitud-texto {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tablero-tarjeta-acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.25rem;
+}
+.tablero-tarjeta-acciones:empty {
+  display: none;
+}
 .tablero-mover {
   align-self: flex-start;
-  margin-top: 0.25rem;
   padding: 0.2rem 0.4rem;
   font-size: 0.8rem;
   width: auto;

@@ -36,15 +36,18 @@ const tituloPropuesto = (s: Solicitud) => {
  */
 export function DetalleSolicitud({
   solicitud: s,
+  accionInicial = null,
   onCerrar,
 }: {
   solicitud: Solicitud;
+  /** Abrirla ya en «generar orden» o «resolver»: lo que pide el tablero al moverla. */
+  accionInicial?: Accion;
   onCerrar: () => void;
 }) {
   const puede = usePuede();
   const { data: yo } = useUsuarioActual();
   const gestiona = puede(P.SOLICITUDES_GESTIONAR);
-  const [accion, setAccion] = useState<Accion>(null);
+  const [accion, setAccion] = useState<Accion>(s.estado === 'NUEVA' ? accionInicial : null);
   const [titulo, setTitulo] = useState(() => tituloPropuesto(s));
   const [asignadoAId, setAsignadoAId] = useState('');
   const [texto, setTexto] = useState('');

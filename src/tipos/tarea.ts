@@ -136,6 +136,41 @@ export interface Tablero {
   enProceso: Tarea[];
   /** Lo terminado en el período. */
   hechas: Tarea[];
+  /** Las órdenes de trabajo abiertas (en proceso), para quien ve las órdenes. */
+  ordenesAbiertas?: OrdenEnTablero[];
+  /** Las cerradas en el período que no salieron de una tarea (listo). */
+  ordenesCerradas?: OrdenEnTablero[];
+  /** Lo que mandaron los sectores y nadie revisó (pendiente), para quien las revisa. */
+  solicitudesNuevas?: SolicitudEnTablero[];
+}
+
+/** Una orden de trabajo como tarjeta del tablero. */
+export interface OrdenEnTablero {
+  id: string;
+  numero: string;
+  titulo: string;
+  /** Sobre qué: la máquina, el equipo de informática o el sector. */
+  sobre: string | null;
+  asignadoAId: string;
+  asignadoANombre: string | null;
+  abiertaEn: string;
+  cerradaEn: string | null;
+  /** El taller, si está afuera. */
+  tallerNombre: string | null;
+  solicitudNumero: string | null;
+  urgencia: 'BAJA' | 'NORMAL' | 'URGENTE' | null;
+}
+
+/** Una solicitud sin revisar como tarjeta del tablero. */
+export interface SolicitudEnTablero {
+  id: string;
+  numero: string;
+  descripcion: string;
+  sectorNombre: string;
+  equipoNombre: string | null;
+  urgencia: 'BAJA' | 'NORMAL' | 'URGENTE';
+  solicitadaPorNombre: string | null;
+  creadoEn: string;
 }
 
 export type AlcanceTablero = 'hoy' | 'semana';

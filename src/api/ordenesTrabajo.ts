@@ -28,6 +28,10 @@ export const clavesTrabajos = {
 function invalidarTodo(qc: ReturnType<typeof useQueryClient>) {
   void qc.invalidateQueries({ queryKey: clavesTrabajos.base });
   void qc.invalidateQueries({ queryKey: clavesMateriales.base });
+  // El tablero del calendario muestra las órdenes abiertas y las cerradas, y
+  // las solicitudes que se resuelven al cerrar su orden.
+  void qc.invalidateQueries({ queryKey: ['calendario', 'tablero'] });
+  void qc.invalidateQueries({ queryKey: ['solicitudes'] });
   // Mandar una máquina a un taller de afuera, o traerla, le cambia el estado.
   void qc.invalidateQueries({ queryKey: clavesEquipos.base });
 }
