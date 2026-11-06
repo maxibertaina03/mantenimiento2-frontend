@@ -24,6 +24,7 @@ import { textoVencimiento } from '@/componentes/PlanesEquipo';
 import { formatearFechaSola, formatearNumero } from '@/lib/formato';
 import { ETIQUETA_ESTADO_EQUIPO } from '@/tipos/equipo';
 import { MisTareasDeHoy } from '@/componentes/MisTareasDeHoy';
+import { VenceManana } from '@/componentes/VenceManana';
 import { P, usePuede } from '@/lib/permisos';
 
 /** Cuántas filas se listan antes de mandar a la pantalla completa. */
@@ -376,6 +377,7 @@ export function InicioPage() {
       <div className="hoy">
         <div className="hoy-tareas">
           <MisTareasDeHoy />
+          <VenceManana />
         </div>
 
         {tarjetas.length === 0 ? (

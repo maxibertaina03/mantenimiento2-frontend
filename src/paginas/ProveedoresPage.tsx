@@ -18,6 +18,7 @@ const FORM_VACIO: CrearProveedorInput = {
   cuit: '',
   email: '',
   telefono: '',
+  direccion: '',
   notas: '',
 };
 const LIMITE = 20;
@@ -202,6 +203,7 @@ export function ProveedoresPage() {
               <DatoFicha etiqueta="CUIT" valor={detalle.cuit} />
               <DatoFicha etiqueta="Email" valor={detalle.email} />
               <DatoFicha etiqueta="Teléfono" valor={detalle.telefono} />
+              <DatoFicha etiqueta="Dirección" valor={detalle.direccion ?? null} />
             </div>
             {detalle.notas && (
               <>
@@ -209,7 +211,11 @@ export function ProveedoresPage() {
                 <p className="texto-suave">{detalle.notas}</p>
               </>
             )}
-            {!detalle.cuit && !detalle.email && !detalle.telefono && !detalle.notas && (
+            {!detalle.cuit &&
+              !detalle.email &&
+              !detalle.telefono &&
+              !detalle.direccion &&
+              !detalle.notas && (
               <p className="texto-suave">
                 Solo tiene cargado el nombre. Tocá «Editar» para completar los datos.
               </p>
@@ -267,6 +273,7 @@ function FormularioProveedor({
           cuit: proveedor.cuit ?? '',
           email: proveedor.email ?? '',
           telefono: proveedor.telefono ?? '',
+          direccion: proveedor.direccion ?? '',
           notas: proveedor.notas ?? '',
         }
       : FORM_VACIO,
@@ -283,6 +290,7 @@ function FormularioProveedor({
       cuit: form.cuit || undefined,
       email: form.email || undefined,
       telefono: form.telefono || undefined,
+      direccion: form.direccion || undefined,
       notas: form.notas || undefined,
     };
     if (proveedor) {
@@ -323,6 +331,15 @@ function FormularioProveedor({
           type="email"
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
+        />
+      </div>
+      <div className="campo">
+        <label>Dirección</label>
+        <input
+          value={form.direccion}
+          maxLength={200}
+          placeholder="Calle, número y localidad"
+          onChange={(e) => setForm({ ...form, direccion: e.target.value })}
         />
       </div>
       <div className="campo">

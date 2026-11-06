@@ -138,7 +138,9 @@ async function construirPdf(orden: OrdenTrabajo, extras: ExtrasOrdenTrabajo) {
       p?.telefono ? `Tel.: ${p.telefono}` : '',
       p?.email ? p.email : '',
     ].filter(Boolean);
-    const alto = datos.length > 0 ? 15 : 10;
+    // La dirección va en su propia línea: es a dónde se lleva la máquina.
+    const direccion = p?.direccion?.trim() ? `Dirección: ${p.direccion.trim()}` : '';
+    const alto = 10 + (datos.length > 0 ? 5 : 0) + (direccion ? 5 : 0);
 
     doc.setFillColor(253, 242, 244);
     doc.setDrawColor(...ROJO);
@@ -152,12 +154,15 @@ async function construirPdf(orden: OrdenTrabajo, extras: ExtrasOrdenTrabajo) {
     doc.setTextColor(...NEGRO);
     doc.setFontSize(11);
     doc.text(orden.proveedorNombre ?? p?.nombre ?? '—', margen + 28, y + 6);
-    if (datos.length > 0) {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      doc.setTextColor(...GRIS);
-      doc.text(datos.join('   ·   '), margen + 28, y + 11.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...GRIS);
+    let linea = y + 11.5;
+    if (direccion) {
+      doc.text(direccion, margen + 28, linea);
+      linea += 5;
     }
+    if (datos.length > 0) doc.text(datos.join('   ·   '), margen + 28, linea);
     y += alto + 7;
   }
 

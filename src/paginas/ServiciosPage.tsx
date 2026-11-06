@@ -1,8 +1,11 @@
-import { Check } from 'lucide-react';
+import { Check, Truck } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTareaDelPlan } from '@/api/calendario';
 import { usePlanesQueVencen } from '@/api/equipos';
+import { useOrdenesTrabajo } from '@/api/ordenesTrabajo';
+import { ModalDetalleOrden } from '@/componentes/ordenesTrabajo/ModalDetalleOrden';
+import { ServiceATaller } from '@/componentes/ServiceATaller';
 import { useUsuarioActual } from '@/api/usuarios';
 import { HacerTareas } from '@/componentes/HacerTareas';
 import { PostergarTarea } from '@/componentes/PostergarTarea';
@@ -11,7 +14,7 @@ import type { Tarea } from '@/tipos/tarea';
 import { textoVencimiento } from '@/componentes/PlanesEquipo';
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/Estados';
 import { formatearFechaSola } from '@/lib/formato';
-import { ETIQUETA_ESTADO_PLAN } from '@/tipos/equipo';
+import { ETIQUETA_ESTADO_PLAN, type PlanQueVence } from '@/tipos/equipo';
 
 /** Ventanas de tiempo para mirar hacia adelante. */
 const HORIZONTES = [
@@ -39,6 +42,19 @@ export function ServiciosPage() {
   const [completando, setCompletando] = useState<Tarea | null>(null);
   const [postergando, setPostergando] = useState<Tarea | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [aTaller, setATaller] = useState<PlanQueVence | null>(null);
+  const [ordenAbierta, setOrdenAbierta] = useState<string | null>(null);
+  // Los services que ya están en un taller: su orden externa abierta, por plan.
+  const puedeMandar = puede(P.TRABAJOS_EDITAR);
+  const { data: afuera } = useOrdenesTrabajo(
+    1,
+    100,
+    { estado: 'ABIERTA', ejecutor: 'EXTERNO' },
+    puede(P.TRABAJOS_VER),
+  );
+  const enTaller = new Map(
+    (afuera?.datos ?? []).filter((o) => o.planId).map((o) => [o.planId as string, o]),
+  );
 
   /**
    * Dar un service por hecho es completar su tarea del calendario: así queda
@@ -147,8 +163,38 @@ export function ServiciosPage() {
                       {ETIQUETA_ESTADO_PLAN[p.estado]}
                     </span>
                   </td>
-                  {puedeHacerlos && (
+                  {puedeHacerlos && enTaller.has(p.id) && (
                     <td className="celda-acciones">
+                      <button
+                        type="button"
+                        className="btn btn-sm"
+                        title="La orden se cierra cuando vuelve del taller: ahí el service queda hecho"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOrdenAbierta(enTaller.get(p.id)!.id);
+                        }}
+                      >
+                        <Truck className="icono" aria-hidden />
+                        En taller: {enTaller.get(p.id)!.proveedorNombre ?? 'externo'} ·{' '}
+                        {enTaller.get(p.id)!.numero}
+                      </button>
+                    </td>
+                  )}
+                  {puedeHacerlos && !enTaller.has(p.id) && (
+                    <td className="celda-acciones">
+                      {puedeMandar && (
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setATaller(p);
+                          }}
+                        >
+                          <Truck className="icono" aria-hidden />
+                          Mandar a taller
+                        </button>
+                      )}
                       {/* Lo vencido no se posterga: se hace. */}
                       {p.estado !== 'VENCIDO' && (
                         <button
@@ -183,6 +229,21 @@ export function ServiciosPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {aTaller && (
+        <ServiceATaller
+          plan={aTaller}
+          onCerrar={() => setATaller(null)}
+          onListo={(id) => {
+            setATaller(null);
+            // Se abre la orden: para imprimirla o mandársela al taller.
+            setOrdenAbierta(id);
+          }}
+        />
+      )}
+      {ordenAbierta && (
+        <ModalDetalleOrden id={ordenAbierta} onCerrar={() => setOrdenAbierta(null)} />
       )}
 
       {postergando && (

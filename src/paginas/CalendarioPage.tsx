@@ -618,6 +618,13 @@ function DetalleTarea({
           {tarea.equipoItNombre ? ` · ${tarea.equipoItNombre}` : ''}
         </p>
 
+        {tarea.estado === 'INCOMPLETA' && (
+          <p className="aviso-escaneo es-error">
+            Venció sin hacerse y quedó registrada como incompleta. Lo que se repite no se hace
+            atrasado: la próxima vez que toque, aparece de nuevo.
+          </p>
+        )}
+
         {tarea.descripcion && <p>{tarea.descripcion}</p>}
 
         {(tarea.postergaciones ?? []).length > 0 && (

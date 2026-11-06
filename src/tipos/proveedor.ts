@@ -4,6 +4,8 @@ export interface Proveedor {
   cuit: string | null;
   email: string | null;
   telefono: string | null;
+  /** Calle, número y localidad: sale en la orden de trabajo que va a un taller. */
+  direccion?: string | null;
   notas: string | null;
   creadoEn: string;
   actualizadoEn: string;
@@ -14,6 +16,7 @@ export interface CrearProveedorInput {
   cuit?: string;
   email?: string;
   telefono?: string;
+  direccion?: string;
   notas?: string;
 }
 
