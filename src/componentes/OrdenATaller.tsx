@@ -5,6 +5,7 @@ import { apiRequest } from '@/lib/apiClient';
 import { descargarPdfOrdenTrabajo } from '@/lib/pdfOrdenTrabajo';
 import type { Equipo } from '@/tipos/equipo';
 import type { OrdenTrabajo } from '@/tipos/ordenTrabajo';
+import { useProveedor } from '@/api/proveedores';
 import type { Proveedor } from '@/tipos/proveedor';
 import { ComboProveedor } from './ComboProveedor';
 import { MensajeError } from './Estados';
@@ -38,6 +39,7 @@ export function MandarATaller({ orden }: { orden: OrdenTrabajo }) {
           <span>
             <span className="texto-suave">Se manda a: </span>
             <strong>{orden.proveedorNombre}</strong>
+            <DireccionDelTaller proveedorId={orden.proveedorId} />
           </span>
           <button type="button" className="btn btn-sm" onClick={() => setEligiendo(true)}>
             Cambiar
@@ -126,4 +128,11 @@ export function ImprimirOrdenTrabajo({ orden }: { orden: OrdenTrabajo }) {
       )}
     </>
   );
+}
+
+/** La dirección del taller, si está cargada: a dónde se lleva la máquina. */
+export function DireccionDelTaller({ proveedorId }: { proveedorId: string | null }) {
+  const { data } = useProveedor(proveedorId);
+  if (!data?.direccion) return null;
+  return <span className="texto-suave texto-chico direccion-taller"> · {data.direccion}</span>;
 }

@@ -25,7 +25,11 @@ import { ComboMaterial } from '@/componentes/ComboMaterial';
 import { EnviarOrdenTrabajo } from '@/componentes/EnviarOrdenTrabajo';
 import { Cargando, MensajeError } from '@/componentes/Estados';
 import { Modal } from '@/componentes/Modal';
-import { ImprimirOrdenTrabajo, MandarATaller } from '@/componentes/OrdenATaller';
+import {
+  DireccionDelTaller,
+  ImprimirOrdenTrabajo,
+  MandarATaller,
+} from '@/componentes/OrdenATaller';
 import { VolvioDelTaller } from '@/componentes/VolvioDelTaller';
 import {
   DATOS_DEL_TRABAJO_VACIOS,
@@ -185,6 +189,7 @@ export function ModalDetalleOrden({ id, onCerrar }: { id: string; onCerrar: () =
             <p className="detalle-oc-datos">
               <span className="texto-suave">Se manda a: </span>
               <strong>{orden.proveedorNombre}</strong>
+              <DireccionDelTaller proveedorId={orden.proveedorId} />
             </p>
           )}
 

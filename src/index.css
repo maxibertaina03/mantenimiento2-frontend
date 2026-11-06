@@ -198,6 +198,38 @@ h3 {
   color: var(--texto-tenue);
   padding: 1rem 0.65rem 0.35rem;
 }
+/* El título de la sección es el botón que la abre y la cierra. */
+.grupo-menu-boton {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radio-chico);
+}
+.grupo-menu-boton:hover {
+  color: var(--texto);
+}
+.grupo-menu-boton:focus-visible {
+  outline: 2px solid var(--primario);
+  outline-offset: -2px;
+}
+.grupo-menu-boton > span:first-child {
+  flex: 1;
+}
+.grupo-menu-flecha {
+  width: 14px;
+  height: 14px;
+  transform: rotate(-90deg);
+  transition: transform 0.15s;
+}
+.grupo-menu-boton.abierta .grupo-menu-flecha {
+  transform: none;
+}
 .sidebar nav a {
   display: flex;
   align-items: center;
@@ -3094,6 +3126,15 @@ tr:hover .nombre-material {
 .calendario-tarea.estado-cancelada {
   opacity: 0.45;
 }
+/* Una rutina que venció sin hacerse: tachada en rojo, que también se ve en
+   blanco y negro por el tachado. */
+.calendario-tarea.estado-incompleta {
+  background: #fef2f2;
+}
+.calendario-tarea.estado-incompleta .calendario-tarea-titulo {
+  text-decoration: line-through;
+  color: var(--color-error, #b91c1c);
+}
 /* En proceso: alguien la tomó. Un subrayado de puntos, que también se ve en
    blanco y negro. */
 .calendario-tarea.estado-en_proceso .calendario-tarea-titulo {
@@ -5775,4 +5816,17 @@ label.casilla .icono {
 }
 .sugerencia-equipo .chip-periodo {
   font-size: 0.8rem;
+}
+
+/* El aviso del día anterior: lo que vence mañana. */
+.vence-manana .panel-cabecera h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.vence-manana .panel-cabecera h2 .icono {
+  color: var(--alerta);
+}
+.vence-manana > p {
+  margin: 0 0 0.5rem;
 }

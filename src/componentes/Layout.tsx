@@ -2,6 +2,7 @@ import { UserButton } from '@clerk/clerk-react';
 import {
   CalendarDays,
   ChartColumn,
+  ChevronDown,
   ClipboardCheck,
   Factory,
   History,
@@ -24,8 +25,8 @@ import {
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
-import { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { BannerServidor } from './Estados';
 import { useContadorSolicitudes } from '@/api/solicitudes';
 import { P, usePuede, type Permiso } from '@/lib/permisos';
@@ -204,12 +205,60 @@ function ContadorSolicitudes() {
   );
 }
 
+const CLAVE_MENU = 'menu-secciones-abiertas';
+
+/** Las secciones que la persona dejó abiertas, recordadas en este navegador. */
+function leerAbiertas(): Set<string> {
+  try {
+    const guardado = localStorage.getItem(CLAVE_MENU);
+    return new Set(guardado ? (JSON.parse(guardado) as string[]) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+/** La sección de la pantalla en la que se está: siempre arranca abierta. */
+function seccionDe(ruta: string): string | null {
+  return (
+    GRUPOS.find((g) =>
+      g.opciones.some((o) => ruta === o.a || ruta.startsWith(`${o.a}/`)),
+    )?.titulo ?? null
+  );
+}
+
 /** Estructura general: menú lateral + área de contenido.
  *  En celular el menú se vuelve un cajón deslizable (hamburguesa). */
 export function Layout() {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const cerrar = () => setMenuAbierto(false);
   const puede = usePuede();
+  const { pathname } = useLocation();
+
+  // Cada sección (Pañol, Mantenimiento, Compras…) se abre y se cierra tocando
+  // su título. La de la pantalla actual se abre sola; las demás quedan como
+  // las dejó la persona.
+  const [abiertas, setAbiertas] = useState<Set<string>>(() => {
+    const guardadas = leerAbiertas();
+    const actual = seccionDe(pathname);
+    if (actual) guardadas.add(actual);
+    return guardadas;
+  });
+  useEffect(() => {
+    const actual = seccionDe(pathname);
+    if (actual) setAbiertas((a) => (a.has(actual) ? a : new Set(a).add(actual)));
+  }, [pathname]);
+  const alternar = (titulo: string) =>
+    setAbiertas((a) => {
+      const nuevas = new Set(a);
+      if (nuevas.has(titulo)) nuevas.delete(titulo);
+      else nuevas.add(titulo);
+      try {
+        localStorage.setItem(CLAVE_MENU, JSON.stringify([...nuevas]));
+      } catch {
+        // Sin almacenamiento (navegación privada): se recuerda solo mientras dura.
+      }
+      return nuevas;
+    });
 
   return (
     <div className="app">
@@ -242,16 +291,39 @@ export function Layout() {
               (o) => (!o.permiso || puede(o.permiso)) && !(o.ocultarCon && puede(o.ocultarCon)),
             );
             if (visibles.length === 0) return null;
+            const abierta = !titulo || abiertas.has(titulo);
+            const idOpciones = `menu-${(titulo ?? 'inicio').toLowerCase().replace(/\W+/g, '-')}`;
             return (
               <div key={titulo ?? 'inicio'} role="group" aria-label={titulo ?? 'Inicio'}>
-                {titulo && <div className="grupo-menu">{titulo}</div>}
-                {visibles.map(({ a, texto, Icono, exacta, contador }) => (
-                  <NavLink key={a} to={a} end={exacta} className={claseNav}>
-                    <Icono className="icono" aria-hidden />
-                    {texto}
-                    {contador && <ContadorSolicitudes />}
-                  </NavLink>
-                ))}
+                {titulo && (
+                  <button
+                    type="button"
+                    className={`grupo-menu grupo-menu-boton${abierta ? ' abierta' : ''}`}
+                    aria-expanded={abierta}
+                    aria-controls={idOpciones}
+                    // En el celular, tocar el nav cierra el cajón: el título no.
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      alternar(titulo);
+                    }}
+                  >
+                    <span>{titulo}</span>
+                    {/* Cerrada, igual se ve si hay solicitudes sin revisar. */}
+                    {!abierta && visibles.some((o) => o.contador) && <ContadorSolicitudes />}
+                    <ChevronDown className="icono grupo-menu-flecha" aria-hidden />
+                  </button>
+                )}
+                {abierta && (
+                  <div id={idOpciones}>
+                    {visibles.map(({ a, texto, Icono, exacta, contador }) => (
+                      <NavLink key={a} to={a} end={exacta} className={claseNav}>
+                        <Icono className="icono" aria-hidden />
+                        {texto}
+                        {contador && <ContadorSolicitudes />}
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}

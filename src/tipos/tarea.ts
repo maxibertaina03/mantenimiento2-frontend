@@ -4,7 +4,13 @@
  * Reflejo del dominio del backend. Se repite acá y no se comparte porque son
  * dos proyectos que se despliegan por separado.
  */
-export const ESTADOS_TAREA = ['PENDIENTE', 'EN_PROCESO', 'HECHA', 'CANCELADA'] as const;
+export const ESTADOS_TAREA = [
+  'PENDIENTE',
+  'EN_PROCESO',
+  'HECHA',
+  'CANCELADA',
+  'INCOMPLETA',
+] as const;
 export type EstadoTarea = (typeof ESTADOS_TAREA)[number];
 
 export const ETIQUETA_ESTADO_TAREA: Record<EstadoTarea, string> = {
@@ -12,6 +18,8 @@ export const ETIQUETA_ESTADO_TAREA: Record<EstadoTarea, string> = {
   EN_PROCESO: 'En proceso',
   HECHA: 'Hecha',
   CANCELADA: 'Cancelada',
+  /** Una rutina que venció sin hacerse: queda el registro y ya no se hace. */
+  INCOMPLETA: 'Incompleta',
 };
 
 /** Lo que falta hacer: pendiente, o en proceso (alguien la tomó). */
