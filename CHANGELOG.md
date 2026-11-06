@@ -4,6 +4,15 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.28.0] — 2026-11-06
+
+### Agregado
+- **Dirección del proveedor** en la ficha, en el PDF de la orden de trabajo y en su detalle.
+- **«Mandar a taller»** en Servicios: abre la orden de trabajo del service para un taller externo y muestra «En taller» mientras está afuera.
+- **«Vence mañana»** en Hoy: lo que vence mañana, con Postergar y Hacerla ya. Las de todos los días van en una línea.
+- **Tareas incompletas** en el calendario, tachadas en rojo.
+- **Menú lateral por secciones**, que se abren y se cierran; la de la pantalla actual se abre sola.
+
 ## [1.27.0] — 2026-11-06
 
 ### Agregado
@@ -461,6 +470,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.28.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.28.0
 [1.27.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.27.0
 [1.26.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.26.0
 [1.25.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.25.0
