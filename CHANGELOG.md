@@ -4,6 +4,16 @@ Lo que cambia en cada versión de las pantallas, escrito para quien usa el siste
 sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones,
 [versionado semántico](https://semver.org/lang/es/) (ver [CONTRIBUTING.md](CONTRIBUTING.md#las-versiones)).
 
+## [1.27.0] — 2026-11-06
+
+### Agregado
+
+- **La tarea nueva reconoce la máquina en lo que escribís:** con «Cambio de rodamiento de desmigadora», la tarea queda atada a la Desmigadora sola, y abajo dice «Atada a Desmigadora 1 por lo que escribiste», con «No es esa» para soltarla. Si el texto nombra varias («purgar el compresor»), aparecen para tocar la que es. Lo que se elige a mano gana siempre.
+
+### Cambiado
+
+- **Recibir mercadería:** «Llegó ahora» viene cargado con lo que falta recibir de cada renglón, porque casi siempre llega lo pedido. Se compara con el remito y se corrige solo lo que llegó distinto; lo que no llegó se pone en 0 y queda pendiente.
+
 ## [1.26.0] — 2026-11-05
 
 ### Agregado
@@ -451,6 +461,7 @@ todo lo que se le fue sumando. A partir de acá, cada publicación tiene su núm
 - **Modales** que preguntan antes de cerrarse si hay algo cargado.
 - Funciona en la computadora y en el celular.
 
+[1.27.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.27.0
 [1.26.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.26.0
 [1.25.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.25.0
 [1.24.0]: https://github.com/maxibertaina03/mantenimiento2-frontend/releases/tag/v1.24.0
