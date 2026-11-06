@@ -10,10 +10,11 @@ import type { OrdenCompra } from '@/tipos/ordenCompra';
 /**
  * Recibir la mercadería de una orden: toda, o lo que llegó.
  *
- * Cada renglón arranca en 0: se carga, mirando el remito, lo que vino de cada
- * uno. Precargar lo pedido hacía fácil confirmar de más sin mirar. Si un
- * proveedor entregó una parte —llegaron los artefactos y no los acrílicos—
- * lo que no se carga queda pendiente:
+ * Cada renglón arranca con lo que falta recibir: casi siempre el proveedor
+ * manda lo pedido, y escribir otra vez cada número era trabajo para nada. Se
+ * corrige solo lo que llegó distinto, mirando el remito. Si un proveedor
+ * entregó una parte —llegaron los artefactos y no los acrílicos— lo que se
+ * baja (o se pone en 0) queda pendiente:
  * la orden pasa a «Recibida en parte» y se puede volver a recibir con el
  * remito de la próxima entrega.
  */
@@ -28,8 +29,10 @@ export function RecibirMercaderia({
 }) {
   const recibir = useRecibirOrden(orden.id);
   const pendientes = orden.renglones.filter((r) => r.pendiente > 0);
-  // Vacío cuenta como 0: así se escribe la cantidad sin borrar un 0 antes.
-  const [llega, setLlega] = useState<Record<string, number | undefined>>({});
+  // Arranca con lo que falta de cada renglón. Vacío cuenta como 0.
+  const [llega, setLlega] = useState<Record<string, number | undefined>>(() =>
+    Object.fromEntries(pendientes.map((r) => [r.id, r.pendiente])),
+  );
   const [remito, setRemito] = useState('');
   const [factura, setFactura] = useState('');
 
@@ -59,8 +62,8 @@ export function RecibirMercaderia({
     <div className="panel">
       <h3 className="subtitulo-form">¿Qué llegó?</h3>
       <p className="texto-suave texto-chico">
-        Mirando el remito, cargá cuánto llegó de cada material. Lo que quede en 0 sigue pendiente
-        para la próxima entrega.
+        Viene cargado lo que falta recibir. Compará con el remito y corregí solo lo que llegó
+        distinto: lo que quede de menos (o en 0) sigue pendiente para la próxima entrega.
       </p>
 
       <div className="tabla-scroll tabla-cards-contenedor">

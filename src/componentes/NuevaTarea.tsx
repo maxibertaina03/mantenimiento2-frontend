@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Link2, X } from 'lucide-react';
 import { useCrearTarea } from '@/api/calendario';
+import { useSugerirEquipos } from '@/api/equipos';
 import { useAsignables } from '@/api/ordenesTrabajo';
 import { ComboEquipo } from './ComboEquipo';
 import { ComboEquipoIt } from './ComboEquipoIt';
@@ -16,6 +18,11 @@ import { P, usePuede } from '@/lib/permisos';
  * Son dos campos, planta e informática, y elegir en uno limpia el otro: una
  * tarea es sobre una máquina o sobre una PC, nunca sobre las dos. El backend lo
  * rechaza igual; acá se evita que alguien llegue a intentarlo.
+ *
+ * La máquina se reconoce en lo que se escribe: «cambio de rodamiento de
+ * desmigadora» queda atada a la Desmigadora sola, si no hay dudas; si el
+ * texto nombra varias («la tina»), se ofrecen para tocar la que es. Elegirla
+ * a mano, o sacarla, gana siempre.
  */
 export function NuevaTarea({ fecha, onCerrar }: { fecha: string; onCerrar: () => void }) {
   const puede = usePuede();
@@ -28,6 +35,42 @@ export function NuevaTarea({ fecha, onCerrar }: { fecha: string; onCerrar: () =>
   const [asignadoA, setAsignadoA] = useState('');
   const [equipo, setEquipo] = useState<{ id: string; nombre: string } | null>(null);
   const [equipoIt, setEquipoIt] = useState<{ id: string; nombre: string } | null>(null);
+  /** La eligió (o la sacó) la persona: lo que se escribe ya no la cambia. */
+  const [equipoAMano, setEquipoAMano] = useState(false);
+  /** La ató el sistema por lo que se escribió, para avisarlo. */
+  const [porElTexto, setPorElTexto] = useState(false);
+  /** Para que el combo muestre la máquina que se eligió desde afuera. */
+  const [versionCombo, setVersionCombo] = useState(0);
+
+  // El texto se lee recién cuando se deja de escribir.
+  const [textoQuieto, setTextoQuieto] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setTextoQuieto(`${titulo} ${descripcion}`), 450);
+    return () => clearTimeout(t);
+  }, [titulo, descripcion]);
+  const veEquipos = puede(P.EQUIPOS_VER);
+  const { data: sugeridos } = useSugerirEquipos(
+    textoQuieto,
+    veEquipos && !equipoAMano && !equipoIt,
+  );
+
+  const ponerEquipo = (e: { id: string; nombre: string } | null, delTexto: boolean) => {
+    setEquipo(e);
+    setPorElTexto(delTexto && e !== null);
+    if (e) setEquipoIt(null);
+    setVersionCombo((v) => v + 1);
+  };
+
+  // Si el texto nombra una sola máquina sin dudas, queda atada; si deja de
+  // nombrarla, se suelta. Lo elegido a mano no se toca.
+  useEffect(() => {
+    if (equipoAMano || !sugeridos) return;
+    const elegida = sugeridos.find((s) => s.elegida) ?? null;
+    if (elegida && elegida.id !== equipo?.id) ponerEquipo(elegida, true);
+    if (!elegida && porElTexto) ponerEquipo(null, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sugeridos, equipoAMano]);
+  const opciones = !equipo && !equipoAMano ? (sugeridos ?? []).filter((s) => !s.elegida) : [];
 
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,16 +124,57 @@ export function NuevaTarea({ fecha, onCerrar }: { fecha: string; onCerrar: () =>
           </label>
         </div>
 
-        {puede(P.EQUIPOS_VER) && (
+        {veEquipos && (
           <label className="campo">
             Máquina de planta (opcional)
             <ComboEquipo
-              key={`planta-${equipoIt?.id ?? 'no'}`}
+              key={`planta-${equipoIt?.id ?? 'no'}-${versionCombo}`}
+              inicial={equipo}
               onCambio={(e) => {
+                setEquipoAMano(true);
+                setPorElTexto(false);
                 setEquipo(e);
                 if (e) setEquipoIt(null);
               }}
             />
+            {equipo && porElTexto && (
+              <span className="sugerencia-equipo texto-chico">
+                <Link2 className="icono" aria-hidden />
+                Atada a <strong>{equipo.nombre}</strong> por lo que escribiste.
+                <button
+                  type="button"
+                  className="btn-enlace"
+                  onClick={() => {
+                    setEquipoAMano(true);
+                    ponerEquipo(null, false);
+                  }}
+                >
+                  <X className="icono" aria-hidden />
+                  No es esa
+                </button>
+              </span>
+            )}
+            {opciones.length > 0 && (
+              <span className="sugerencia-equipo texto-chico">
+                ¿Es de alguna de estas?
+                {opciones.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className="chip-periodo"
+                    onClick={() => {
+                      setEquipoAMano(true);
+                      ponerEquipo(s, false);
+                    }}
+                  >
+                    {s.nombre}
+                    {s.ubicacionNombre && (
+                      <span className="texto-suave"> · {s.ubicacionNombre}</span>
+                    )}
+                  </button>
+                ))}
+              </span>
+            )}
           </label>
         )}
 
